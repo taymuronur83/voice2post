@@ -304,19 +304,22 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        
-        // GÜNCELLENEN FIREBASE KONFİGÜRASYONU
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+
+        // VERCEL ÜZERİNDEKİ ÇEVRE DEĞİŞKENİ KULLANIMI
         const firebaseConfig = {
-            apiKey: "FIREBASE_API_CODE",
+            apiKey: "FIREBASE_API_CODE", // Vercel Environment Variable üzerinden çekilecek
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
             storageBucket: "voice2post-9e8ca.firebasestorage.app",
             messagingSenderId: "511446656614",
-            appId: "1:511446656614:web:508d3f81985e6946716fa7",
-            measurementId: "G-77VMHG0YZB"
+            appId: "1:511446656614:web:16537fc8fd3a343e716fa7",
+            measurementId: "G-21X5ECFGYR"
         };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const analytics = getAnalytics(app);
 
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
