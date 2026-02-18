@@ -305,8 +305,9 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         
+        // GÜNCELLENEN FIREBASE KONFİGÜRASYONU
         const firebaseConfig = {
-            apiKey: "AIzaSyDB7JZCqe4Z30UZ6ItNp28PNbH_28tpjtA",
+            apiKey: "FIREBASE_API_CODE",
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
             storageBucket: "voice2post-9e8ca.firebasestorage.app",
@@ -456,7 +457,6 @@
             recognition.onend = () => { if (!isRecording && finalTranscript.trim().length > 0) processAIResult(finalTranscript); };
         }
 
-        // GÜVENLİ API BAĞLANTISI (DEĞİŞMEYEN TEK YER)
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
