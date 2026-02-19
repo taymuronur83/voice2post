@@ -2,25 +2,35 @@ name: Video Render
 
 on:
   repository_dispatch:
-    types: [render-video] # Vercel'den gelecek olan anahtar kelime
+    types: [render-video]
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Render Video
+      - name: Render Remotion Video
         run: |
-          # Buraya senin projenin render komutu gelecek (Örn: npx remotion render)
-          echo "Video render işlemi başlatılıyor: ${{ github.event.client_payload.props.text }}"
-          npm run build # Ya da senin render komutun neyse o
+          # 'npm run build' yerine direkt render komutunu yazıyoruz
+          # Eğer package.json içinde "render" komutun varsa:
+          npm run render -- --props='{"text": "${{ github.event.client_payload.props.text }}"}'
+        env:
+          # Eğer Remotion için gerekli başka anahtarların varsa buraya ekleyebilirsin
+          NODE_ENV: production
+
+      - name: Upload Video Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-video
+          path: out/video.mp4 # Remotion genelde 'out' klasörüne video.mp4 çıkarır
