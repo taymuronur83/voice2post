@@ -1,49 +1,36 @@
 export default async function handler(req, res) {
-    // Sadece POST isteklerini kabul et
-    if (req.method !== 'POST') return res.status(405).json({ error: 'POST method required' });
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST required' });
 
     try {
         const { script } = req.body;
-        
-        // DİKKAT: Vercel Environment Variables kısmında ismin GH_TOKEN olduğundan emin ol
-        const GITHUB_TOKEN = process.env.GH_TOKEN ? process.env.GH_TOKEN.trim() : null;
+        const GITHUB_TOKEN = process.env.GH_TOKEN;
 
-        if (!GITHUB_TOKEN) {
-            return res.status(500).json({ error: "Vercel'de GH_TOKEN bulunamadı!" });
-        }
-
-        // GitHub API URL (Kullanıcı adı ve repo ismini buraya direkt gömdük)
+        // URL'nin doğruluğunu buradan kontrol et: taymuronur83 / voice2post
         const url = "https://api.github.com/repos/taymuronur83/voice2post/dispatches";
 
         const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`, // 'Bearer' yerine 'token' bazen daha iyi çalışır
+                'Authorization': `token ${GITHUB_TOKEN.trim()}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json',
-                'User-Agent': 'Vercel-Serverless-Function'
+                'User-Agent': 'Vercel-App'
             },
             body: JSON.stringify({
                 event_type: 'render-video', 
                 client_payload: {
-                    props: { text: script || "Varsayılan metin" }
+                    props: { text: script || "Metin yok" }
                 }
             })
         });
 
-        // GitHub 204 dönerse bu başarılı demektir
         if (response.status === 204 || response.ok) {
-            return res.status(200).json({ ok: true, message: "GitHub Actions tetiklendi!" });
+            return res.status(200).json({ ok: true, message: "Aksiyon tetiklendi!" });
         } else {
-            const errorData = await response.text();
-            console.error("GitHub Hata Kodu:", response.status);
-            return res.status(response.status).json({ 
-                error: "GitHub isteği reddetti", 
-                code: response.status, 
-                detail: errorData 
-            });
+            const errorText = await response.text();
+            return res.status(response.status).json({ error: "GitHub Hatası", status: response.status, detail: errorText });
         }
-    } catch (err) {
-        return res.status(500).json({ error: "Sunucu hatası", detail: err.message });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 }
