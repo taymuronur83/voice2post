@@ -1,130 +1,108 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const VideoPreviewSystem = () => {
-    // State Yönetimi
-    const [status, setStatus] = useState('idle'); // idle, processing, rendering, success, error
+    const [status, setStatus] = useState('idle');
     const [displayMessage, setDisplayMessage] = useState('Komut bekleniyor...');
     const [videoUrl, setVideoUrl] = useState(null);
-    const [renderError, setRenderError] = useState(null);
-    
-    // Video referansı (Hataları anlık yakalamak için)
     const videoRef = useRef(null);
 
-    // Render Hatası Yakalayıcı (Video oynatılamazsa devreye girer)
-    const handleVideoError = () => {
-        setRenderError("Video dosyası bozuk veya render edilemedi.");
-        setStatus('error');
-        setDisplayMessage("Render Hatası: Video yüklenemiyor.");
-    };
+    // Bellek sızıntısını önlemek için URL'i temizleme
+    useEffect(() => {
+        return () => {
+            if (videoUrl && videoUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(videoUrl);
+            }
+        };
+    }, [videoUrl]);
 
-    // Komutu Uzak Sunucuya Gönderen Fonksiyon
     const sendCommandToRemote = async (command) => {
-        // Resetleme
         setStatus('processing');
         setDisplayMessage('Claude kodunuzu işliyor...');
-        setRenderError(null);
         setVideoUrl(null);
 
         try {
-            // REMOTE BAĞLANTI: Buradaki URL senin gerçek API adresin olmalı.
+            // REMOTE İSTEK: Kendi API endpoint'ini buraya yazmalısın
             const response = await fetch('/api/generate-video', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    prompt: command,
-                    timestamp: new Date().getTime() // Cache problemini önlemek için
-                })
+                body: JSON.stringify({ prompt: command })
             });
 
-            if (!response.ok) {
-                throw new Error(`Sunucu Hatası: ${response.status}`);
+            if (!response.ok) throw new Error(`Sunucu yanıt vermedi: ${response.status}`);
+
+            // GELEN VERİ KONTROLÜ
+            const contentType = response.headers.get("content-type");
+            
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                if (data.videoUrl) {
+                    setVideoUrl(data.videoUrl);
+                } else {
+                    throw new Error("JSON içinde videoUrl bulunamadı.");
+                }
+            } else {
+                // Eğer sunucu direkt video dosyasını (binary) gönderiyorsa:
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                setVideoUrl(objectUrl);
             }
 
-            const data = await response.json();
-            
-            // API'den gelen veriyi kontrol et (videoUrl boş gelirse hata ver)
-            if (data && data.videoUrl) {
-                setStatus('rendering');
-                setDisplayMessage('Video verisi alındı, render ediliyor...');
-                setVideoUrl(data.videoUrl);
-            } else {
-                throw new Error("Sunucudan geçerli bir video URL'si gelmedi.");
-            }
+            setStatus('success');
+            setDisplayMessage('Render tamamlandı.');
 
         } catch (error) {
-            console.error("Detaylı Hata:", error.message);
+            console.error("Render Hatası Detayı:", error);
             setStatus('error');
-            setDisplayMessage(`Bağlantı/Render Hatası: ${error.message}`);
+            setDisplayMessage(`Hata: ${error.message}`);
         }
     };
 
     return (
-        <div className="preview-container" style={{ padding: '20px', background: '#121212', color: '#e0e0e0', borderRadius: '8px' }}>
-            <div className="status-header" style={{ 
-                marginBottom: '15px', 
-                padding: '10px', 
-                borderRadius: '4px',
-                background: status === 'error' ? '#441111' : '#1e1e1e',
-                border: `1px solid ${status === 'error' ? 'red' : '#333'}`
-            }}>
-                <strong>Durum:</strong> {displayMessage}
+        <div style={{ padding: '20px', background: '#111', color: '#fff', fontFamily: 'sans-serif' }}>
+            <div style={{ marginBottom: '10px', padding: '10px', border: '1px solid #333', borderRadius: '5px' }}>
+                <strong>Sistem Mesajı:</strong> <span style={{ color: status === 'error' ? '#ff4d4d' : '#4caf50' }}>{displayMessage}</span>
             </div>
 
-            <div className="video-viewport" style={{ 
-                width: '100%', 
-                minHeight: '400px', 
-                background: '#000', 
-                display: 'flex', 
-                flexDirection: 'column',
-                alignItems: 'center', 
-                justifyContent: 'center',
-                position: 'relative',
-                overflow: 'hidden',
-                border: '1px solid #333'
-            }}>
-                {/* Render Süreci Görselleştirmesi */}
+            <div style={{ width: '100%', minHeight: '300px', backgroundColor: '#000', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {status === 'processing' && (
-                    <div className="loader-box">
-                        <div className="spinner"></div>
+                    <div style={{ textAlign: 'center' }}>
+                        <div className="spinner" style={{ border: '4px solid #f3f3f3', borderTop: '4px solid #3498db', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 2s linear infinite' }}></div>
                         <p>Kod İşleniyor...</p>
+                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                     </div>
                 )}
 
-                {status === 'rendering' && <p>Görüntü oluşturuluyor...</p>}
-
-                {videoUrl && (
+                {videoUrl ? (
                     <video 
                         ref={videoRef}
-                        controls 
-                        autoPlay
                         src={videoUrl} 
-                        onError={handleVideoError}
-                        style={{ width: '100%', maxHeight: '100%' }}
+                        controls 
+                        autoPlay 
+                        style={{ width: '100%', height: 'auto' }}
+                        onError={(e) => {
+                            console.error("Video Element Hatası:", e);
+                            setDisplayMessage("Video oynatılamıyor: Format uyumsuz.");
+                        }}
                     />
-                )}
-
-                {status === 'error' && (
-                    <div style={{ color: '#ff5555', textAlign: 'center' }}>
-                        <p>⚠️ {renderError || "Bilinmeyen bir hata oluştu."}</p>
-                    </div>
+                ) : (
+                    status !== 'processing' && <p style={{ color: '#666' }}>Video henüz oluşturulmadı.</p>
                 )}
             </div>
 
-            <div className="action-area" style={{ marginTop: '20px' }}>
+            <div style={{ marginTop: '15px' }}>
                 <button 
-                    onClick={() => sendCommandToRemote("Yeni sahne render et")}
+                    onClick={() => sendCommandToRemote("Render başlat")}
                     disabled={status === 'processing'}
-                    style={{ 
-                        padding: '12px 24px', 
-                        backgroundColor: status === 'processing' ? '#333' : '#007bff',
-                        color: 'white',
+                    style={{
+                        padding: '10px 25px',
+                        backgroundColor: '#007bff',
+                        color: '#white',
                         border: 'none',
-                        borderRadius: '4px',
-                        cursor: status === 'processing' ? 'not-allowed' : 'pointer',
-                        fontWeight: 'bold'
+                        borderRadius: '5px',
+                        cursor: status === 'processing' ? 'not-allowed' : 'pointer'
                     }}
                 >
-                    {status === 'processing' ? 'İşleniyor...' : 'Render Başlat'}
+                    {status === 'processing' ? 'Bekleyin...' : 'Komutu Gönder ve Render Et'}
                 </button>
             </div>
         </div>
