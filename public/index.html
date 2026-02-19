@@ -474,13 +474,11 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ AI VE CANLI VİDEO İŞLEME FONKSİYONU ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka Hazırlanıyor...";
+            statusText.innerText = "Claude Videoyu Tasarlıyor...";
             
-            // UI hazırlığı: Önce sonuç alanını göster
             const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
@@ -499,28 +497,24 @@
                 const data = await response.json();
                 if(!response.ok) throw new Error(data.error || "Hata oluştu");
 
-                // Metin sonuçlarını bas
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
                 
-                // CANLI PLAYER'I IFRAME İLE İNJECT ET
-                // Claude'dan gelen video_script verisini Remotion Player URL'ine ekliyoruz.
+                // --- CLAUDE'UN TASARIM PLANINI (JSON) PLAYER'A GÖNDERME ---
                 liveArea.innerHTML = `
-                    <iframe src="/video-preview?command=${encodeURIComponent(data.video_script)}" 
+                    <iframe src="/video-preview?videoData=${encodeURIComponent(JSON.stringify(data.video_script))}" 
                             style="width:100%; height:100%; border:none;" 
                             allow="autoplay"></iframe>`;
                 
-                // Loader'ı kapat ve Player'ı göster (Yumuşak geçiş)
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
                     liveArea.classList.remove('opacity-0');
                     document.getElementById('download-btn').classList.remove('hidden');
                     statusText.innerText = "İçerikler ve Video Hazır!";
-                }, 2000);
+                }, 1500);
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-                // Arka planda gerçek MP4 render işlemini başlat
                 fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
