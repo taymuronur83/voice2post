@@ -1,9 +1,13 @@
 name: Render Video
+
 on:
   push:
     branches:
-      - '**'  # Hangi branch olursa olsun (main, master, dev) push yapınca başla
-  workflow_dispatch: # Manuel butonun da orada durmasını sağlar
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   render:
@@ -26,7 +30,7 @@ jobs:
       - name: Render Video
         run: npm run render
 
-      - name: Upload Video
+      - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-video
