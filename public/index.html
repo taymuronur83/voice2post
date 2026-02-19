@@ -231,9 +231,10 @@
 
                 <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+                        
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Metin Medyası (OpenAI)
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> SOSYAL MEDYA METİNLERİ
                             </h4>
                             <div class="animate-fade-in">
                                 <div class="flex justify-between items-center mb-3">
@@ -257,20 +258,23 @@
 
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Video Kurgusu (Claude & Remotion)
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> OLUŞTURULAN VİDEO
                             </h4>
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
-                                        <i class="fas fa-play-circle text-lg mr-2"></i> CANLI VİDEO ÖNİZLEME
+                                        <i class="fas fa-play-circle text-lg mr-2"></i> CANLI ÖNİZLEME
                                     </span>
                                     <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
                                         <i class="fas fa-download mr-1"></i> MP4 İndir
                                     </button>
                                 </div>
-                                <div id="video-res-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden flex items-center justify-center bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
-                                    <div id="player-placeholder" class="text-slate-500 text-xs italic text-center p-4">Claude video kurgusunu hazırlıyor...</div>
-                                    <div id="remotion-player-container" class="w-full h-full hidden">
+                                <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
+                                    <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/80 backdrop-blur-sm z-10">
+                                        <i class="fas fa-circle-notch fa-spin text-3xl text-pink-500 mb-4"></i>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Claude Videoyu Kurguluyor...</p>
+                                    </div>
+                                    <div id="remotion-player-container" class="w-full h-full opacity-0 transition-opacity duration-500">
                                         </div>
                                 </div>
                             </div>
@@ -473,8 +477,16 @@
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka İçeriği Hazırlıyor...";
+            statusText.innerText = "Yapay Zeka Hazırlanıyor...";
             
+            // UI hazırlığı
+            document.getElementById('ai-result-container').classList.remove('hidden');
+            const videoLoader = document.getElementById('video-loader');
+            const playerContainer = document.getElementById('remotion-player-container');
+            
+            videoLoader.classList.remove('hidden');
+            playerContainer.classList.add('opacity-0');
+
             try {
                 const response = await fetch('/api/generate', {
                     method: 'POST',
@@ -485,30 +497,28 @@
                 const data = await response.json();
                 if(!response.ok) throw new Error(data.error || "İçerik üretim hatası");
 
-                // UI'ı görünür kıl
-                document.getElementById('ai-result-container').classList.remove('hidden');
-                document.getElementById('linkedin-res').innerText = data.linkedin || "Hata oluştu.";
-                document.getElementById('x-res').innerText = data.twitter || "Hata oluştu.";
+                // Metinleri bas
+                document.getElementById('linkedin-res').innerText = data.linkedin;
+                document.getElementById('x-res').innerText = data.twitter;
                 
-                // --- CANLI PLAYER ENTEGRASYONU ---
-                const playerContainer = document.getElementById('remotion-player-container');
-                const placeholder = document.getElementById('player-placeholder');
-                
-                placeholder.classList.add('hidden');
-                playerContainer.classList.remove('hidden');
-                document.getElementById('download-btn').classList.remove('hidden');
-
-                // Remotion Player'ı iframe aracılığıyla (veya varsa SDK ile) yükle
-                // Claude'dan gelen video_script verisini parametre olarak gönderiyoruz.
+                // --- CANLI VİDEO PLAYER ENTEGRASYONU ---
+                // Claude'dan gelen video_script'i direkt player'a iframe ile basıyoruz
                 playerContainer.innerHTML = `
                     <iframe src="/video-preview?command=${encodeURIComponent(data.video_script)}" 
-                            style="width:100%; height:100%; border:none; border-radius: 2rem;" 
+                            style="width:100%; height:100%; border:none;" 
                             allow="autoplay"></iframe>`;
                 
-                statusText.innerText = "İçerikler ve Video Hazır!";
+                // Video kurgusunu simüle et ve göster
+                setTimeout(() => {
+                    videoLoader.classList.add('hidden');
+                    playerContainer.classList.remove('opacity-0');
+                    document.getElementById('download-btn').classList.remove('hidden');
+                }, 1500);
+
+                statusText.innerText = "Her Şey Hazır!";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
-                // Arka planda MP4 oluşturma (Github Actions/Server)
+                // Arka planda gerçek MP4 render işlemini tetikle
                 fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -517,6 +527,7 @@
 
             } catch (error) { 
                 statusText.innerText = "Hata oluştu: " + error.message; 
+                videoLoader.innerHTML = `<p class="text-red-400 text-[10px]">Video oluşturulamadı.</p>`;
             }
         }
 
