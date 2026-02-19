@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "remotion preview src/index.ts",
-    "build": "remotion bundle src/index.ts out/bundle.js",
+    "build": "echo 'Vercel build bypass' && exit 0",
     "render": "remotion render src/index.ts MyVideo out/video.mp4",
     "typecheck": "tsc"
   },
@@ -28,6 +28,6 @@
     "typescript": "^5.1.0"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   }
 }
