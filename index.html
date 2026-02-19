@@ -477,18 +477,25 @@
                 });
                 
                 const data = await response.json();
-                if(data.error) throw new Error(data.error);
+                
+                if(!response.ok) throw new Error(data.error || "Sunucu hatası");
 
                 document.getElementById('ai-result-container').classList.remove('hidden');
-                document.getElementById('linkedin-res').innerText = data.linkedin;
-                document.getElementById('x-res').innerText = data.twitter;
-                document.getElementById('video-res').innerText = data.video_script;
                 
-                console.log("Remotion Verisi:", data.video_data);
+                // Backend (generate.js) ile tam uyumlu eşleştirme
+                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
+                document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
+                document.getElementById('video-res').innerText = data.video_script || "Senaryo oluşturulamadı.";
+                
+                if(data.videoProps) {
+                    console.log("Remotion Verisi Alındı:", data.videoProps);
+                }
+
                 statusText.innerText = "Başarıyla Oluşturuldu!";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
+                console.error("İşlem Hatası:", error);
                 statusText.innerText = "Hata: " + error.message; 
             }
         }
