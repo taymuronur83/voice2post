@@ -36,14 +36,23 @@ export default async function handler(req, res) {
                     max_tokens: 1200,
                     messages: [{ 
                         role: "user", 
-                        content: `Sen bir video kurgu uzmanısın. SADECE JSON döndür. Remotion bileşeni için uygun sahne verileri üret. 
-                        Yapı: {
-                          "video_script": "...",
+                        content: `Sen bir Remotion kurgu uzmanısın. Metni analiz et ve teknik video verisi üret. SADECE JSON döndür. Markdown etiketi kullanma.
+                        
+                        Yapı: 
+                        {
+                          "video_script": "Kısa sahne açıklamaları",
                           "videoProps": {
-                            "title": "...",
-                            "scenes": [{"text": "...", "duration": 90}]
+                            "title": "Video Başlığı",
+                            "fps": 30,
+                            "durationInFrames": 300,
+                            "scenes": [
+                              {"text": "Sahne 1 Yazısı", "duration": 90, "color": "#3b82f6"},
+                              {"text": "Sahne 2 Yazısı", "duration": 120, "color": "#10b981"},
+                              {"text": "Sahne 3 Yazısı", "duration": 90, "color": "#f59e0b"}
+                            ]
                           }
                         }
+                        
                         Konu: ${prompt}` 
                     }]
                 })
@@ -53,13 +62,13 @@ export default async function handler(req, res) {
         const oaiData = await oaiRes.json();
         const antData = await antRes.json();
 
-        // 1. OpenAI Kontrol ve Parse
+        // 1. OpenAI Kontrol
         const oaiText = oaiData.choices?.[0]?.message?.content;
-        if (!oaiText) throw new Error("OpenAI yanıtı boş. Kota veya Key hatası olabilir.");
+        if (!oaiText) throw new Error("OpenAI yanıtı boş.");
 
-        // 2. Claude Kontrol ve Parse
+        // 2. Claude Kontrol
         const antText = antData.content?.[0]?.text;
-        if (!antText) throw new Error("Claude yanıtı boş. Kredi veya Key hatası olabilir.");
+        if (!antText) throw new Error("Claude yanıtı boş.");
 
         // Güvenli JSON Ayıklama Fonksiyonu
         const extractJSON = (text) => {
@@ -72,16 +81,15 @@ export default async function handler(req, res) {
         const finalAnt = extractJSON(antText);
 
         // FRONTEND'E GİDEN VERİ
-        // data.linkedin, data.twitter, data.video_script şeklinde erişebilirsin.
         return res.status(200).json({
             linkedin: finalOai.linkedin || "Metin üretilemedi",
             twitter: finalOai.twitter || "Metin üretilemedi",
             video_script: finalAnt.video_script || "Senaryo üretilemedi",
-            videoProps: finalAnt.videoProps || {}
+            videoProps: finalAnt.videoProps || { title: "Hazır", scenes: [], fps: 30, durationInFrames: 300 }
         });
 
     } catch (error) {
         console.error("Hata Detayı:", error);
-        return res.status(500).json({ error: "Yapay zeka yanıtı işlenemedi: " + error.message });
+        return res.status(500).json({ error: "Hata: " + error.message });
     }
 }
