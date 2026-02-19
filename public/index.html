@@ -272,7 +272,7 @@
                                 <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
                                     <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/90 backdrop-blur-sm z-10">
                                         <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
-                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Claude Videoyu Hazırlıyor...</p>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold" id="video-loader-text">Claude Videoyu Hazırlıyor...</p>
                                     </div>
                                     <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700">
                                     </div>
@@ -290,25 +290,6 @@
             <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
             <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
             <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
-        </div>
-    </section>
-
-    <section id="fiyatlandirma" class="py-24 px-6 max-w-5xl mx-auto">
-        <h2 class="text-center text-4xl font-bold text-white mb-16" data-i18n="pricing_title">Planları Karşılaştır</h2>
-        <div class="glass rounded-[2.5rem] table-container border border-white/10 shadow-2xl overflow-hidden">
-            <div class="min-w-table">
-                <div class="grid grid-cols-3 bg-white/5 p-8 border-b border-white/10 text-center items-center">
-                    <div class="text-left font-bold text-slate-400 uppercase tracking-widest text-[10px] md:text-xs">Özellikler</div>
-                    <div><h3 class="text-lg font-bold text-white plan-text-mobile">Basic</h3><p class="text-blue-400 text-2xl font-black mt-1 plan-text-mobile">$0</p></div>
-                    <div class="relative"><span class="absolute populer-badge left-1/2 -translate-x-1/2 bg-blue-600 text-white rounded-full font-bold uppercase tracking-tighter shadow-lg shadow-blue-500/20">Popüler</span><h3 class="text-lg font-bold text-white plan-text-mobile">Pro</h3><p class="text-emerald-400 text-2xl font-black mt-1 plan-text-mobile">$3,99</p></div>
-                </div>
-                <div class="p-4 md:p-8 space-y-2">
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Günlük Video Üretimi</div><div class="text-slate-400 text-xs md:text-sm plan-text-mobile">2 Video</div><div class="text-white font-bold text-xs md:text-sm plan-text-mobile">10 Video</div></div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Ses + Metin</div><div><i class="fas fa-check text-emerald-500"></i></div><div><i class="fas fa-check text-emerald-500"></i></div></div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center border-none"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Dosya Yükleme Desteği</div><div><i class="fas fa-times text-red-500/50"></i></div><div><i class="fas fa-check text-emerald-500"></i></div></div>
-                </div>
-                <div class="grid grid-cols-3 p-8 bg-white/2 gap-4 items-center"><div></div><div class="mobile-btn-container"><button onclick="handleNavClick()" class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 transition text-[10px] font-bold uppercase tracking-widest text-slate-300">Ücretsiz Başla</button></div><div class="mobile-btn-container"><div id="paypal-button-container"></div></div></div>
-            </div>
         </div>
     </section>
 
@@ -436,27 +417,83 @@
             }
         }
 
-        paypal.Buttons({
-            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
-            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '3.99' } }] }); },
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    window.isProUser = true;
-                    document.getElementById('fiyatlandirma').innerHTML = `<div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30"><h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF</h2></div>`;
-                });
-            }
-        }).render('#paypal-button-container');
+        // --- GÜNCELLENMİŞ VE ZIRHLI processAIResult FONKSİYONU ---
+        async function processAIResult(text) {
+            if(!text.trim() || isProcessing) return;
+            
+            isProcessing = true; 
+            const statusText = document.getElementById('status-text');
+            const resultContainer = document.getElementById('ai-result-container');
+            const videoLoader = document.getElementById('video-loader');
+            const liveArea = document.getElementById('remotion-live-area');
+            const loaderText = document.getElementById('video-loader-text');
+            
+            statusText.innerText = "Claude Videoyu Tasarlıyor...";
+            resultContainer.classList.remove('hidden');
+            videoLoader.classList.remove('hidden');
+            liveArea.classList.add('opacity-0');
 
-        function changeLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('current-lang-name').innerText = lang.toUpperCase();
-            document.getElementById('current-lang-flag').innerText = lang === 'tr' ? '🇹🇷' : '🇺🇸';
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if(translations[lang][key]) el.innerText = translations[lang][key];
-            });
-            if (recognition) recognition.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-            document.getElementById('lang-list').classList.remove('show');
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text })
+                });
+                
+                // --- KRİTİK ADIM: HAM METNİ ALIP JSON AYIKLIYORUZ ---
+                const rawData = await response.text();
+                let data;
+
+                try {
+                    // JSON'un başladığı ve bittiği yerleri bul (Zırhlı Mantık)
+                    const jsonStart = rawData.indexOf('{');
+                    const jsonEnd = rawData.lastIndexOf('}') + 1;
+                    const cleanJson = rawData.substring(jsonStart, jsonEnd);
+                    data = JSON.parse(cleanJson);
+                } catch (jsonErr) {
+                    console.error("JSON parse hatası:", rawData);
+                    throw new Error("AI format hatası yaptı.");
+                }
+
+                if(!data.video_script) throw new Error("Video verisi eksik.");
+
+                // Arayüzü güncelle
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
+                
+                const videoPlanStr = JSON.stringify(data.video_script);
+                const encodedData = encodeURIComponent(videoPlanStr);
+                const encodedText = encodeURIComponent(data.video_script.text || text);
+
+                // Remotion Iframe Kurulumu
+                liveArea.innerHTML = `
+                    <iframe src="/video-preview?command=${encodedText}&videoData=${encodedData}" 
+                            style="width:100%; height:100%; border:none;" 
+                            allow="autoplay"></iframe>`;
+                
+                setTimeout(() => {
+                    videoLoader.classList.add('hidden');
+                    liveArea.classList.remove('opacity-0');
+                    document.getElementById('download-btn').classList.remove('hidden');
+                    statusText.innerText = "İçerikler ve Video Hazır!";
+                }, 2000);
+
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) { 
+                console.error("Hata:", error);
+                statusText.innerText = "Hata oluştu, tekrar deneyin.";
+                loaderText.innerText = "Kurgu Hatası: " + error.message;
+            } finally {
+                isProcessing = false; 
+            }
+        }
+
+        // Diğer yardımcı fonksiyonlar
+        function processManualText() {
+            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
+            const text = document.getElementById('manual-text').value;
+            if(text.trim()) processAIResult(text);
         }
 
         if ('webkitSpeechRecognition' in window) {
@@ -474,85 +511,6 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ VE ENTEGRE EDİLMİŞ processAIResult ---
-        async function processAIResult(text) {
-            if(!text.trim() || isProcessing) return;
-            
-            isProcessing = true; 
-            const statusText = document.getElementById('status-text');
-            const resultContainer = document.getElementById('ai-result-container');
-            const videoLoader = document.getElementById('video-loader');
-            const liveArea = document.getElementById('remotion-live-area');
-            
-            statusText.innerText = "Claude Videoyu Tasarlıyor...";
-            resultContainer.classList.remove('hidden');
-            videoLoader.classList.remove('hidden');
-            liveArea.classList.add('opacity-0');
-
-            try {
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text })
-                });
-                
-                const data = await response.json();
-                if(!response.ok) throw new Error(data.error || "Hata oluştu");
-
-                // --- KRİTİK VERİ KONTROLÜ ---
-                if(!data.video_script || typeof data.video_script !== 'object') {
-                    console.log("Ara mesaj alındı:", data);
-                    statusText.innerText = "Claude süreci analiz ediyor...";
-                    isProcessing = false;
-                    return; 
-                }
-
-                // Metin sonuçlarını güncelle
-                document.getElementById('linkedin-res').innerText = data.linkedin || "";
-                document.getElementById('x-res').innerText = data.twitter || "";
-                
-                // Remotion için URL parametrelerini hazırla
-                const videoPlanStr = JSON.stringify(data.video_script);
-                const encodedData = encodeURIComponent(videoPlanStr);
-                const encodedText = encodeURIComponent(data.video_script.text || text);
-
-                // Iframe köprüsünü kur
-                liveArea.innerHTML = `
-                    <iframe src="/video-preview?command=${encodedText}&videoData=${encodedData}" 
-                            style="width:100%; height:100%; border:none;" 
-                            allow="autoplay"></iframe>`;
-                
-                setTimeout(() => {
-                    videoLoader.classList.add('hidden');
-                    liveArea.classList.remove('opacity-0');
-                    document.getElementById('download-btn').classList.remove('hidden');
-                    statusText.innerText = "İçerikler ve Video Hazır!";
-                }, 1500);
-
-                resultContainer.scrollIntoView({ behavior: 'smooth' });
-
-                // Arka planda render işlemini başlat
-                fetch('/api/render-video', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ script: data.video_script })
-                }).catch(err => console.error("Render hatası:", err));
-
-            } catch (error) { 
-                console.error("Hata:", error);
-                statusText.innerText = "Hata: " + error.message; 
-                videoLoader.innerHTML = `<p class="text-red-400 text-[10px] p-4 text-center">İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.</p>`;
-            } finally {
-                isProcessing = false; 
-            }
-        }
-
-        function processManualText() {
-            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
-            const text = document.getElementById('manual-text').value;
-            if(text.trim()) processAIResult(text);
-        }
-
         document.getElementById('record-btn').onclick = () => {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             if (!isRecording) {
@@ -566,16 +524,6 @@
             } else { stopRecording(); }
         };
 
-        document.getElementById('cancel-btn').onclick = () => {
-            isRecording = false; try { recognition.stop(); } catch(e) {}
-            finalTranscript = "";
-            document.getElementById('record-btn').classList.remove('recording-pulse');
-            document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
-            document.getElementById('recording-anim').classList.add('hidden');
-            document.getElementById('cancel-btn').classList.add('hidden');
-            document.getElementById('status-text').innerText = "İptal edildi.";
-        };
-
         function stopRecording() {
             isRecording = false; try { recognition.stop(); } catch(e) {}
             document.getElementById('record-btn').classList.remove('recording-pulse');
@@ -585,21 +533,15 @@
             setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
         }
 
-        async function copyText(id) {
-            const text = document.getElementById(id).innerText;
-            await navigator.clipboard.writeText(text); alert("Kopyalandı!");
-        }
-
         function toggleLangMenu() { document.getElementById('lang-list').classList.toggle('show'); }
         function closeModals() { document.getElementById('auth-modal').classList.remove('active'); }
         function handleNavClick() {
             if (window.isLoggedIn) document.getElementById('user-dropdown').classList.toggle('active');
             else document.getElementById('auth-modal').classList.add('active');
         }
-
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal-overlay')) closeModals();
-            if (!e.target.closest('.lang-dropdown')) document.getElementById('lang-list').classList.remove('show');
+        async function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            await navigator.clipboard.writeText(text); alert("Kopyalandı!");
         }
     </script>
 </body>
