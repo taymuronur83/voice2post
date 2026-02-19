@@ -1,8 +1,17 @@
 import { registerRoot, Composition, Audio, AbsoluteFill, Img, useVideoConfig, useCurrentFrame, interpolate, getInputProps } from 'remotion';
 import React from 'react';
 
+// --- CLAUDE'UN TASARIM PLANI ARABİRİMİ ---
+interface VideoPlan {
+  text: string;
+  theme: 'ekonomi' | 'motive' | 'teknoloji';
+  accentColor: string;
+  backgroundUrl: string;
+  audioUrl: string;
+}
+
 // --- CLAUDE'UN KOMUT ANALİZ MERKEZİ ---
-// Kullanıcının sesli/yazılı komutunu analiz edip görsel atmosferi (arka plan, müzik, renk) belirleyen merkez.
+// Kullanıcının sesli/yazılı komutunu analiz edip görsel atmosferi belirleyen merkez.
 // Tek bir satır bile eksiltilmeden korunmuştur.
 const analyzeCommand = (command: string) => {
   const cmd = command.toLowerCase();
@@ -21,7 +30,6 @@ const analyzeCommand = (command: string) => {
       accent: "#ffcc00"
     };
   }
-  // Varsayılan: Teknoloji/Modern (Claude Default Style)
   return {
     bg: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
     music: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
@@ -30,11 +38,30 @@ const analyzeCommand = (command: string) => {
 };
 
 // --- VİDEO TASARIMI (CANLI GÖSTERİM BİLEŞENİ) ---
-// Claude'un hazırladığı senaryoyu Remotion üzerinde direkt videoya dönüştüren kısım.
-export const ClaudeVideo: React.FC<{ command: string }> = ({ command }) => {
+// Hem ham komutları hem de Claude'dan gelen özel JSON tasarımlarını işler.
+export const ClaudeVideo: React.FC<{ command: string; videoData?: string }> = ({ command, videoData }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
-  const style = analyzeCommand(command);
+
+  // 1. Veri Kaynağını Belirle (JSON varsa onu kullan, yoksa analize git)
+  let plan: VideoPlan;
+  
+  try {
+    if (videoData && videoData !== "{}") {
+      plan = JSON.parse(videoData);
+    } else {
+      throw new Error("Düz metin moduna geç");
+    }
+  } catch (e) {
+    const style = analyzeCommand(command);
+    plan = {
+      text: command,
+      theme: 'teknoloji',
+      accentColor: style.accent,
+      backgroundUrl: style.bg,
+      audioUrl: style.music
+    };
+  }
 
   // Görsel Efektler: Zoom (Ken Burns) ve Fade-in animasyonları korunmuştur.
   const scale = interpolate(frame, [0, durationInFrames], [1, 1.15]);
@@ -45,7 +72,7 @@ export const ClaudeVideo: React.FC<{ command: string }> = ({ command }) => {
       {/* Arka Plan Görseli */}
       <AbsoluteFill>
         <Img 
-          src={style.bg} 
+          src={plan.backgroundUrl} 
           style={{ 
             width: '100%', 
             height: '100%', 
@@ -65,32 +92,32 @@ export const ClaudeVideo: React.FC<{ command: string }> = ({ command }) => {
           fontWeight: 'bold',
           textAlign: 'center',
           padding: '30px',
-          borderLeft: `12px solid ${style.accent}`,
+          borderLeft: `12px solid ${plan.accentColor}`,
           backgroundColor: 'rgba(0,0,0,0.5)',
           borderRadius: '15px',
           backdropFilter: 'blur(10px)',
-          textShadow: '0px 5px 15px rgba(0,0,0,0.5)'
+          textShadow: '0px 5px 15px rgba(0,0,0,0.5)',
+          textTransform: 'uppercase'
         }}>
-          {command.toUpperCase()}
+          {plan.text}
         </div>
       </AbsoluteFill>
 
       {/* Dinamik Müzik */}
-      <Audio src={style.music} />
+      <Audio src={plan.audioUrl} />
     </AbsoluteFill>
   );
 };
 
 // --- RENDER VE COMPOSITION AYARLARI ---
-// 9:16 formatı (1080x1920) korunarak kök dizine kaydedilir.
 registerRoot(() => {
-  // Videonun süresi 15 saniye (450 frame) olarak ayarlanmıştır.
   const durationInSeconds = 15; 
   const fps = 30;
 
-  // Web sitesinden iframe/url yoluyla gelen dinamik metni yakala
+  // Web sitesinden gelen dinamik verileri yakala
   const inputProps = getInputProps();
   const finalCommand = inputProps.command || "Claude komut analizi yapılıyor...";
+  const finalVideoData = inputProps.videoData || "{}";
 
   return (
     <Composition
@@ -100,9 +127,9 @@ registerRoot(() => {
       fps={fps}
       width={1080}
       height={1920}
-      // Dışarıdan gelen veriyi bileşene aktar
       defaultProps={{
-        command: finalCommand, 
+        command: finalCommand,
+        videoData: finalVideoData
       }}
     />
   );
