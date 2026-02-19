@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
+    <link rel="icon" href="data:,"> <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -292,9 +292,7 @@
                 </div>
                 <div class="p-4 md:p-8 space-y-2">
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Günlük Video Üretimi</div><div class="text-slate-400 text-xs md:text-sm plan-text-mobile">2 Video</div><div class="text-white font-bold text-xs md:text-sm plan-text-mobile">10 Video</div></div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Senkronize #</div><div><i class="fas fa-check text-emerald-500"></i></div><div><i class="fas fa-check text-emerald-500"></i></div></div>
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Ses + Metin</div><div><i class="fas fa-check text-emerald-500"></i></div><div><i class="fas fa-check text-emerald-500"></i></div></div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Günlük Görsel Oluşturma</div><div class="text-slate-400 text-xs md:text-sm plan-text-mobile">2 Görsel</div><div class="text-white font-bold text-xs md:text-sm plan-text-mobile">10 Görsel</div></div>
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center border-none"><div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Dosya Yükleme Desteği</div><div><i class="fas fa-times text-red-500/50"></i></div><div><i class="fas fa-check text-emerald-500"></i></div></div>
                 </div>
                 <div class="grid grid-cols-3 p-8 bg-white/2 gap-4 items-center"><div></div><div class="mobile-btn-container"><button onclick="handleNavClick()" class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 transition text-[10px] font-bold uppercase tracking-widest text-slate-300">Ücretsiz Başla</button></div><div class="mobile-btn-container"><div id="paypal-button-container"></div></div></div>
@@ -381,6 +379,7 @@
         let isRecording = false; 
         let finalTranscript = ""; 
         let recognition;
+        let currentLang = 'tr';
 
         const translations = {
             tr: {
@@ -410,8 +409,6 @@
                 mode_mic: "Voice", mode_text: "Text"
             }
         };
-
-        let currentLang = 'tr';
 
         function setMode(mode) {
             const slider = document.getElementById('mode-slider');
@@ -464,14 +461,12 @@
             };
         }
 
-        // GÜNCEL FONKSİYON: taymuronur83 / voice2post uyumlu
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
             statusText.innerText = "Yapay Zeka İçeriği Hazırlıyor...";
             
             try {
-                // 1. ADIM: İçerik Üretimi (Vercel API)
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -481,34 +476,23 @@
                 const data = await response.json();
                 if(!response.ok) throw new Error(data.error || "İçerik üretim hatası");
 
-                // Sonuçları göster
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 document.getElementById('linkedin-res').innerText = data.linkedin || "Hata oluştu.";
                 document.getElementById('x-res').innerText = data.twitter || "Hata oluştu.";
                 document.getElementById('video-res').innerText = data.video_script || "Hata oluştu.";
                 
-                // 2. ADIM: GitHub Video Tetikleme
-                statusText.innerText = "GitHub Actions: Video Kurgusu Tetikleniyor...";
+                statusText.innerText = "Video Kurgusu Tetikleniyor...";
                 
-                const videoTrigger = await fetch('/api/render-video', {
+                await fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ script: data.video_script })
                 });
 
-                const triggerResult = await videoTrigger.json();
-
-                if (videoTrigger.ok) {
-                    statusText.innerText = "Başarıyla Tetiklendi! Video GitHub Actions'da işleniyor.";
-                } else {
-                    console.error("Video hatası:", triggerResult);
-                    statusText.innerText = "Metinler hazır ama video hatası: " + (triggerResult.detail || triggerResult.error);
-                }
-
+                statusText.innerText = "Başarıyla Tetiklendi! Video GitHub Actions'da işleniyor.";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("Süreç Hatası:", error);
                 statusText.innerText = "Hata oluştu: " + error.message; 
             }
         }
