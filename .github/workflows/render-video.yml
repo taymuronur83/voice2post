@@ -8,24 +8,22 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Kodları İndir
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 2. Node.js Kur
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: 3. Paketleri Yükle
+      - name: Install Dependencies
         run: npm install
 
-      - name: 4. Videoyu Oluştur (Render)
-        run: |
-          # MyVideo.js dosyasını kullanarak render alıyoruz
-          npm run render -- --props='{"text": "${{ github.event.client_payload.props.text }}"}'
+      - name: Render Video
+        run: npm run render -- --props='{"text": "${{ github.event.client_payload.props.text }}"}'
 
-      - name: 5. Videoyu Kaydet
+      - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
-          name: olusturulan-video
+          name: video-output
           path: out/video.mp4
