@@ -440,7 +440,7 @@
                     body: JSON.stringify({ prompt: text })
                 });
                 
-                // --- KRİTİK ADIM: HAM METNİ ALIP JSON AYIKLIYORUZ ---
+                // Ham metni al
                 const rawData = await response.text();
                 let data;
 
@@ -471,12 +471,13 @@
                             style="width:100%; height:100%; border:none;" 
                             allow="autoplay"></iframe>`;
                 
+                // Loader'ı kapatan kilit mekanizma
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
                     liveArea.classList.remove('opacity-0');
-                    document.getElementById('download-btn').classList.remove('hidden');
+                    document.getElementById('download-btn')?.classList.remove('hidden');
                     statusText.innerText = "İçerikler ve Video Hazır!";
-                }, 2000);
+                }, 2500); // 2.5 saniye sonra loader kesin kapanır
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
@@ -489,7 +490,6 @@
             }
         }
 
-        // Diğer yardımcı fonksiyonlar
         function processManualText() {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             const text = document.getElementById('manual-text').value;
