@@ -3,6 +3,7 @@ import React from 'react';
 
 // --- CLAUDE'UN KOMUT ANALİZ MERKEZİ ---
 // Bu kısım siteden gelen komuta göre görsel ve müzik atmosferini belirler.
+// Mevcut ekonomi, motivasyon ve teknoloji kategorileri aynen korunmuştur.
 const analyzeCommand = (command: string) => {
   const cmd = command.toLowerCase();
   
@@ -20,7 +21,7 @@ const analyzeCommand = (command: string) => {
       accent: "#ffcc00"
     };
   }
-  // Varsayılan: Teknoloji/Modern (Claude Default Style)
+  // Varsayılan: Teknoloji/Modern (Claude Default Style) - Mevcut yapı korunmuştur.
   return {
     bg: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
     music: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
@@ -29,31 +30,35 @@ const analyzeCommand = (command: string) => {
 };
 
 // --- VİDEO TASARIMI (EXPORT EDİLDİ: SİTEDE PLAYER İÇİN) ---
-// Artık bu bileşen dikey (9:16) formatta sitendeki Player içinde doğrudan kullanılabilir.
+// Bu bileşen dikey (9:16) formatta sitendeki Player içinde doğrudan kullanılabilir.
+// Tüm animasyon ve stil verileri korunmuştur.
 export const ClaudeVideo: React.FC<{ command: string }> = ({ command }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
   const style = analyzeCommand(command);
 
-  // Arka plan Ken Burns efekti
+  // Arka plan Ken Burns (yavaş zoom) efekti
   const scale = interpolate(frame, [0, durationInFrames], [1, 1.15]);
-  // Yazı giriş animasyonu
+  // Yazı giriş animasyonu (Fade-in)
   const opacity = interpolate(frame, [0, 25], [0, 1]);
 
   return (
     <AbsoluteFill style={{ backgroundColor: 'black', fontFamily: 'sans-serif' }}>
-      {/* Dinamik Arka Plan */}
+      {/* Dinamik Arka Plan - Orijinal hali korunmuştur */}
       <AbsoluteFill>
         <Img 
           src={style.bg} 
           style={{ 
-            width: '100%', height: '100%', objectFit: 'cover', 
-            transform: `scale(${scale})`, opacity: 0.5 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'cover', 
+            transform: `scale(${scale})`, 
+            opacity: 0.5 
           }} 
         />
       </AbsoluteFill>
 
-      {/* Metin Alanı (9:16 formatına uygun ortalanmış) */}
+      {/* Metin Alanı (9:16 dikey formatına uygun tasarlanmış) */}
       <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center', padding: '60px' }}>
         <div style={{
           opacity,
@@ -72,16 +77,17 @@ export const ClaudeVideo: React.FC<{ command: string }> = ({ command }) => {
         </div>
       </AbsoluteFill>
 
-      {/* Konuya Uygun Müzik */}
+      {/* Konuya Uygun Müzik - Orijinal hali korunmuştur */}
       <Audio src={style.music} />
     </AbsoluteFill>
   );
 };
 
 // --- RENDER VE COMPOSITION AYARLARI ---
+// 9:16 Dikey format ve 8-30 saniye kuralı burada tanımlıdır.
 registerRoot(() => {
-  // KURAL: 8-30 saniye arası (Örnek olarak 15 saniye ayarlandı)
-  const durationInSeconds = 15; 
+  // Siteden gelen sesin uzunluğuna göre bu süreyi 8-30 arası set edebilirsin.
+  const durationInSeconds = 15; // 15 Saniye (Örnek)
   const fps = 30;
 
   return (
@@ -90,8 +96,8 @@ registerRoot(() => {
       component={ClaudeVideo}
       durationInFrames={durationInSeconds * fps}
       fps={fps}
-      width={1080} // 9:16 genişlik
-      height={1920} // 9:16 yükseklik
+      width={1080} // 9:16 dikey genişlik
+      height={1920} // 9:16 dikey yükseklik
       defaultProps={{
         command: "Siteden gelen komut bekleniyor...", // Varsayılan metin
       }}
