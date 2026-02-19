@@ -1,26 +1,26 @@
-name: Video Oluşturucu (Remotion)
+name: Video Render
+
 on:
   repository_dispatch:
-    types: [render-video]
+    types: [render-video] # Vercel'den gelecek olan anahtar kelime
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
           node-version: 18
-      
-      - name: Bağımlılıkları Kur
+
+      - name: Install Dependencies
         run: npm install
 
-      - name: Videoyu Render Et
-        # Bu kısım Claude'dan gelen metni 'props' olarak alır
-        run: npx remotion render MyVideo out/video.mp4 --props='${{ github.event.client_payload.props }}'
-
-      - name: Videoyu Upload Et
-        uses: actions/upload-artifact@v3
-        with:
-          name: ai-video
-          path: out/video.mp4
+      - name: Render Video
+        run: |
+          # Buraya senin projenin render komutu gelecek (Örn: npx remotion render)
+          echo "Video render işlemi başlatılıyor: ${{ github.event.client_payload.props.text }}"
+          npm run build # Ya da senin render komutun neyse o
