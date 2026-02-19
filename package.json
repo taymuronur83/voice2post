@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "start": "remotion preview src/index.ts",
-    "build": "echo 'Build bypass for Vercel' && exit 0",
+    "build": "echo 'Build bypass' && exit 0",
     "render": "remotion render src/index.ts MyVideo out/video.mp4",
     "typecheck": "tsc"
   },
