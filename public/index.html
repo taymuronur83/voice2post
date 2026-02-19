@@ -254,6 +254,7 @@
                                 <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-300 text-sm italic leading-relaxed" id="x-res"></div>
                             </div>
                         </div>
+
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
                                 <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Video Kurgusu (Claude & Remotion)
@@ -261,17 +262,18 @@
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
-                                        <i class="fas fa-video text-lg mr-2"></i> CANLI VİDEO ÖNİZLEME
+                                        <i class="fas fa-play-circle text-lg mr-2"></i> CANLI VİDEO ÖNİZLEME
                                     </span>
                                     <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
                                         <i class="fas fa-download mr-1"></i> MP4 İndir
                                     </button>
                                 </div>
                                 <div id="video-res-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden flex items-center justify-center bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
-                                    <div id="player-placeholder" class="text-slate-500 text-xs italic text-center p-4">Video oluşturulduğunda burada dikey formatta oynatılacaktır.</div>
-                                    <div id="remotion-player" class="w-full h-full hidden"></div>
+                                    <div id="player-placeholder" class="text-slate-500 text-xs italic text-center p-4">Claude video kurgusunu hazırlıyor...</div>
+                                    <div id="remotion-player-container" class="w-full h-full hidden">
+                                        </div>
                                 </div>
-                                <div id="video-res" class="hidden"></div> </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -467,6 +469,7 @@
             };
         }
 
+        // --- GÜNCELLENMİŞ AI İŞLEME FONKSİYONU ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
@@ -482,25 +485,30 @@
                 const data = await response.json();
                 if(!response.ok) throw new Error(data.error || "İçerik üretim hatası");
 
+                // UI'ı görünür kıl
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 document.getElementById('linkedin-res').innerText = data.linkedin || "Hata oluştu.";
                 document.getElementById('x-res').innerText = data.twitter || "Hata oluştu.";
                 
-                // CANLI PLAYER TETİKLEME
-                document.getElementById('player-placeholder').classList.add('hidden');
-                document.getElementById('remotion-player').classList.remove('hidden');
+                // --- CANLI PLAYER ENTEGRASYONU ---
+                const playerContainer = document.getElementById('remotion-player-container');
+                const placeholder = document.getElementById('player-placeholder');
+                
+                placeholder.classList.add('hidden');
+                playerContainer.classList.remove('hidden');
                 document.getElementById('download-btn').classList.remove('hidden');
 
-                // Burası Remotion Player'ın canlanacağı yer
-                document.getElementById('remotion-player').innerHTML = `
+                // Remotion Player'ı iframe aracılığıyla (veya varsa SDK ile) yükle
+                // Claude'dan gelen video_script verisini parametre olarak gönderiyoruz.
+                playerContainer.innerHTML = `
                     <iframe src="/video-preview?command=${encodeURIComponent(data.video_script)}" 
-                            style="width:100%; height:100%; border:none; border-radius: 2.5rem;" 
+                            style="width:100%; height:100%; border:none; border-radius: 2rem;" 
                             allow="autoplay"></iframe>`;
                 
-                statusText.innerText = "Video Kurgusu Tamamlandı!";
+                statusText.innerText = "İçerikler ve Video Hazır!";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
-                // GITHUB ACTIONS TETİKLEME (MP4 İçin)
+                // Arka planda MP4 oluşturma (Github Actions/Server)
                 fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
