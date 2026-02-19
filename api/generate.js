@@ -1,64 +1,53 @@
 export default async function handler(req, res) {
-    // CORS ayarları (Frontend'den erişim için)
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { prompt } = req.body;
-    
-    // API KEY KONTROLÜ
-    if (!process.env.OPENAI_API_KEY) {
-        return res.status(500).json({ error: "Backend Hatası: OPENAI_API_KEY bulunamadı!" });
+    const openAIKey = process.env.OPENAI_API_KEY;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+    if (!openAIKey || !anthropicKey) {
+        return res.status(500).json({ error: 'API Keys missing' });
     }
 
     try {
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // 1. OpenAI İsteği
+        const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: "Sadece JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\", \"video_script\": \"...\"}" },
-                    { role: "user", content: prompt }
-                ],
-                temperature: 0.5
+                messages: [{ role: "system", content: "Metinden LinkedIn ve Twitter postu üret. SADECE şu JSON'u döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" }, { role: "user", content: prompt }]
             })
         });
+        const oaiData = await oaiRes.json();
+        const social = JSON.parse(oaiData.choices[0].message.content.trim());
 
-        const data = await response.json();
-        
-        // OpenAI hata döndürdüyse (Kota dolması, yanlış key vb.)
-        if (data.error) {
-            console.error("OpenAI Error:", data.error);
-            return res.status(500).json({ error: `OpenAI Hatası: ${data.error.message}` });
-        }
-
-        const rawContent = data.choices[0].message.content;
-        
-        // JSON Temizleme Operasyonu (En sağlam yöntem)
-        let parsedData;
-        try {
-            const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-            parsedData = JSON.parse(jsonMatch ? jsonMatch[0] : rawContent);
-        } catch (parseError) {
-            console.error("Parse Error. Gelen Metin:", rawContent);
-            return res.status(500).json({ error: "AI formatı bozuk geldi, lütfen tekrar deneyin." });
-        }
+        // 2. Claude İsteği
+        const antRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'x-api-key': anthropicKey, 
+                'anthropic-version': '2023-06-01' 
+            },
+            body: JSON.stringify({
+                model: "claude-3-sonnet-20240229",
+                max_tokens: 1000,
+                messages: [{ role: "user", content: `Metinden video kurgusu üret. SADECE şu formatta JSON döndür: {"video_script": "...", "video_data": {"backgroundColor": "#0f172a", "scenes": [{"text": "...", "duration": 60, "fontSize": 60}]}}. Metin: ${prompt}` }]
+            })
+        });
+        const antData = await antRes.json();
+        const video = JSON.parse(antData.content[0].text.trim());
 
         return res.status(200).json({
-            linkedin: parsedData.linkedin || "İçerik yok",
-            twitter: parsedData.twitter || "İçerik yok",
-            video_script: parsedData.video_script || "Senaryo yok"
+            linkedin: social.linkedin,
+            twitter: social.twitter,
+            video_script: video.video_script,
+            video_data: video.video_data
         });
 
     } catch (error) {
-        console.error("Genel Hata:", error);
-        return res.status(500).json({ error: "Sunucu hatası: " + error.message });
+        console.error("Hata Detayı:", error);
+        return res.status(500).json({ error: error.message });
     }
 }
