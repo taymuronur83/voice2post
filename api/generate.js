@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
     try {
-        // 1. ADIM: OpenAI - Sosyal Medya Metinleri
+        // 1. ADIM: OpenAI ile Sosyal Medya Metinlerini Üret
         const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -16,27 +16,20 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "Sen bir JSON makinesisin. Sadece şu yapıda JSON döndür, asla açıklama yapma: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
+                    { role: "system", content: "Sen sosyal medya uzmanısın. Sadece şu yapıda JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
                     { role: "user", content: prompt }
                 ],
-                temperature: 0.3 // Daha stabil çıktı için
+                temperature: 0.7
             })
         });
 
         const oaiData = await oaiRes.json();
-        if (!oaiData.choices || !oaiData.choices[0]) throw new Error("OpenAI yanıt dönmedi.");
+        if (!oaiData.choices?.[0]) throw new Error("OpenAI tarafında bir hata oluştu veya yanıt dönmedi.");
         
-        let socialContent;
-        try {
-            // JSON içindeki olası ekstra metinleri temizle
-            const rawOai = oaiData.choices[0].message.content;
-            const jsonOaiMatch = rawOai.match(/\{[\s\S]*\}/);
-            socialContent = JSON.parse(jsonOaiMatch ? jsonOaiMatch[0] : rawOai);
-        } catch (e) {
-            throw new Error("OpenAI JSON ayrıştırma hatası.");
-        }
+        const rawOai = oaiData.choices[0].message.content;
+        const oaiJson = JSON.parse(rawOai.match(/\{[\s\S]*\}/)[0]);
 
-        // 2. ADIM: Claude - Video Kurgusu
+        // 2. ADIM: Claude ile Remotion Video Verisi Üret
         const antRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -49,38 +42,45 @@ export default async function handler(req, res) {
                 max_tokens: 1000,
                 messages: [{
                     role: "user",
-                    content: `SADECE JSON döndür. Video senaryosu üret: 
+                    content: `Remotion video bileşeni için JSON formatında sahne verileri üret. 
+                    Yapı: 
                     {
-                      "video_script": "...",
-                      "video_data": { "scenes": [] }
+                      "videoConfig": {
+                        "title": "...",
+                        "backgroundColor": "#000000",
+                        "scenes": [
+                          {"text": "Sahne 1 metni", "duration": 90},
+                          {"text": "Sahne 2 metni", "duration": 90}
+                        ]
+                      }
                     }
-                    Metin: ${prompt}`
+                    Konu: ${prompt}. SADECE JSON DÖNDÜR.`
                 }]
             })
         });
 
         const antData = await antRes.json();
-        if (!antData.content || !antData.content[0]) throw new Error("Claude yanıt dönmedi.");
-
-        let videoContent;
-        try {
-            const rawAnt = antData.content[0].text;
-            const jsonAntMatch = rawAnt.match(/\{[\s\S]*\}/);
-            videoContent = JSON.parse(jsonAntMatch ? jsonAntMatch[0] : rawAnt);
-        } catch (e) {
-            throw new Error("Claude JSON ayrıştırma hatası.");
+        
+        // Claude yanıt vermezse veya hata verirse yakala
+        if (!antData.content?.[0]) {
+            console.error("Claude Hatası:", antData);
+            throw new Error("Claude API yanıt vermedi. Bakiyenizi veya API anahtarınızı kontrol edin.");
         }
 
-        // 3. ADIM: Başarılı Yanıt
+        const rawAnt = antData.content[0].text;
+        const antJson = JSON.parse(rawAnt.match(/\{[\s\S]*\}/)[0]);
+
+        // 3. ADIM: Her iki veriyi birleştirip Frontend'e gönder
         return res.status(200).json({
-            linkedin: socialContent.linkedin || "Metin üretilemedi",
-            twitter: socialContent.twitter || "Metin üretilemedi",
-            video_script: videoContent.video_script || "Senaryo üretilemedi",
-            video_data: videoContent.video_data || {}
+            social: oaiJson,
+            video: antJson.videoConfig
         });
 
     } catch (error) {
-        console.error("Backend Hatası:", error);
-        return res.status(500).json({ error: "İşlem tamamlanamadı: " + error.message });
+        console.error("Sistem Hatası:", error);
+        return res.status(500).json({ 
+            error: "İşlem sırasında bir hata oluştu.",
+            details: error.message 
+        });
     }
 }
