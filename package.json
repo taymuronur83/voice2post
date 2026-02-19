@@ -2,8 +2,8 @@
   "name": "voice2post",
   "version": "1.0.0",
   "scripts": {
-    "build": "next build", 
-    "render": "remotion render src/index.ts Main out/video.mp4"
+    "build": "next build",
+    "render": "remotion render Components/MyVideo.js Main out/video.mp4"
   },
   "dependencies": {
     "remotion": "^4.0.0",
