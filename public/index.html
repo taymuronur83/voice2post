@@ -218,7 +218,6 @@
             liveArea.classList.add('opacity-0');
 
             try {
-                // OpenAI & Claude Backend İsteği
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -229,14 +228,19 @@
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
 
-                // REMOTION BAĞLANTISI (ID=MyVideo Hatasını Çözen Kısım)
-                liveArea.innerHTML = `<iframe src="/api/render-preview?id=MyVideo&title=${encodeURIComponent(text)}" style="width:100%; height:100%; border:none;"></iframe>`;
+                // CLAUDE'dan gelen veriyi (Başlık, Alt Metin, Renk) REMOTION'a gönderiyoruz
+                const videoUrl = `/api/render-preview?id=MyVideo&title=${encodeURIComponent(data.video_script.text)}&sub=${encodeURIComponent(data.video_script.theme)}&accentColor=${encodeURIComponent(data.video_script.accentColor)}`;
+                
+                liveArea.innerHTML = `<iframe src="${videoUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
                 
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
                     liveArea.classList.remove('opacity-0');
                 }, 3000);
-            } catch(e) { alert("Hata oluştu."); }
+            } catch(e) { 
+                console.error(e);
+                alert("Hata oluştu."); 
+            }
         }
 
         function processManualText() {
