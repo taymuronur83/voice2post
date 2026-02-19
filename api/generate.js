@@ -36,9 +36,9 @@ export default async function handler(req, res) {
                     max_tokens: 1200,
                     messages: [{ 
                         role: "user", 
-                        content: `Sen bir Remotion kurgu uzmanısın. Metni analiz et ve teknik video verisi üret. SADECE JSON döndür. Markdown etiketi kullanma.
+                        content: `Sen bir Remotion kurgu uzmanısın. Metni analiz et ve teknik video verisi üret. SADECE JSON döndür. Markdown etiketi ( \`\`\`json ) kullanma.
                         
-                        Yapı: 
+                        Yapı tam olarak şöyle olmalı: 
                         {
                           "video_script": "Kısa sahne açıklamaları",
                           "videoProps": {
@@ -62,15 +62,15 @@ export default async function handler(req, res) {
         const oaiData = await oaiRes.json();
         const antData = await antRes.json();
 
-        // 1. OpenAI Kontrol
+        // 1. OpenAI Yanıt Kontrolü
         const oaiText = oaiData.choices?.[0]?.message?.content;
         if (!oaiText) throw new Error("OpenAI yanıtı boş.");
 
-        // 2. Claude Kontrol
+        // 2. Claude Yanıt Kontrolü
         const antText = antData.content?.[0]?.text;
         if (!antText) throw new Error("Claude yanıtı boş.");
 
-        // Güvenli JSON Ayıklama Fonksiyonu
+        // Güvenli JSON Ayıklama Fonksiyonu (Hem OpenAI hem Claude için ortak)
         const extractJSON = (text) => {
             const match = text.match(/\{[\s\S]*\}/);
             if (!match) throw new Error("AI geçerli bir JSON bloğu oluşturamadı.");
@@ -80,16 +80,21 @@ export default async function handler(req, res) {
         const finalOai = extractJSON(oaiText);
         const finalAnt = extractJSON(antText);
 
-        // FRONTEND'E GİDEN VERİ
+        // FRONTEND'E GİDEN VERİ: Tüm içerikler tam halde birleştirildi.
         return res.status(200).json({
             linkedin: finalOai.linkedin || "Metin üretilemedi",
             twitter: finalOai.twitter || "Metin üretilemedi",
             video_script: finalAnt.video_script || "Senaryo üretilemedi",
-            videoProps: finalAnt.videoProps || { title: "Hazır", scenes: [], fps: 30, durationInFrames: 300 }
+            videoProps: finalAnt.videoProps || { 
+                title: "Hazır Video", 
+                scenes: [], 
+                fps: 30, 
+                durationInFrames: 300 
+            }
         });
 
     } catch (error) {
         console.error("Hata Detayı:", error);
-        return res.status(500).json({ error: "Hata: " + error.message });
+        return res.status(500).json({ error: "Yapay zeka yanıtı işlenemedi: " + error.message });
     }
 }
