@@ -201,6 +201,7 @@
                         <i class="fas fa-keyboard"></i> <span data-i18n="mode_text">Metin</span>
                     </div>
                 </div>
+                
                 <div id="voice-input-ui" class="flex flex-col items-center">
                     <div class="flex items-center gap-4 relative">
                         <div id="record-btn" class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-xl shadow-blue-500/40">
@@ -212,21 +213,24 @@
                     </div>
                     <p id="status-text" class="mt-8 font-medium text-slate-300 italic text-lg min-h-[1.5rem]" data-i18n="mic_ready">Dokun ve anlatmaya başla...</p>
                 </div>
+
                 <div id="text-input-ui" class="hidden w-full">
                     <textarea id="manual-text" class="text-input-area" placeholder="İçeriğe dönüştürmek istediğin metni buraya yaz..."></textarea>
                     <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
                 </div>
+
                 <div id="recording-anim" class="hidden mt-4 flex items-end space-x-1 h-8">
                     <div class="w-1.5 bg-blue-500 animate-bounce h-4"></div>
                     <div class="w-1.5 bg-emerald-500 animate-bounce h-8"></div>
                     <div class="w-1.5 bg-blue-500 animate-bounce h-6"></div>
                     <div class="w-1.5 bg-emerald-500 animate-bounce h-4"></div>
                 </div>
+
                 <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Metin Medyası
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Metin Medyası (OpenAI)
                             </h4>
                             <div class="animate-fade-in">
                                 <div class="flex justify-between items-center mb-3">
@@ -249,7 +253,7 @@
                         </div>
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Video Platformları
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Video Kurgusu (Claude & Remotion)
                             </h4>
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
@@ -304,28 +308,23 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-        // Konfigürasyon (Bu anahtarlar tarayıcıda görünebilir, güvenlik kuralları Firebase'den yönetilir)
         const firebaseConfig = {
             apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA", 
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
             storageBucket: "voice2post-9e8ca.firebasestorage.app",
             messagingSenderId: "511446656614",
-            appId: "1:511446656614:web:16537fc8fd3a343e716fa7",
-            measurementId: "G-21X5ECFGYR"
+            appId: "1:511446656614:web:16537fc8fd3a343e716fa7"
         };
         
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const analytics = getAnalytics(app);
 
-        // Pencere Fonksiyonları
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if(!email || !pass) return alert("Lütfen bilgileri doldurun.");
+            if(!email || !pass) return alert("Bilgileri doldurun.");
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                 await sendEmailVerification(userCredential.user);
@@ -337,21 +336,21 @@
         window.handleSignIn = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if(!email || !pass) return alert("Lütfen bilgileri girin.");
+            if(!email || !pass) return alert("Giriş bilgilerini yazın.");
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
                 if (userCredential.user.emailVerified) {
                     window.isLoggedIn = true; closeModals();
                 } else { 
-                    alert("Lütfen mailinizi doğrulayın!"); 
+                    alert("Lütfen önce e-postanızı doğrulayın!"); 
                     await signOut(auth); 
                 }
-            } catch (error) { alert("Giriş Hatası: " + error.message); }
+            } catch (error) { alert("Hata: " + error.message); }
         };
 
         window.handleForgotPassword = async () => {
             const email = document.getElementById('login-email').value;
-            if (!email) return alert("E-posta yazmalısınız.");
+            if (!email) return alert("E-posta yazın.");
             try { await sendPasswordResetEmail(auth, email); alert("Sıfırlama maili gönderildi."); } catch (error) { alert(error.message); }
         };
 
@@ -368,7 +367,7 @@
             } else { 
                 window.isLoggedIn = false; 
                 btn.innerText = "Giriş Yap";
-                btn.classList.replace('bg-emerald-600', 'bg-blue-600');
+                if(btn.classList.contains('bg-emerald-600')) btn.classList.replace('bg-emerald-600', 'bg-blue-600');
             }
         });
     </script>
@@ -399,11 +398,7 @@
             onApprove: function(data, actions) {
                 return actions.order.capture().then(function(details) {
                     window.isProUser = true;
-                    document.getElementById('fiyatlandirma').innerHTML = `
-                        <div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30">
-                            <i class="fas fa-check-circle text-6xl text-emerald-500 mb-6"></i>
-                            <h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF EDİLDİ</h2>
-                        </div>`;
+                    document.getElementById('fiyatlandirma').innerHTML = `<div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30"><h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF</h2></div>`;
                 });
             }
         }).render('#paypal-button-container');
@@ -467,24 +462,40 @@
             recognition.onend = () => { if (!isRecording && finalTranscript.trim().length > 0) processAIResult(finalTranscript); };
         }
 
+        // --- ENTEGRASYONUN KALBİ ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka yanıtı hazırlıyor...";
+            statusText.innerText = "Yapay Zeka (OpenAI & Claude) çalışıyor...";
+            
             try {
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
+                
                 const data = await response.json();
                 if(data.error) throw new Error(data.error);
+
+                // Sonuçları Ekrana Bas
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
-                document.getElementById('video-res').innerText = data.video;
-                statusText.innerText = "AI Cevabı Hazır!";
-            } catch (error) { statusText.innerText = "Hizmet şu an meşgul."; }
+                document.getElementById('video-res').innerText = data.video_script;
+                
+                // Remotion verisi konsolda (Daha sonra Player'a bağlanacak)
+                console.log("Claude'un Remotion Verisi:", data.video_data);
+                
+                statusText.innerText = "İçerikler ve Video Kurgusu Hazır!";
+                
+                // Kaydırma (Scroll)
+                document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) { 
+                console.error(error);
+                statusText.innerText = "Hata: " + error.message; 
+            }
         }
 
         function processManualText() {
@@ -496,7 +507,8 @@
         document.getElementById('record-btn').onclick = () => {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             if (!isRecording) {
-                finalTranscript = ""; isRecording = true; recognition.start();
+                finalTranscript = ""; isRecording = true; 
+                try { recognition.start(); } catch(e) {}
                 document.getElementById('record-btn').classList.add('recording-pulse');
                 document.getElementById('mic-icon').className = "fas fa-stop text-4xl text-white";
                 document.getElementById('recording-anim').classList.remove('hidden');
@@ -515,7 +527,7 @@
         };
 
         function stopRecording() {
-            isRecording = false; recognition.stop();
+            isRecording = false; try { recognition.stop(); } catch(e) {}
             document.getElementById('record-btn').classList.remove('recording-pulse');
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
