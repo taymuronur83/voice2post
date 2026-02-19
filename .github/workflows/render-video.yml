@@ -1,0 +1,26 @@
+name: Video Oluşturucu (Remotion)
+on:
+  repository_dispatch:
+    types: [render-video]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Bağımlılıkları Kur
+        run: npm install
+
+      - name: Videoyu Render Et
+        # Bu kısım Claude'dan gelen metni 'props' olarak alır
+        run: npx remotion render MyVideo out/video.mp4 --props='${{ github.event.client_payload.props }}'
+
+      - name: Videoyu Upload Et
+        uses: actions/upload-artifact@v3
+        with:
+          name: ai-video
+          path: out/video.mp4
