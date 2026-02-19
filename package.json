@@ -28,6 +28,6 @@
     "typescript": "^5.1.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20.0.0"
   }
 }
