@@ -216,7 +216,9 @@
 
                 <div id="text-input-ui" class="hidden w-full">
                     <textarea id="manual-text" class="text-input-area" placeholder="İçeriğe dönüştürmek istediğin metni buraya yaz..."></textarea>
-                    <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
+                    <div class="flex justify-center">
+                        <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
+                    </div>
                 </div>
 
                 <div id="recording-anim" class="hidden mt-4 flex items-end space-x-1 h-8">
@@ -360,7 +362,7 @@
             const btn = document.getElementById('nav-login-btn');
             if (user && user.emailVerified) {
                 window.isLoggedIn = true; 
-                btn.innerText = "Çıkış Yap";
+                btn.innerText = "Hesabım";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
@@ -378,30 +380,7 @@
         window.isProUser = false;
         let isRecording = false; 
         let finalTranscript = ""; 
-
-        function setMode(mode) {
-            const slider = document.getElementById('mode-slider');
-            const micUi = document.getElementById('voice-input-ui');
-            const textUi = document.getElementById('text-input-ui');
-            const optMic = document.getElementById('opt-mic');
-            const optText = document.getElementById('opt-text');
-            if(mode === 'mic') {
-                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden'); optMic.classList.add('active'); optText.classList.remove('active');
-            } else {
-                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden'); optMic.classList.remove('active'); optText.classList.add('active');
-            }
-        }
-
-        paypal.Buttons({
-            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
-            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '3.99' } }] }); },
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    window.isProUser = true;
-                    document.getElementById('fiyatlandirma').innerHTML = `<div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30"><h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF</h2></div>`;
-                });
-            }
-        }).render('#paypal-button-container');
+        let recognition;
 
         const translations = {
             tr: {
@@ -433,6 +412,31 @@
         };
 
         let currentLang = 'tr';
+
+        function setMode(mode) {
+            const slider = document.getElementById('mode-slider');
+            const micUi = document.getElementById('voice-input-ui');
+            const textUi = document.getElementById('text-input-ui');
+            const optMic = document.getElementById('opt-mic');
+            const optText = document.getElementById('opt-text');
+            if(mode === 'mic') {
+                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden'); optMic.classList.add('active'); optText.classList.remove('active');
+            } else {
+                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden'); optMic.classList.remove('active'); optText.classList.add('active');
+            }
+        }
+
+        paypal.Buttons({
+            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
+            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '3.99' } }] }); },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    window.isProUser = true;
+                    document.getElementById('fiyatlandirma').innerHTML = `<div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30"><h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF</h2></div>`;
+                });
+            }
+        }).render('#paypal-button-container');
+
         function changeLanguage(lang) {
             currentLang = lang;
             document.getElementById('current-lang-name').innerText = lang.toUpperCase();
@@ -442,10 +446,9 @@
                 if(translations[lang][key]) el.innerText = translations[lang][key];
             });
             if (recognition) recognition.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-            toggleLangMenu();
+            document.getElementById('lang-list').classList.remove('show');
         }
 
-        let recognition;
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.lang = 'tr-TR';
@@ -459,14 +462,12 @@
                 }
                 document.getElementById('status-text').innerText = finalTranscript + interimTranscript;
             };
-            recognition.onend = () => { if (!isRecording && finalTranscript.trim().length > 0) processAIResult(finalTranscript); };
         }
 
-        // --- ENTEGRASYONUN KALBİ ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka (OpenAI & Claude) çalışıyor...";
+            statusText.innerText = "Yapay Zeka Hazırlıyor...";
             
             try {
                 const response = await fetch('/api/generate', {
@@ -478,22 +479,16 @@
                 const data = await response.json();
                 if(data.error) throw new Error(data.error);
 
-                // Sonuçları Ekrana Bas
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
                 document.getElementById('video-res').innerText = data.video_script;
                 
-                // Remotion verisi konsolda (Daha sonra Player'a bağlanacak)
-                console.log("Claude'un Remotion Verisi:", data.video_data);
-                
-                statusText.innerText = "İçerikler ve Video Kurgusu Hazır!";
-                
-                // Kaydırma (Scroll)
+                console.log("Remotion Verisi:", data.video_data);
+                statusText.innerText = "Başarıyla Oluşturuldu!";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error(error);
                 statusText.innerText = "Hata: " + error.message; 
             }
         }
@@ -523,7 +518,7 @@
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
             document.getElementById('cancel-btn').classList.add('hidden');
-            document.getElementById('status-text').innerText = "Kayıt iptal edildi.";
+            document.getElementById('status-text').innerText = "İptal edildi.";
         };
 
         function stopRecording() {
@@ -532,6 +527,7 @@
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
             document.getElementById('cancel-btn').classList.add('hidden');
+            setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
         }
 
         async function copyText(id) {
