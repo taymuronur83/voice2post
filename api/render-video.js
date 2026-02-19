@@ -28,7 +28,7 @@ export default async function handler(req, res) {
             })
         });
 
-        if (response.status === 204 || response.ok) {
+        if (response.ok || response.status === 204) {
             return res.status(200).json({ success: true, message: "GitHub tetiklendi." });
         } else {
             const errorData = await response.json();
