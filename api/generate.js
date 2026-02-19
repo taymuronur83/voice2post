@@ -38,18 +38,14 @@ export default async function handler(req, res) {
                         role: "user", 
                         content: `Sen bir Remotion kurgu uzmanısın. Metni analiz et ve teknik video verisi üret. SADECE JSON döndür. Markdown etiketi ( \`\`\`json ) kullanma.
                         
-                        Yapı tam olarak şöyle olmalı: 
+                        Yapı tam olarak şöyle olmalı (Remotion videoPlan formatı): 
                         {
-                          "video_script": "Kısa sahne açıklamaları",
-                          "videoProps": {
-                            "title": "Video Başlığı",
-                            "fps": 30,
-                            "durationInFrames": 300,
-                            "scenes": [
-                              {"text": "Sahne 1 Yazısı", "duration": 90, "color": "#3b82f6"},
-                              {"text": "Sahne 2 Yazısı", "duration": 120, "color": "#10b981"},
-                              {"text": "Sahne 3 Yazısı", "duration": 90, "color": "#f59e0b"}
-                            ]
+                          "video_script": {
+                            "text": "Videoda görünecek ana başlık/metin",
+                            "theme": "ekonomi veya motive veya teknoloji",
+                            "accentColor": "#hex_kodu",
+                            "backgroundUrl": "konuyla ilgili kaliteli bir unsplash görsel linki",
+                            "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
                           }
                         }
                         
@@ -80,16 +76,18 @@ export default async function handler(req, res) {
         const finalOai = extractJSON(oaiText);
         const finalAnt = extractJSON(antText);
 
-        // FRONTEND'E GİDEN VERİ: Tüm içerikler tam halde birleştirildi.
+        // FRONTEND'E GİDEN VERİ: 
+        // HTML'deki iframe URL'sinin doğru çalışması için video_script objesi tam halde gönderiliyor.
         return res.status(200).json({
             linkedin: finalOai.linkedin || "Metin üretilemedi",
             twitter: finalOai.twitter || "Metin üretilemedi",
-            video_script: finalAnt.video_script || "Senaryo üretilemedi",
-            videoProps: finalAnt.videoProps || { 
-                title: "Hazır Video", 
-                scenes: [], 
-                fps: 30, 
-                durationInFrames: 300 
+            // Remotion bileşeninin direkt okuduğu obje yapısı:
+            video_script: finalAnt.video_script || {
+                text: "Video Hazırlanıyor...",
+                theme: "teknoloji",
+                accentColor: "#00d4ff",
+                backgroundUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"
             }
         });
 
