@@ -5,24 +5,47 @@ export default async function handler(req, res) {
     const openAIKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
+    if (!openAIKey || !anthropicKey) {
+        return res.status(500).json({ error: "API anahtarları eksik! Vercel panelini kontrol et." });
+    }
+
     try {
-        // PARALEL ÇAĞRI
+        // PARALEL ÇAĞRI: Hem OpenAI hem Claude aynı anda çalışır.
         const [oaiRes, antRes] = await Promise.all([
             fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
-                    messages: [{ role: "system", content: "Sadece JSON döndür." }, { role: "user", content: prompt }]
+                    messages: [
+                        { role: "system", content: "Sen bir sosyal medya uzmanısın. SADECE JSON döndür. Yapı: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
+                        { role: "user", content: `Şu konu hakkında LinkedIn ve Twitter postu yaz: ${prompt}` }
+                    ],
+                    temperature: 0.7
                 })
             }),
             fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'x-api-key': anthropicKey, 
+                    'anthropic-version': '2023-06-01' 
+                },
                 body: JSON.stringify({
                     model: "claude-3-haiku-20240307",
-                    max_tokens: 1000,
-                    messages: [{ role: "user", content: "Sadece JSON döndür." }]
+                    max_tokens: 1200,
+                    messages: [{ 
+                        role: "user", 
+                        content: `Sen bir video kurgu uzmanısın. SADECE JSON döndür. Remotion bileşeni için uygun sahne verileri üret. 
+                        Yapı: {
+                          "video_script": "...",
+                          "videoProps": {
+                            "title": "...",
+                            "scenes": [{"text": "...", "duration": 90}]
+                          }
+                        }
+                        Konu: ${prompt}` 
+                    }]
                 })
             })
         ]);
@@ -30,27 +53,35 @@ export default async function handler(req, res) {
         const oaiData = await oaiRes.json();
         const antData = await antRes.json();
 
-        // ADIM 1: OpenAI İçerik Kontrolü
+        // 1. OpenAI Kontrol ve Parse
         const oaiText = oaiData.choices?.[0]?.message?.content;
-        if (!oaiText) throw new Error(`OpenAI boş döndü. Hata: ${JSON.stringify(oaiData.error || 'Bilinmiyor')}`);
+        if (!oaiText) throw new Error("OpenAI yanıtı boş. Kota veya Key hatası olabilir.");
 
-        // ADIM 2: Claude İçerik Kontrolü
+        // 2. Claude Kontrol ve Parse
         const antText = antData.content?.[0]?.text;
-        if (!antText) throw new Error(`Claude boş döndü. Hata: ${JSON.stringify(antData.error || 'Bilinmiyor')}`);
+        if (!antText) throw new Error("Claude yanıtı boş. Kredi veya Key hatası olabilir.");
 
-        // ADIM 3: Güvenli JSON Parse
+        // Güvenli JSON Ayıklama Fonksiyonu
         const extractJSON = (text) => {
             const match = text.match(/\{[\s\S]*\}/);
-            if (!match) throw new Error(`JSON bulunamadı! Ham Metin: ${text.substring(0, 100)}...`);
+            if (!match) throw new Error("AI geçerli bir JSON bloğu oluşturamadı.");
             return JSON.parse(match[0]);
         };
 
         const finalOai = extractJSON(oaiText);
         const finalAnt = extractJSON(antText);
 
-        return res.status(200).json({ social: finalOai, video: finalAnt });
+        // FRONTEND'E GİDEN VERİ
+        // data.linkedin, data.twitter, data.video_script şeklinde erişebilirsin.
+        return res.status(200).json({
+            linkedin: finalOai.linkedin || "Metin üretilemedi",
+            twitter: finalOai.twitter || "Metin üretilemedi",
+            video_script: finalAnt.video_script || "Senaryo üretilemedi",
+            videoProps: finalAnt.videoProps || {}
+        });
 
     } catch (error) {
-        return res.status(500).json({ error: error.message });
+        console.error("Hata Detayı:", error);
+        return res.status(500).json({ error: "Yapay zeka yanıtı işlenemedi: " + error.message });
     }
 }
