@@ -7,10 +7,9 @@ export default async function handler(req, res) {
     try {
         const { script } = req.body;
 
-        // --- BU KISMI KENDİ BİLGİLERİNLE DOLDUR ---
-        const REPO_OWNER = "SENIN_GITHUB_KULLANICI_ADIN"; 
-        const REPO_NAME = "SENIN_REMOTION_REPO_ADIN";
-        // -----------------------------------------
+        // Senin güncel bilgilerin
+        const REPO_OWNER = "taymuronur83"; 
+        const REPO_NAME = "voice2post";
 
         // GitHub API'sine komut gönder
         const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
@@ -23,22 +22,25 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 event_type: 'render-video', 
                 client_payload: {
-                    props: { text: script }
+                    props: { text: script || "Metin gelmedi" }
                 }
             })
         });
 
-        // GitHub'dan gelen yanıtı kontrol et
+        // GitHub yanıtını kontrol et
         if (response.ok || response.status === 204) {
-            return res.status(200).json({ ok: true, message: "GitHub Actions tetiklendi!" });
+            return res.status(200).json({ ok: true, message: "GitHub Actions başarıyla tetiklendi!" });
         } else {
             const errorDetail = await response.text();
-            console.error("GitHub Hata Yanıtı:", errorDetail);
-            return res.status(500).json({ error: "GitHub reddetti", detail: errorDetail });
+            return res.status(500).json({ 
+                error: "GitHub isteği reddetti", 
+                detail: errorDetail,
+                owner: REPO_OWNER,
+                repo: REPO_NAME
+            });
         }
 
     } catch (error) {
-        console.error("Vercel API Hatası:", error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: "Sunucu Hatası", message: error.message });
     }
 }
