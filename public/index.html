@@ -191,6 +191,7 @@
         <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
             <span data-i18n="hero_1">Sesini</span> <br><span class="gradient-text" data-i18n="hero_2">Profesyonel Posta</span> <span data-i18n="hero_3">Dönüştür</span>
         </h1>
+        
         <div class="max-w-4xl mx-auto p-8 md:p-12 rounded-[2.5rem] glass shadow-2xl border border-white/10 mt-12 relative overflow-hidden">
             <div class="flex flex-col items-center">
                 <div class="input-mode-container" id="mode-toggle">
@@ -372,7 +373,6 @@
         let isRecording = false; 
         let finalTranscript = ""; 
         let recognition;
-        let currentLang = 'tr';
         let isProcessing = false; 
 
         const translations = {
@@ -386,8 +386,7 @@
                 feat_1_t: "Hızlı İşleme", feat_1_d: "Sesiniz saniyeler içinde metne dönüşür.",
                 feat_2_t: "Akıllı AI", feat_2_d: "Gereksiz kelimeleri atar, fikre odaklanır.",
                 feat_3_t: "Çoklu Format", feat_3_d: "LinkedIn ve X için hazır şablonlar.",
-                pricing_title: "Planları Karşılaştır", rights: "Tüm Hakları Saklıdır.",
-                mode_mic: "Ses", mode_text: "Metin"
+                rights: "Tüm Hakları Saklıdır.", mode_mic: "Ses", mode_text: "Metin"
             },
             en: {
                 nav_try: "Try Now", nav_features: "Features", nav_pricing: "Pricing",
@@ -399,8 +398,7 @@
                 feat_1_t: "Fast Processing", feat_1_d: "Voice turns to text in seconds.",
                 feat_2_t: "Smart AI", feat_2_d: "Focuses on core idea, removes fluff.",
                 feat_3_t: "Multi Format", feat_3_d: "Ready templates for LinkedIn and X.",
-                pricing_title: "Compare Plans", rights: "All Rights Reserved.",
-                mode_mic: "Voice", mode_text: "Text"
+                rights: "All Rights Reserved.", mode_mic: "Voice", mode_text: "Text"
             }
         };
 
@@ -417,7 +415,7 @@
             }
         }
 
-        // --- GÜNCELLENMİŞ VE ZIRHLI processAIResult FONKSİYONU ---
+        // --- GÜNCEL VE ZIRHLI AI İŞLEME MANTIĞI ---
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             
@@ -426,9 +424,8 @@
             const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
-            const loaderText = document.getElementById('video-loader-text');
             
-            statusText.innerText = "Claude Videoyu Tasarlıyor...";
+            statusText.innerText = "Yapay Zeka Analiz Ediyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
@@ -440,62 +437,56 @@
                     body: JSON.stringify({ prompt: text })
                 });
                 
-                // --- KRİTİK ADIM: HAM METNİ ALIP JSON AYIKLIYORUZ ---
                 const rawData = await response.text();
                 let data;
 
+                // JSON Zırhlama: Gereksiz metinleri ayıkla
                 try {
-                    // JSON'un başladığı ve bittiği yerleri bul (Zırhlı Mantık)
                     const jsonStart = rawData.indexOf('{');
                     const jsonEnd = rawData.lastIndexOf('}') + 1;
-                    const cleanJson = rawData.substring(jsonStart, jsonEnd);
-                    data = JSON.parse(cleanJson);
-                } catch (jsonErr) {
-                    console.error("JSON parse hatası:", rawData);
-                    throw new Error("AI format hatası yaptı.");
-                }
+                    data = JSON.parse(rawData.substring(jsonStart, jsonEnd));
+                } catch (e) { throw new Error("Format Hatası"); }
 
-                if(!data.video_script) throw new Error("Video verisi eksik.");
-
-                // Arayüzü güncelle
+                // Metin sonuçlarını göster
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
                 
-                const videoPlanStr = JSON.stringify(data.video_script);
-                const encodedData = encodeURIComponent(videoPlanStr);
-                const encodedText = encodeURIComponent(data.video_script.text || text);
-
-                // Remotion Iframe Kurulumu
-                liveArea.innerHTML = `
-                    <iframe src="/video-preview?command=${encodedText}&videoData=${encodedData}" 
-                            style="width:100%; height:100%; border:none;" 
-                            allow="autoplay"></iframe>`;
+                // Video verisini kodla ve iframe içine bas
+                const videoData = data.video_script;
+                const encodedData = encodeURIComponent(JSON.stringify(videoData));
                 
-                setTimeout(() => {
-                    videoLoader.classList.add('hidden');
-                    liveArea.classList.remove('opacity-0');
-                    document.getElementById('download-btn').classList.remove('hidden');
-                    statusText.innerText = "İçerikler ve Video Hazır!";
-                }, 2000);
+                liveArea.innerHTML = `<iframe src="/video-preview?videoData=${encodedData}" 
+                                       style="width:100%; height:100%; border:none;" 
+                                       id="v-iframe"></iframe>`;
+
+                const vIframe = document.getElementById('v-iframe');
+                vIframe.onload = () => {
+                    setTimeout(() => {
+                        videoLoader.classList.add('hidden');
+                        liveArea.classList.remove('opacity-0');
+                        statusText.innerText = "İçerik Hazır!";
+                        document.getElementById('download-btn')?.classList.remove('hidden');
+                    }, 1000);
+                };
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("Hata:", error);
+                console.error("AI Error:", error);
                 statusText.innerText = "Hata oluştu, tekrar deneyin.";
-                loaderText.innerText = "Kurgu Hatası: " + error.message;
+                videoLoader.classList.add('hidden');
             } finally {
                 isProcessing = false; 
             }
         }
 
-        // Diğer yardımcı fonksiyonlar
         function processManualText() {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             const text = document.getElementById('manual-text').value;
             if(text.trim()) processAIResult(text);
         }
 
+        // Ses Tanıma Ayarları
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.lang = 'tr-TR';
