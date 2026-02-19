@@ -306,9 +306,9 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-        // VERCEL ÜZERİNDEKİ ÇEVRE DEĞİŞKENİ KULLANIMI
+        // Konfigürasyon (Bu anahtarlar tarayıcıda görünebilir, güvenlik kuralları Firebase'den yönetilir)
         const firebaseConfig = {
-            apiKey: "FIREBASE_API_CODE", // Vercel Environment Variable üzerinden çekilecek
+            apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA", 
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
             storageBucket: "voice2post-9e8ca.firebasestorage.app",
@@ -321,6 +321,7 @@
         const auth = getAuth(app);
         const analytics = getAnalytics(app);
 
+        // Pencere Fonksiyonları
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
@@ -336,11 +337,15 @@
         window.handleSignIn = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return alert("Lütfen bilgileri girin.");
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
                 if (userCredential.user.emailVerified) {
                     window.isLoggedIn = true; closeModals();
-                } else { alert("Lütfen mailinizi doğrulayın!"); await signOut(auth); }
+                } else { 
+                    alert("Lütfen mailinizi doğrulayın!"); 
+                    await signOut(auth); 
+                }
             } catch (error) { alert("Giriş Hatası: " + error.message); }
         };
 
@@ -355,12 +360,14 @@
         onAuthStateChanged(auth, (user) => {
             const btn = document.getElementById('nav-login-btn');
             if (user && user.emailVerified) {
-                window.isLoggedIn = true; btn.innerText = "Çıkış Yap";
+                window.isLoggedIn = true; 
+                btn.innerText = "Çıkış Yap";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
             } else { 
-                window.isLoggedIn = false; btn.innerText = "Giriş Yap";
+                window.isLoggedIn = false; 
+                btn.innerText = "Giriş Yap";
                 btn.classList.replace('bg-emerald-600', 'bg-blue-600');
             }
         });
