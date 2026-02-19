@@ -9,18 +9,35 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: "API anahtarları eksik! Vercel panelini kontrol et." });
     }
 
+    // GÜÇLENDİRİLMİŞ SİSTEM TALİMATI
+    const systemPromptClaude = `Sen bir içerik üretim robotusun ve Remotion kurgu uzmanısın. 
+    GÖREVİN: Kullanıcı mesajını analiz et ve SADECE JSON formatında yanıt dön. 
+    KURAL 1: Yanıtına asla "İşte analizim", "Hazırlıyorum" gibi cümleler veya açıklama ekleme.
+    KURAL 2: Sadece saf JSON dön, markdown (\`\`\`json) kullanma.
+    KURAL 3: Yapı tam olarak şöyle olmalı:
+    {
+      "video_script": {
+        "text": "Videoda görünecek ana başlık/metin",
+        "theme": "ekonomi veya motive veya teknoloji",
+        "accentColor": "#hex_kodu",
+        "backgroundUrl": "https://images.unsplash.com/photo-X (konuyla ilgili kaliteli bir görsel)",
+        "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+      }
+    }`;
+
     try {
-        // PARALEL ÇAĞRI: Hem OpenAI hem Claude aynı anda çalışır.
+        // PARALEL ÇAĞRI: Modeller yükseltildi (GPT-4o-mini ve Claude 3.5 Sonnet)
         const [oaiRes, antRes] = await Promise.all([
             fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
                 body: JSON.stringify({
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4o-mini", // Daha zeki ve JSON uyumlu
                     messages: [
-                        { role: "system", content: "Sen bir sosyal medya uzmanısın. SADECE JSON döndür. Yapı: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
+                        { role: "system", content: "Sen bir sosyal medya uzmanısın. SADECE JSON döndür. Asla açıklama yapma. Yapı: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
                         { role: "user", content: `Şu konu hakkında LinkedIn ve Twitter postu yaz: ${prompt}` }
                     ],
+                    response_format: { type: "json_object" }, // OpenAI için JSON zorlaması
                     temperature: 0.7
                 })
             }),
@@ -32,24 +49,12 @@ export default async function handler(req, res) {
                     'anthropic-version': '2023-06-01' 
                 },
                 body: JSON.stringify({
-                    model: "claude-3-haiku-20240307",
+                    model: "claude-3-5-sonnet-20240620", // EN KAPSAMLI VERSİYON
                     max_tokens: 1200,
+                    system: systemPromptClaude, // Sistem talimatı buraya alındı
                     messages: [{ 
                         role: "user", 
-                        content: `Sen bir Remotion kurgu uzmanısın. Metni analiz et ve teknik video verisi üret. SADECE JSON döndür. Markdown etiketi ( \`\`\`json ) kullanma.
-                        
-                        Yapı tam olarak şöyle olmalı (Remotion videoPlan formatı): 
-                        {
-                          "video_script": {
-                            "text": "Videoda görünecek ana başlık/metin",
-                            "theme": "ekonomi veya motive veya teknoloji",
-                            "accentColor": "#hex_kodu",
-                            "backgroundUrl": "konuyla ilgili kaliteli bir unsplash görsel linki",
-                            "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
-                          }
-                        }
-                        
-                        Konu: ${prompt}` 
+                        content: `Konu: ${prompt}` 
                     }]
                 })
             })
@@ -66,33 +71,41 @@ export default async function handler(req, res) {
         const antText = antData.content?.[0]?.text;
         if (!antText) throw new Error("Claude yanıtı boş.");
 
-        // Güvenli JSON Ayıklama Fonksiyonu (Hem OpenAI hem Claude için ortak)
+        // GÜVENLİ JSON AYIKLAMA (Zırhlı Versiyon)
         const extractJSON = (text) => {
-            const match = text.match(/\{[\s\S]*\}/);
-            if (!match) throw new Error("AI geçerli bir JSON bloğu oluşturamadı.");
-            return JSON.parse(match[0]);
+            try {
+                const match = text.match(/\{[\s\S]*\}/);
+                if (!match) throw new Error("JSON bloğu bulunamadı.");
+                return JSON.parse(match[0]);
+            } catch (e) {
+                console.error("Parse hatası metni:", text);
+                throw new Error("AI geçerli bir JSON oluşturamadı.");
+            }
         };
 
         const finalOai = extractJSON(oaiText);
         const finalAnt = extractJSON(antText);
 
-        // FRONTEND'E GİDEN VERİ: 
-        // HTML'deki iframe URL'sinin doğru çalışması için video_script objesi tam halde gönderiliyor.
+        // FRONTEND'E GİDEN VERİ
         return res.status(200).json({
-            linkedin: finalOai.linkedin || "Metin üretilemedi",
-            twitter: finalOai.twitter || "Metin üretilemedi",
-            // Remotion bileşeninin direkt okuduğu obje yapısı:
+            linkedin: finalOai.linkedin || "LinkedIn metni hazırlanamadı.",
+            twitter: finalOai.twitter || "Twitter metni hazırlanamadı.",
             video_script: finalAnt.video_script || {
-                text: "Video Hazırlanıyor...",
+                text: "Video Planı Oluşturulamadı",
                 theme: "teknoloji",
-                accentColor: "#00d4ff",
-                backgroundUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
-                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3"
+                accentColor: "#3b82f6",
+                backgroundUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1080",
+                audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
             }
         });
 
     } catch (error) {
         console.error("Hata Detayı:", error);
-        return res.status(500).json({ error: "Yapay zeka yanıtı işlenemedi: " + error.message });
+        return res.status(500).json({ 
+            error: "Sistem hatası", 
+            message: error.message,
+            // Hata anında bile frontend'in çökmemesi için fallback verisi
+            video_script: { text: "Bir hata oluştu, lütfen tekrar deneyin." }
+        });
     }
 }
