@@ -464,6 +464,7 @@
             };
         }
 
+        // --- GÜNCELLENMİŞ FONKSİYON: BACKEND (IMAGE 2) İLE TAM UYUMLU ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
@@ -476,19 +477,24 @@
                     body: JSON.stringify({ prompt: text })
                 });
                 
+                // Ham yanıtı al
                 const data = await response.json();
                 
-                if(!response.ok) throw new Error(data.error || "Sunucu hatası");
+                if(!response.ok) {
+                    throw new Error(data.error || "Sunucu hatası");
+                }
 
+                // UI elementlerini göster
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 
-                // Backend (generate.js) ile tam uyumlu eşleştirme
+                // BACKEND'DEN GELEN VERİLERİ EŞLEŞTİR (linkedin, twitter, video_script)
                 document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
                 document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
                 document.getElementById('video-res').innerText = data.video_script || "Senaryo oluşturulamadı.";
                 
-                if(data.videoProps) {
-                    console.log("Remotion Verisi Alındı:", data.videoProps);
+                // Ekstra veri (videoProps vb.) varsa konsola bas
+                if(data.video_data || data.videoProps) {
+                    console.log("Kurgu verisi hazır:", data.video_data || data.videoProps);
                 }
 
                 statusText.innerText = "Başarıyla Oluşturuldu!";
@@ -496,7 +502,7 @@
 
             } catch (error) { 
                 console.error("İşlem Hatası:", error);
-                statusText.innerText = "Hata: " + error.message; 
+                statusText.innerText = "Hata oluştu: " + error.message; 
             }
         }
 
