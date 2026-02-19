@@ -1,33 +1,33 @@
-import { registerRoot } from 'remotion';
-import { Composition } from 'remotion';
+import { registerRoot, Composition } from 'remotion';
 import React from 'react';
 
-// Ana Video Bileşeni
+// Video Bileşeni
 const MyVideo: React.FC = () => {
-    return (
-        <div style={{ 
-            flex: 1, 
-            backgroundColor: 'white', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            display: 'flex', 
-            fontSize: '50px' 
-        }}>
-            Voice2Post Otomatik Render Başarılı!
-        </div>
-    );
+  return (
+    <div style={{ 
+      flex: 1, 
+      backgroundColor: 'black', 
+      color: 'white', 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      fontSize: '60px' 
+    }}>
+      Render Basarili!
+    </div>
+  );
 };
 
 // Kayıt İşlemi
 registerRoot(() => {
-    return (
-        <Composition
-            id="MyVideo"
-            component={MyVideo}
-            durationInFrames={150}
-            fps={30}
-            width={1080}
-            height={1920}
-        />
-    );
+  return (
+    <Composition
+      id="MyVideo"
+      component={MyVideo}
+      durationInFrames={60}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
+  );
 });
