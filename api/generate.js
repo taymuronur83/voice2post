@@ -20,24 +20,24 @@ export default async function handler(req, res) {
         "text": "Videoda görünecek ana başlık/metin",
         "theme": "ekonomi veya motive veya teknoloji",
         "accentColor": "#hex_kodu",
-        "backgroundUrl": "https://images.unsplash.com/photo-X (konuyla ilgili kaliteli bir görsel)",
+        "backgroundUrl": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1080&q=80",
         "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
       }
     }`;
 
     try {
-        // PARALEL ÇAĞRI: Modeller yükseltildi (GPT-4o-mini ve Claude 3.5 Sonnet)
+        // PARALEL ÇAĞRI: Modeller yükseltildi ve Tier 1 için optimize edildi
         const [oaiRes, antRes] = await Promise.all([
             fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
                 body: JSON.stringify({
-                    model: "gpt-4o-mini", // Daha zeki ve JSON uyumlu
+                    model: "gpt-4o-mini",
                     messages: [
                         { role: "system", content: "Sen bir sosyal medya uzmanısın. SADECE JSON döndür. Asla açıklama yapma. Yapı: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
                         { role: "user", content: `Şu konu hakkında LinkedIn ve Twitter postu yaz: ${prompt}` }
                     ],
-                    response_format: { type: "json_object" }, // OpenAI için JSON zorlaması
+                    response_format: { type: "json_object" },
                     temperature: 0.7
                 })
             }),
@@ -49,9 +49,9 @@ export default async function handler(req, res) {
                     'anthropic-version': '2023-06-01' 
                 },
                 body: JSON.stringify({
-                    model: "claude-3-5-sonnet-20240620", // EN KAPSAMLI VERSİYON
+                    model: "claude-3-5-sonnet-20240620", // Tier 1'in gücünü kullanıyoruz
                     max_tokens: 1200,
-                    system: systemPromptClaude, // Sistem talimatı buraya alındı
+                    system: systemPromptClaude, 
                     messages: [{ 
                         role: "user", 
                         content: `Konu: ${prompt}` 
@@ -63,15 +63,16 @@ export default async function handler(req, res) {
         const oaiData = await oaiRes.json();
         const antData = await antRes.json();
 
-        // 1. OpenAI Yanıt Kontrolü
+        // Yanıtların teknik kontrolü
+        if (oaiData.error) throw new Error(`OpenAI Hatası: ${oaiData.error.message}`);
+        if (antData.error) throw new Error(`Claude Hatası: ${antData.error.message}`);
+
         const oaiText = oaiData.choices?.[0]?.message?.content;
-        if (!oaiText) throw new Error("OpenAI yanıtı boş.");
-
-        // 2. Claude Yanıt Kontrolü
         const antText = antData.content?.[0]?.text;
-        if (!antText) throw new Error("Claude yanıtı boş.");
 
-        // GÜVENLİ JSON AYIKLAMA (Zırhlı Versiyon)
+        if (!oaiText || !antText) throw new Error("AI yanıtlarından biri boş geldi.");
+
+        // GÜVENLİ JSON AYIKLAMA (Regex ile dış metinleri temizler)
         const extractJSON = (text) => {
             try {
                 const match = text.match(/\{[\s\S]*\}/);
@@ -91,7 +92,7 @@ export default async function handler(req, res) {
             linkedin: finalOai.linkedin || "LinkedIn metni hazırlanamadı.",
             twitter: finalOai.twitter || "Twitter metni hazırlanamadı.",
             video_script: finalAnt.video_script || {
-                text: "Video Planı Oluşturulamadı",
+                text: "Video kurgulanırken bir sorun oluştu.",
                 theme: "teknoloji",
                 accentColor: "#3b82f6",
                 backgroundUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1080",
@@ -104,8 +105,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ 
             error: "Sistem hatası", 
             message: error.message,
-            // Hata anında bile frontend'in çökmemesi için fallback verisi
-            video_script: { text: "Bir hata oluştu, lütfen tekrar deneyin." }
+            video_script: { text: "Hata: " + error.message }
         });
     }
 }
