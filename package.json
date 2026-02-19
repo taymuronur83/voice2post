@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "build": "next build",
-    "render": "remotion render Components/MyVideo.js Main out/video.mp4"
+    "render": "remotion render src/index.ts MyVideo out/video.mp4"
   },
   "dependencies": {
     "remotion": "^4.0.0",
