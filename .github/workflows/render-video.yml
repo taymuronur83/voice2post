@@ -2,7 +2,12 @@ name: Render Video
 on:
   push:
     branches:
-      - main  # Kodu hangi branch'e atıyorsan o (Genelde main veya master)
+      - main
+      - master
+  workflow_dispatch: # Bu satır çok önemli: "Actions" sekmesinden elle başlatmanı sağlar.
+
+permissions:
+  contents: write
 
 jobs:
   render:
@@ -14,19 +19,19 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # En kararlı versiyon
+          node-version: 20
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Install Chrome (Remotion için Şart)
+      - name: Install Remotion Browser
         run: npx remotion browser install
 
       - name: Render Video
-        run: npm run render # package.json'daki render komutunu çalıştırır
+        run: npm run render
 
-      - name: Upload Video Artifact
+      - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
           name: my-video
