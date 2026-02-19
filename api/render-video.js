@@ -1,13 +1,18 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Sadece POST');
-
-    const { script } = req.body;
-    
-    // !!! BURALARI KENDİ BİLGİLERİNLE GÜNCELLE !!!
-    const REPO_OWNER = "GitHub_Kullanıcı_Adın"; 
-    const REPO_NAME = "Proje_Depo_Adın";
+    // Sadece POST isteklerini kabul et
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
+    }
 
     try {
+        const { script } = req.body;
+
+        // --- BU KISMI KENDİ BİLGİLERİNLE DOLDUR ---
+        const REPO_OWNER = "SENIN_GITHUB_KULLANICI_ADIN"; 
+        const REPO_NAME = "SENIN_REMOTION_REPO_ADIN";
+        // -----------------------------------------
+
+        // GitHub API'sine komut gönder
         const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
             method: 'POST',
             headers: {
@@ -16,20 +21,24 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                event_type: 'render-video', // GitHub YAML dosyasındaki 'types' ile aynı olmalı
+                event_type: 'render-video', 
                 client_payload: {
                     props: { text: script }
                 }
             })
         });
 
-        if (response.ok) {
-            res.status(200).json({ ok: true });
+        // GitHub'dan gelen yanıtı kontrol et
+        if (response.ok || response.status === 204) {
+            return res.status(200).json({ ok: true, message: "GitHub Actions tetiklendi!" });
         } else {
-            const errorData = await response.text();
-            res.status(500).json({ error: errorData });
+            const errorDetail = await response.text();
+            console.error("GitHub Hata Yanıtı:", errorDetail);
+            return res.status(500).json({ error: "GitHub reddetti", detail: errorDetail });
         }
+
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error("Vercel API Hatası:", error);
+        return res.status(500).json({ error: error.message });
     }
 }
