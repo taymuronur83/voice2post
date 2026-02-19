@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // Sadece POST isteklerini kabul et
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
@@ -7,11 +6,10 @@ export default async function handler(req, res) {
     try {
         const { script } = req.body;
 
-        // Senin güncel bilgilerin
+        // Senin netleşen bilgilerin
         const REPO_OWNER = "taymuronur83"; 
         const REPO_NAME = "voice2post";
 
-        // GitHub API'sine komut gönder
         const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
             method: 'POST',
             headers: {
@@ -20,27 +18,20 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                event_type: 'render-video', 
+                event_type: 'render-video', // GitHub'daki types ile AYNI olmalı
                 client_payload: {
-                    props: { text: script || "Metin gelmedi" }
+                    props: { text: script || "Metin yok" }
                 }
             })
         });
 
-        // GitHub yanıtını kontrol et
         if (response.ok || response.status === 204) {
-            return res.status(200).json({ ok: true, message: "GitHub Actions başarıyla tetiklendi!" });
+            return res.status(200).json({ ok: true });
         } else {
             const errorDetail = await response.text();
-            return res.status(500).json({ 
-                error: "GitHub isteği reddetti", 
-                detail: errorDetail,
-                owner: REPO_OWNER,
-                repo: REPO_NAME
-            });
+            return res.status(500).json({ error: "GitHub Hatası", detail: errorDetail });
         }
-
     } catch (error) {
-        return res.status(500).json({ error: "Sunucu Hatası", message: error.message });
+        return res.status(500).json({ error: error.message });
     }
 }
