@@ -3,8 +3,6 @@ export default async function handler(req, res) {
 
     try {
         const { script } = req.body;
-
-        // BİLGİLERİNİ BURADAN KONTROL ET
         const REPO_OWNER = "taymuronur83"; 
         const REPO_NAME = "voice2post";
 
@@ -26,8 +24,8 @@ export default async function handler(req, res) {
         if (response.ok || response.status === 204) {
             return res.status(200).json({ ok: true });
         } else {
-            const errorText = await response.text();
-            return res.status(500).json({ error: "GitHub Hatası", detail: errorText });
+            const errorDetail = await response.text();
+            return res.status(500).json({ error: "GitHub Hatası", detail: errorDetail });
         }
     } catch (error) {
         return res.status(500).json({ error: error.message });
