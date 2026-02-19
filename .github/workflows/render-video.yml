@@ -2,30 +2,27 @@ name: Video Render
 
 on:
   repository_dispatch:
-    types: [render-video]
+    types: [render-video] # API'deki event_type ile birebir aynı
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
-
-      - name: Install Dependencies
+      
+      - name: Bağımlılıkları Kur
         run: npm install
 
-      # Remotion render komutu burada çalışıyor
-      - name: Render Video
+      - name: Remotion Render
+        # Buradaki src/index.ts ve MyVideo senin projenin giriş dosyası ve ID'si olmalı
         run: npx remotion render src/index.ts MyVideo out/video.mp4 --props='{"text": "${{ github.event.client_payload.props.text }}"}'
-
-      - name: Upload Video
+      
+      - name: Videoyu Kaydet (Artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: output-video
+          name: son-video
           path: out/video.mp4
