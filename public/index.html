@@ -6,6 +6,7 @@
     <link rel="icon" href="data:,"> <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/@remotion/player@latest/dist/index.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #0f172a; color: #e2e8f0; }
@@ -260,12 +261,17 @@
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
-                                        <i class="fas fa-video text-lg mr-2"></i> Reels / Shorts Senaryosu
+                                        <i class="fas fa-video text-lg mr-2"></i> CANLI VİDEO ÖNİZLEME
                                     </span>
-                                    <button onclick="copyText('video-res')" class="text-xs text-slate-500 hover:text-white transition"><i class="fas fa-copy mr-1"></i> <span data-i18n="copy">Kopyala</span></button>
+                                    <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
+                                        <i class="fas fa-download mr-1"></i> MP4 İndir
+                                    </button>
                                 </div>
-                                <div class="p-6 bg-white/5 rounded-2xl border border-pink-500/20 text-slate-300 text-sm leading-relaxed min-h-[200px]" id="video-res"></div>
-                            </div>
+                                <div id="video-res-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden flex items-center justify-center bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
+                                    <div id="player-placeholder" class="text-slate-500 text-xs italic text-center p-4">Video oluşturulduğunda burada dikey formatta oynatılacaktır.</div>
+                                    <div id="remotion-player" class="w-full h-full hidden"></div>
+                                </div>
+                                <div id="video-res" class="hidden"></div> </div>
                         </div>
                     </div>
                 </div>
@@ -479,18 +485,27 @@
                 document.getElementById('ai-result-container').classList.remove('hidden');
                 document.getElementById('linkedin-res').innerText = data.linkedin || "Hata oluştu.";
                 document.getElementById('x-res').innerText = data.twitter || "Hata oluştu.";
-                document.getElementById('video-res').innerText = data.video_script || "Hata oluştu.";
                 
-                statusText.innerText = "Video Kurgusu Tetikleniyor...";
+                // CANLI PLAYER TETİKLEME
+                document.getElementById('player-placeholder').classList.add('hidden');
+                document.getElementById('remotion-player').classList.remove('hidden');
+                document.getElementById('download-btn').classList.remove('hidden');
+
+                // Burası Remotion Player'ın canlanacağı yer
+                document.getElementById('remotion-player').innerHTML = `
+                    <iframe src="/video-preview?command=${encodeURIComponent(data.video_script)}" 
+                            style="width:100%; height:100%; border:none; border-radius: 2.5rem;" 
+                            allow="autoplay"></iframe>`;
                 
-                await fetch('/api/render-video', {
+                statusText.innerText = "Video Kurgusu Tamamlandı!";
+                document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
+
+                // GITHUB ACTIONS TETİKLEME (MP4 İçin)
+                fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ script: data.video_script })
                 });
-
-                statusText.innerText = "Başarıyla Tetiklendi! Video GitHub Actions'da işleniyor.";
-                document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
                 statusText.innerText = "Hata oluştu: " + error.message; 
