@@ -5,82 +5,54 @@ export default async function handler(req, res) {
     const openAIKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
+    // ANAHTAR KONTROLÜ
+    if (!openAIKey || !anthropicKey) {
+        return res.status(500).json({ error: "API anahtarları Vercel üzerinde eksik!" });
+    }
+
     try {
-        // 1. ADIM: OpenAI ile Sosyal Medya Metinlerini Üret
-        const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${openAIKey}`
-            },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: "Sen sosyal medya uzmanısın. Sadece şu yapıda JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
-                    { role: "user", content: prompt }
-                ],
-                temperature: 0.7
+        // Hız için iki API'yi aynı anda başlatıyoruz
+        const [oaiResponse, antResponse] = await Promise.all([
+            fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages: [{ role: "system", content: "Sadece JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" }, { role: "user", content: prompt }]
+                })
+            }),
+            fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
+                body: JSON.stringify({
+                    model: "claude-3-haiku-20240307", // Daha hızlı yanıt için Haiku modeli
+                    max_tokens: 1000,
+                    messages: [{ role: "user", content: `Remotion JSON döndür: {"videoConfig": {"title": "...", "scenes": [{"text": "...", "duration": 60}]}}. Konu: ${prompt}` }]
+                })
             })
-        });
+        ]);
 
-        const oaiData = await oaiRes.json();
-        if (!oaiData.choices?.[0]) throw new Error("OpenAI tarafında bir hata oluştu veya yanıt dönmedi.");
-        
-        const rawOai = oaiData.choices[0].message.content;
-        const oaiJson = JSON.parse(rawOai.match(/\{[\s\S]*\}/)[0]);
+        // Verileri çöz
+        const oaiData = await oaiResponse.json();
+        const antData = await antResponse.json();
 
-        // 2. ADIM: Claude ile Remotion Video Verisi Üret
-        const antRes = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': anthropicKey,
-                'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-                model: "claude-3-sonnet-20240229",
-                max_tokens: 1000,
-                messages: [{
-                    role: "user",
-                    content: `Remotion video bileşeni için JSON formatında sahne verileri üret. 
-                    Yapı: 
-                    {
-                      "videoConfig": {
-                        "title": "...",
-                        "backgroundColor": "#000000",
-                        "scenes": [
-                          {"text": "Sahne 1 metni", "duration": 90},
-                          {"text": "Sahne 2 metni", "duration": 90}
-                        ]
-                      }
-                    }
-                    Konu: ${prompt}. SADECE JSON DÖNDÜR.`
-                }]
-            })
-        });
+        // OpenAI Hata Kontrolü
+        if (oaiData.error) throw new Error(`OpenAI: ${oaiData.error.message}`);
+        // Claude Hata Kontrolü
+        if (antData.error) throw new Error(`Claude: ${antData.error.message}`);
 
-        const antData = await antRes.json();
-        
-        // Claude yanıt vermezse veya hata verirse yakala
-        if (!antData.content?.[0]) {
-            console.error("Claude Hatası:", antData);
-            throw new Error("Claude API yanıt vermedi. Bakiyenizi veya API anahtarınızı kontrol edin.");
-        }
+        // JSON Ayıklama
+        const cleanOai = JSON.parse(oaiData.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
+        const cleanAnt = JSON.parse(antData.content[0].text.match(/\{[\s\S]*\}/)[0]);
 
-        const rawAnt = antData.content[0].text;
-        const antJson = JSON.parse(rawAnt.match(/\{[\s\S]*\}/)[0]);
-
-        // 3. ADIM: Her iki veriyi birleştirip Frontend'e gönder
         return res.status(200).json({
-            social: oaiJson,
-            video: antJson.videoConfig
+            social: cleanOai,
+            video: cleanAnt.videoConfig
         });
 
     } catch (error) {
-        console.error("Sistem Hatası:", error);
-        return res.status(500).json({ 
-            error: "İşlem sırasında bir hata oluştu.",
-            details: error.message 
-        });
+        console.error("KRİTİK HATA:", error.message);
+        // Hatanın tam olarak ne olduğunu ekranda görmek için mesajı gönderiyoruz
+        return res.status(500).json({ error: "Hata Detayı: " + error.message });
     }
 }
