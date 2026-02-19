@@ -1,12 +1,10 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
 
     try {
         const { script } = req.body;
 
-        // Senin netleşen bilgilerin
+        // BİLGİLERİNİ BURADAN KONTROL ET
         const REPO_OWNER = "taymuronur83"; 
         const REPO_NAME = "voice2post";
 
@@ -18,9 +16,9 @@ export default async function handler(req, res) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                event_type: 'render-video', // GitHub'daki types ile AYNI olmalı
+                event_type: 'render-video', 
                 client_payload: {
-                    props: { text: script || "Metin yok" }
+                    props: { text: script || "Metin gelmedi" }
                 }
             })
         });
@@ -28,8 +26,8 @@ export default async function handler(req, res) {
         if (response.ok || response.status === 204) {
             return res.status(200).json({ ok: true });
         } else {
-            const errorDetail = await response.text();
-            return res.status(500).json({ error: "GitHub Hatası", detail: errorDetail });
+            const errorText = await response.text();
+            return res.status(500).json({ error: "GitHub Hatası", detail: errorText });
         }
     } catch (error) {
         return res.status(500).json({ error: error.message });
