@@ -393,6 +393,7 @@
         let finalTranscript = ""; 
         let recognition;
         let currentLang = 'tr';
+        let isProcessing = false; // HAYALET AKSİYONLARI ENGELLEYEN KİLİT
 
         const translations = {
             tr: {
@@ -474,9 +475,11 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ ENTEGRE FONKSİYON ---
+        // --- GÜNCELLENMİŞ ENTEGRE VE KİLİTLİ FONKSİYON ---
         async function processAIResult(text) {
-            if(!text.trim()) return;
+            if(!text.trim() || isProcessing) return;
+            
+            isProcessing = true; // SİSTEMİ KİLİTLE
             const statusText = document.getElementById('status-text');
             statusText.innerText = "Claude Videoyu Tasarlıyor...";
             
@@ -522,16 +525,19 @@
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-                // Render isteğini gönder (arka planda çalışır)
-                fetch('/api/render-video', {
+                // RENDER İSTEĞİNİ ANA SÜRECE ENTEGRE ET
+                await fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ script: data.video_script })
                 });
 
             } catch (error) { 
+                console.error("Hata:", error);
                 statusText.innerText = "Hata: " + error.message; 
                 videoLoader.innerHTML = `<p class="text-red-400 text-[10px] p-4 text-center">Video kurgusu sırasında bir hata oluştu.</p>`;
+            } finally {
+                isProcessing = false; // İŞLEM BİTİNCE KİLİDİ AÇ
             }
         }
 
