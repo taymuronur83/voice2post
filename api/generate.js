@@ -1,22 +1,8 @@
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     const { prompt } = req.body;
     const apiKey = process.env.OPENAI_API_KEY;
-
-    if (!apiKey) {
-        return res.status(500).json({ error: 'API anahtarı bulunamadı.' });
-    }
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -30,30 +16,29 @@ export default async function handler(req, res) {
                 messages: [
                     { 
                         role: "system", 
-                        content: `Sen uzman bir içerik üreticisisin. Sana gelen metni analiz et ve aşağıdaki JSON formatında içerik üret.
+                        content: `Sen bir video yönetmenisin. Gelen metni analiz et ve şu JSON formatında yanıt ver:
                         {
-                          "linkedin": "Profesyonel bir LinkedIn postu.",
-                          "twitter": "Kısa ve etkili bir X postu.",
-                          "video": "Reels/Shorts için video senaryosu."
-                        }
-                        SADECE JSON döndür, başka açıklama yazma.` 
+                          "linkedin": "...",
+                          "twitter": "...",
+                          "video_script": "...",
+                          "remotion_data": {
+                             "title": "Videonun Ana Başlığı",
+                             "scenes": [
+                               {"text": "Sahne 1 Metni", "color": "#2563eb", "duration": 60},
+                               {"text": "Sahne 2 Metni", "color": "#10b981", "duration": 60}
+                             ]
+                          }
+                        }` 
                     },
                     { role: "user", content: prompt }
-                ],
-                temperature: 0.7
+                ]
             })
         });
 
         const data = await response.json();
-        const aiResponseText = data.choices[0].message.content;
-        
-        const startJson = aiResponseText.indexOf('{');
-        const endJson = aiResponseText.lastIndexOf('}') + 1;
-        const formattedResult = JSON.parse(aiResponseText.substring(startJson, endJson));
-
-        return res.status(200).json(formattedResult);
-
+        const result = JSON.parse(data.choices[0].message.content);
+        return res.status(200).json(result);
     } catch (error) {
-        return res.status(500).json({ error: 'AI işlenirken bir hata oluştu.' });
+        return res.status(500).json({ error: 'Video verisi oluşturulamadı.' });
     }
 }
