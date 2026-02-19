@@ -1,4 +1,4 @@
-name: Video Render (Voice2Post)
+üname: Video Render (Voice2Post)
 
 on:
   repository_dispatch:
@@ -21,11 +21,11 @@ jobs:
         run: npm install
 
       - name: Remotion Tarayıcısını Kur
-        # Kırmızı X hatasının ana sebebi budur. Tarayıcı olmadan render alamaz.
+        # Render hatasının ana çözümü budur
         run: npx remotion browser ensure
 
       - name: Remotion Render Başlat
-        # Dosya yollarının ve ID'nin (MyVideo) projenle uyumlu olduğunu kontrol et
+        # src/index.ts ve MyVideo ID'sinin doğruluğunu kontrol et
         run: npx remotion render src/index.ts MyVideo out/video.mp4 --props='{"text": "${{ github.event.client_payload.props.text }}"}'
 
       - name: Videoyu Kaydet
