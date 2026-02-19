@@ -1,35 +1,33 @@
-üname: Video Render (Voice2Post)
-
+name: Render Video
 on:
-  repository_dispatch:
-    types: [render-video]
+  push:
+    branches:
+      - main  # Kodu hangi branch'e atıyorsan o (Genelde main veya master)
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: Kodları Çek
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Node.js Kur
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20 # En kararlı versiyon
           cache: 'npm'
 
-      - name: Bağımlılıkları Yükle
+      - name: Install Dependencies
         run: npm install
 
-      - name: Remotion Tarayıcısını Kur
-        # Render hatasının ana çözümü budur
-        run: npx remotion browser ensure
+      - name: Install Chrome (Remotion için Şart)
+        run: npx remotion browser install
 
-      - name: Remotion Render Başlat
-        # src/index.ts ve MyVideo ID'sinin doğruluğunu kontrol et
-        run: npx remotion render src/index.ts MyVideo out/video.mp4 --props='{"text": "${{ github.event.client_payload.props.text }}"}'
+      - name: Render Video
+        run: npm run render # package.json'daki render komutunu çalıştırır
 
-      - name: Videoyu Kaydet
+      - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: voice2post-video
+          name: my-video
           path: out/video.mp4
