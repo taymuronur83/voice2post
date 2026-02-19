@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { registerRoot } from 'remotion';
 
 const VideoPreviewSystem = () => {
     const [status, setStatus] = useState('idle');
@@ -96,7 +97,7 @@ const VideoPreviewSystem = () => {
                     style={{
                         padding: '10px 25px',
                         backgroundColor: '#007bff',
-                        color: '#white',
+                        color: 'white',
                         border: 'none',
                         borderRadius: '5px',
                         cursor: status === 'processing' ? 'not-allowed' : 'pointer'
@@ -108,5 +109,9 @@ const VideoPreviewSystem = () => {
         </div>
     );
 };
+
+// REMOTION RENDER İÇİN KRİTİK KAYIT
+// Bu satır olmazsa terminal üzerinden render (npx remotion render) alamazsın.
+registerRoot(VideoPreviewSystem);
 
 export default VideoPreviewSystem;
