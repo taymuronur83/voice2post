@@ -464,40 +464,48 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ FONKSİYON: BACKEND (IMAGE 2) İLE TAM UYUMLU ---
+        // --- GÜNCELLENMİŞ FONKSİYON: VERCEL ÜZERİNDEN GİTHUB ACTIONS (KİTAP) TETİKLEME ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
             statusText.innerText = "Yapay Zeka Hazırlıyor...";
             
             try {
+                // 1. OpenAI/Claude API'sine istek at (Metin içerikleri için)
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
                 
-                // Ham yanıtı al
                 const data = await response.json();
                 
                 if(!response.ok) {
                     throw new Error(data.error || "Sunucu hatası");
                 }
 
-                // UI elementlerini göster
+                // UI elementlerini göster ve metinleri doldur
                 document.getElementById('ai-result-container').classList.remove('hidden');
-                
-                // BACKEND'DEN GELEN VERİLERİ EŞLEŞTİR (linkedin, twitter, video_script)
                 document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
                 document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
                 document.getElementById('video-res').innerText = data.video_script || "Senaryo oluşturulamadı.";
                 
-                // Ekstra veri (videoProps vb.) varsa konsola bas
-                if(data.video_data || data.videoProps) {
-                    console.log("Kurgu verisi hazır:", data.video_data || data.videoProps);
+                // 2. VERCEL BACKEND ÜZERİNDEN GİTHUB ACTIONS TETİKLEME (KİTAP)
+                statusText.innerText = "Video Kurgusu Kitap Üzerinde Başlatılıyor...";
+                
+                const videoTrigger = await fetch('/api/render-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ script: data.video_script })
+                });
+
+                if (videoTrigger.ok) {
+                    statusText.innerText = "Başarıyla Oluşturuldu! Video arka planda işleniyor.";
+                } else {
+                    console.error("Video tetikleme hatası");
+                    statusText.innerText = "Metinler hazır ama video başlatılamadı.";
                 }
 
-                statusText.innerText = "Başarıyla Oluşturuldu!";
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
