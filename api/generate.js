@@ -1,16 +1,20 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    // Sadece POST isteklerini kabul et
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
 
     const { prompt } = req.body;
     const openAIKey = process.env.OPENAI_API_KEY;
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
+    // API Anahtarı kontrolü
     if (!openAIKey || !anthropicKey) {
-        return res.status(500).json({ error: 'API anahtarları (OpenAI veya Claude) Vercel üzerinde eksik.' });
+        return res.status(500).json({ error: 'Sistem hatası: API anahtarları eksik.' });
     }
 
     try {
-        // --- 1. ADIM: OpenAI ile Sosyal Medya Metinlerini Oluştur ---
+        // --- 1. ADIM: OpenAI ile Sosyal Medya Metinleri ---
         const oaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -20,16 +24,15 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
                 messages: [
-                    { role: "system", content: "Sen sosyal medya uzmanısın. Sadece şu JSON formatında yanıt ver: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
+                    { role: "system", content: "Sen bir içerik uzmanısın. Sadece şu JSON yapısını döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
                     { role: "user", content: prompt }
                 ]
             })
         });
         const oaiData = await oaiRes.json();
-        if (!oaiData.choices) throw new Error("OpenAI yanıt dönmedi.");
         const socialContent = JSON.parse(oaiData.choices[0].message.content);
 
-        // --- 2. ADIM: Claude ile Video Kurgusunu Oluştur ---
+        // --- 2. ADIM: Claude ile Video Kurgusu ---
         const antRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -42,7 +45,7 @@ export default async function handler(req, res) {
                 max_tokens: 1000,
                 messages: [{
                     role: "user",
-                    content: `Aşağıdaki metinden bir video senaryosu ve Remotion verisi üret. SADECE saf JSON döndür, başka açıklama yapma: 
+                    content: `Aşağıdaki metinden video senaryosu üret. SADECE JSON döndür: 
                     {
                       "video_script": "...",
                       "video_data": {
@@ -56,18 +59,18 @@ export default async function handler(req, res) {
         });
         const antData = await antRes.json();
 
-        // Hata kontrolü: Claude yanıt yapısı doğrulanıyor
+        // Claude hata ve yapı kontrolü
         if (!antData.content || !antData.content[0]) {
-            throw new Error("Claude (Anthropic) servisi şu an yanıt veremiyor.");
+            throw new Error("Claude yanıt dönmedi.");
         }
 
         const rawClaudeText = antData.content[0].text;
-        // JSON ayıklama (metin içindeki JSON'u bulur)
+        // JSON'ı metin içinden temizleyerek al (Regex ile)
         const jsonMatch = rawClaudeText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error("Claude geçersiz bir veri formatı döndürdü.");
+        if (!jsonMatch) throw new Error("Video verisi ayrıştırılamadı.");
         const videoContent = JSON.parse(jsonMatch[0]);
 
-        // --- 3. ADIM: Sonuçları Birleştir ve Gönder ---
+        // --- 3. ADIM: Birleştirilmiş Yanıt ---
         return res.status(200).json({
             linkedin: socialContent.linkedin,
             twitter: socialContent.twitter,
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        console.error("Sistem Hatası:", error);
-        return res.status(500).json({ error: error.message });
+        console.error("Hata Detayı:", error);
+        return res.status(500).json({ error: "İşlem tamamlanamadı: " + error.message });
     }
 }
