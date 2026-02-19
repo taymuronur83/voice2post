@@ -1,4 +1,4 @@
-import { registerRoot, Composition, Audio, AbsoluteFill, Img, useVideoConfig, useCurrentFrame, interpolate } from 'remotion';
+import { registerRoot, Composition, Audio, AbsoluteFill, Img, useVideoConfig, useCurrentFrame, interpolate, getInputProps } from 'remotion';
 import React from 'react';
 
 // --- CLAUDE'UN KOMUT ANALİZ MERKEZİ ---
@@ -88,6 +88,10 @@ registerRoot(() => {
   const durationInSeconds = 15; 
   const fps = 30;
 
+  // Web sitesinden iframe/url yoluyla gelen dinamik metni yakala
+  const inputProps = getInputProps();
+  const finalCommand = inputProps.command || "Claude komut analizi yapılıyor...";
+
   return (
     <Composition
       id="MyVideo"
@@ -96,8 +100,9 @@ registerRoot(() => {
       fps={fps}
       width={1080}
       height={1920}
+      // Dışarıdan gelen veriyi bileşene aktar
       defaultProps={{
-        command: "Claude komut analizi yapılıyor...", 
+        command: finalCommand, 
       }}
     />
   );
