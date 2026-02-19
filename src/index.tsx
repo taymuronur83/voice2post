@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { registerRoot, Composition, Audio, useCurrentFrame, interpolate } from 'remotion';
+import { registerRoot, Composition, useCurrentFrame, interpolate, Audio } from 'remotion';
 
 // --- 1. CLAUDE VİDEO İÇERİĞİ (Dikey Format & Animasyonlar) ---
 const SocialVideoContent = ({ title }: { title: string }) => {
@@ -13,21 +13,20 @@ const SocialVideoContent = ({ title }: { title: string }) => {
             display: 'flex', flexDirection: 'column', justifyContent: 'center', 
             alignItems: 'center', padding: '60px', textAlign: 'center', fontFamily: 'sans-serif' 
         }}>
-            {/* Arka plan figürü/animasyonu simülasyonu */}
+            {/* Animasyonlu Arka Plan Figürü */}
             <div style={{ 
-                position: 'absolute', width: '300px', height: '300px', 
+                position: 'absolute', width: '400px', height: '400px', 
                 borderRadius: '50%', background: 'radial-gradient(circle, #007bff 0%, transparent 70%)',
-                filter: 'blur(50px)', opacity: 0.4,
-                transform: `scale(${1 + Math.sin(frame / 10) * 0.1})`
+                filter: 'blur(60px)', opacity: 0.3,
+                transform: `scale(${1 + Math.sin(frame / 15) * 0.2})`
             }} />
 
             <div style={{ opacity, transform: `scale(${scale})`, zIndex: 10 }}>
-                <h1 style={{ fontSize: '70px', marginBottom: '20px', lineHeight: '1.2' }}>{title}</h1>
-                <div style={{ fontSize: '30px', color: '#007bff', fontWeight: 'bold' }}>🚀 İçerik Üretildi</div>
+                <h1 style={{ fontSize: '80px', marginBottom: '30px', fontWeight: 'bold', textShadow: '0 0 20px rgba(0,123,255,0.5)' }}>
+                    {title || "Yükleniyor..."}
+                </h1>
+                <div style={{ fontSize: '35px', color: '#007bff', letterSpacing: '2px' }}>✨ CLAUDE AI GENERATED</div>
             </div>
-
-            {/* Ses dosyası konuya göre API'den gelen URL ile değişebilir */}
-            {/* <Audio src="https://your-server.com/bg-music.mp3" /> */}
         </div>
     );
 };
@@ -43,82 +42,78 @@ const MainSocialSystem = () => {
         setStatus('processing');
 
         try {
-            // Vercel'deki OPENAI_API_KEY'i kullanan backend isteği
-            const textRes = await fetch('/api/social-text', {
+            // Vercel'deki OPENAI_API_KEY ve ANTHROPIC_API_KEY'i kullanan TEK API isteği
+            // Not: Bu endpoint'in backend tarafında oluşturulmuş olması gerekir.
+            const response = await fetch('/api/generate-all', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ prompt: userInput })
             });
-            const textData = await textRes.json();
 
-            // Vercel'deki ANTHROPIC_API_KEY'i (Claude) kullanan video render isteği
-            const videoRes = await fetch('/api/video-render', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: userInput })
-            });
-            const videoBlob = await videoRes.blob();
+            if (!response.ok) throw new Error("Sunucu yanıt vermedi. API Route kontrol edilmeli.");
+
+            const data = await response.json();
 
             setOutputs({
-                twitter: textData.twitter,
-                linkedin: textData.linkedin,
-                videoUrl: URL.createObjectURL(videoBlob)
+                twitter: data.twitter,
+                linkedin: data.linkedin,
+                videoUrl: data.videoUrl // Render edilmiş video linki veya blob
             });
             setStatus('success');
         } catch (err) {
-            console.error(err);
+            console.error("Render Hatası:", err);
             setStatus('error');
         }
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', background: '#0a0a0a', color: '#eee', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
             
-            {/* SOL TARAF: OpenAI Metin Dünyası */}
-            <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column' }}>
-                <h2 style={{ color: '#00acee' }}>Social Text Engine (OpenAI)</h2>
+            {/* SOL PANEL: OpenAI Metin (Twitter & LinkedIn) */}
+            <div style={{ flex: 1, padding: '40px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column' }}>
+                <h2 style={{ color: '#00acee', marginBottom: '20px' }}>Social Engine (OpenAI)</h2>
                 <textarea 
-                    placeholder="İsteğinizi buraya yazın (Örn: Yapay zeka hakkında bir tweet ve makale oluştur)"
+                    placeholder="Sosyal medya için ne üretmek istersiniz?"
                     value={userInput}
                     onChange={(e) => setUserInput(e.target.value)}
-                    style={{ width: '100%', height: '120px', background: '#111', color: '#fff', border: '1px solid #333', borderRadius: '10px', padding: '15px', marginBottom: '15px' }}
+                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', border: '1px solid #333', borderRadius: '12px', padding: '20px', fontSize: '16px', outline: 'none' }}
                 />
                 <button 
                     onClick={handleGenerate}
                     disabled={status === 'processing'}
-                    style={{ padding: '15px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                    style={{ padding: '18px', background: status === 'processing' ? '#333' : '#007bff', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', fontSize: '18px', marginTop: '15px', transition: '0.3s' }}
                 >
-                    {status === 'processing' ? 'İşleniyor...' : 'Tüm Platformlar İçin Üret'}
+                    {status === 'processing' ? 'AI İşliyor...' : 'Tüm Platformlar İçin Oluştur'}
                 </button>
 
-                <div style={{ marginTop: '20px', flex: 1, overflowY: 'auto' }}>
-                    <div style={{ background: '#161616', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
-                        <strong style={{ color: '#00acee' }}>Twitter / X:</strong>
-                        <p style={{ marginTop: '10px', lineHeight: '1.5' }}>{outputs.twitter || "..."}</p>
+                <div style={{ marginTop: '30px', flex: 1, overflowY: 'auto' }}>
+                    <div style={{ background: '#111', padding: '20px', borderRadius: '12px', marginBottom: '20px', border: '1px solid #222' }}>
+                        <strong style={{ color: '#1DA1F2' }}>𝕏 Twitter (OpenAI)</strong>
+                        <p style={{ marginTop: '12px', color: '#ccc', lineHeight: '1.6' }}>{outputs.twitter || "İçerik bekleniyor..."}</p>
                     </div>
-                    <div style={{ background: '#161616', padding: '15px', borderRadius: '10px' }}>
-                        <strong style={{ color: '#0077b5' }}>LinkedIn:</strong>
-                        <p style={{ marginTop: '10px', lineHeight: '1.5' }}>{outputs.linkedin || "..."}</p>
+                    <div style={{ background: '#111', padding: '20px', borderRadius: '12px', border: '1px solid #222' }}>
+                        <strong style={{ color: '#0A66C2' }}>Linkedln (OpenAI)</strong>
+                        <p style={{ marginTop: '12px', color: '#ccc', lineHeight: '1.6' }}>{outputs.linkedin || "İçerik bekleniyor..."}</p>
                     </div>
                 </div>
             </div>
 
-            {/* SAĞ TARAF: Claude Video Dünyası */}
+            {/* SAĞ PANEL: Claude & Remotion Video Preview */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-                <h2 style={{ color: '#f0f0f0', marginBottom: '20px' }}>Video Platform (Claude & Remotion)</h2>
+                <h2 style={{ color: '#ff4d4d', marginBottom: '25px' }}>Video Preview (Claude)</h2>
                 
-                {/* DİKEY ÖNİZLEME (9:16) */}
-                <div style={{ width: '320px', height: '568px', border: '4px solid #1a1a1a', borderRadius: '30px', overflow: 'hidden', backgroundColor: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* 9:16 DİKEY FORMAT */}
+                <div style={{ width: '340px', height: '600px', border: '6px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', backgroundColor: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 40px rgba(0,123,255,0.1)' }}>
                     {outputs.videoUrl ? (
                         <video src={outputs.videoUrl} controls autoPlay loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Oluşturuluyor...' : 'Hazır olduğunda burada görünecek.'}
+                        <div style={{ color: '#444', textAlign: 'center', padding: '30px' }}>
+                            {status === 'processing' ? 'Claude Videoyu Oluşturuyor...' : 'Video Hazır Değil'}
                         </div>
                     )}
                 </div>
 
-                {/* ÖNEMLİ: Görseldeki 'MyVideo bulunamadı' hatasını çözen blok */}
+                {/* GÖRSELDEKİ "MyVideo NOT FOUND" HATASINI ÇÖZEN TANIM */}
                 <div style={{ display: 'none' }}>
                     <Composition
                         id="MyVideo"
@@ -135,7 +130,7 @@ const MainSocialSystem = () => {
     );
 };
 
-// Sistemi kaydet
+// Sistemi sisteme kaydet
 registerRoot(MainSocialSystem);
 
 export default MainSocialSystem;
