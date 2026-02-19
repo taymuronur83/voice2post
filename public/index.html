@@ -46,11 +46,7 @@
         .plan-table-row:hover { background: rgba(255,255,255,0.02); }
 
         @media (max-width: 640px) {
-            .table-container { 
-                overflow-x: auto !important; 
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
+            .table-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
             .table-container::-webkit-scrollbar { display: none; }
             .min-w-table { min-width: 600px !important; } 
             .plan-text-mobile { font-size: 12px !important; }
@@ -59,59 +55,13 @@
             #nav-login-btn { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         }
 
-        .populer-badge {
-            top: -1.2rem !important;
-            font-size: 9px !important;
-            padding: 2px 10px !important;
-            white-space: nowrap;
-            z-index: 20;
-        }
+        .populer-badge { top: -1.2rem !important; font-size: 9px !important; padding: 2px 10px !important; white-space: nowrap; z-index: 20; }
 
-        .input-mode-container {
-            position: relative;
-            display: flex;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 5px;
-            border-radius: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 2rem;
-            cursor: pointer;
-            user-select: none;
-        }
-        .mode-slider {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            width: calc(50% - 5px);
-            background: #2563eb;
-            border-radius: 100px;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1;
-            height: 40px;
-        }
-        .mode-option {
-            position: relative;
-            z-index: 2;
-            padding: 10px 30px;
-            border-radius: 100px;
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s;
-        }
+        .input-mode-container { position: relative; display: flex; background: rgba(255, 255, 255, 0.05); padding: 5px; border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 2rem; cursor: pointer; user-select: none; }
+        .mode-slider { position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); background: #2563eb; border-radius: 100px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; height: 40px; }
+        .mode-option { position: relative; z-index: 2; padding: 10px 30px; border-radius: 100px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s; }
         .mode-option.active { color: white; }
-        .text-input-area {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 20px;
-            color: white;
-            resize: none;
-            min-height: 150px;
-            margin-bottom: 20px;
-            outline: none;
-        }
+        .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
         .text-input-area:focus { border-color: #3b82f6; }
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
     </style>
@@ -332,12 +282,8 @@
             if(!email || !pass) return alert("Giriş bilgilerini yazın.");
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                if (userCredential.user.emailVerified) {
-                    window.isLoggedIn = true; closeModals();
-                } else { 
-                    alert("Lütfen önce e-postanızı doğrulayın!"); 
-                    await signOut(auth); 
-                }
+                if (userCredential.user.emailVerified) { window.isLoggedIn = true; closeModals(); } 
+                else { alert("Lütfen önce e-postanızı doğrulayın!"); await signOut(auth); }
             } catch (error) { alert("Hata: " + error.message); }
         };
 
@@ -352,57 +298,23 @@
         onAuthStateChanged(auth, (user) => {
             const btn = document.getElementById('nav-login-btn');
             if (user && user.emailVerified) {
-                window.isLoggedIn = true; 
-                btn.innerText = "Hesabım";
+                window.isLoggedIn = true; btn.innerText = "Hesabım";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
             } else { 
-                window.isLoggedIn = false; 
-                btn.innerText = "Giriş Yap";
+                window.isLoggedIn = false; btn.innerText = "Giriş Yap";
                 if(btn.classList.contains('bg-emerald-600')) btn.classList.replace('bg-emerald-600', 'bg-blue-600');
             }
         });
     </script>
-
-    <script src="https://www.paypal.com/sdk/js?client-id=AdOeigm877SXMe7mMtuEMPUeGkY9WcgyIJPbzGJU2HP1CS_eaGcn4O0FnUEoB3JFmDXEHSnxx5Do-pIN&currency=EUR"></script>
 
     <script>
         window.isProUser = false;
         let isRecording = false; 
         let finalTranscript = ""; 
         let recognition;
-        let currentLang = 'tr';
         let isProcessing = false; 
-
-        const translations = {
-            tr: {
-                nav_try: "Hemen Dene", nav_features: "Özellikler", nav_pricing: "Fiyatlandırma",
-                auth_welcome: "Hoş Geldiniz", auth_subtitle: "Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.",
-                email: "E-Posta", password: "Şifre", forgot_pass: "Şifremi Unuttum",
-                login_btn: "Giriş Yap", logout: "Oturumu Kapat",
-                badge: "AI İÇERİK ASİSTANI", hero_1: "Sesini", hero_2: "Profesyonel Posta", hero_3: "Dönüştür",
-                mic_ready: "Dokun ve anlatmaya başla...", copy: "Kopyala",
-                feat_1_t: "Hızlı İşleme", feat_1_d: "Sesiniz saniyeler içinde metne dönüşür.",
-                feat_2_t: "Akıllı AI", feat_2_d: "Gereksiz kelimeleri atar, fikre odaklanır.",
-                feat_3_t: "Çoklu Format", feat_3_d: "LinkedIn ve X için hazır şablonlar.",
-                pricing_title: "Planları Karşılaştır", rights: "Tüm Hakları Saklıdır.",
-                mode_mic: "Ses", mode_text: "Metin"
-            },
-            en: {
-                nav_try: "Try Now", nav_features: "Features", nav_pricing: "Pricing",
-                auth_welcome: "Welcome Back", auth_subtitle: "Sign in to turn your voice into content.",
-                email: "E-Mail", password: "Password", forgot_pass: "Forgot Password?",
-                login_btn: "Login", logout: "Logout",
-                badge: "AI CONTENT ASSISTANT", hero_1: "Turn Your", hero_2: "Voice Into Posts", hero_3: "Professionally",
-                mic_ready: "Tap and start talking...", copy: "Copy",
-                feat_1_t: "Fast Processing", feat_1_d: "Voice turns to text in seconds.",
-                feat_2_t: "Smart AI", feat_2_d: "Focuses on core idea, removes fluff.",
-                feat_3_t: "Multi Format", feat_3_d: "Ready templates for LinkedIn and X.",
-                pricing_title: "Compare Plans", rights: "All Rights Reserved.",
-                mode_mic: "Voice", mode_text: "Text"
-            }
-        };
 
         function setMode(mode) {
             const slider = document.getElementById('mode-slider');
@@ -417,35 +329,34 @@
             }
         }
 
-        // --- GÜNCELLENMİŞ VE ZIRHLI processAIResult FONKSİYONU ---
+        // --- ENTEGRE EDİLMİŞ ZIRHLI processAIResult ---
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
+            isProcessing = true;
             
-            isProcessing = true; 
             const statusText = document.getElementById('status-text');
             const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
             const loaderText = document.getElementById('video-loader-text');
-            
-            statusText.innerText = "Claude Videoyu Tasarlıyor...";
+
+            statusText.innerText = "İşleniyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
 
             try {
+                // Vercel ucu için '/api/generate'
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
-                
-                // --- KRİTİK ADIM: HAM METNİ ALIP JSON AYIKLIYORUZ ---
+
                 const rawData = await response.text();
                 let data;
 
                 try {
-                    // JSON'un başladığı ve bittiği yerleri bul (Zırhlı Mantık)
                     const jsonStart = rawData.indexOf('{');
                     const jsonEnd = rawData.lastIndexOf('}') + 1;
                     const cleanJson = rawData.substring(jsonStart, jsonEnd);
@@ -457,39 +368,31 @@
 
                 if(!data.video_script) throw new Error("Video verisi eksik.");
 
-                // Arayüzü güncelle
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
-                
+
                 const videoPlanStr = JSON.stringify(data.video_script);
                 const encodedData = encodeURIComponent(videoPlanStr);
                 const encodedText = encodeURIComponent(data.video_script.text || text);
 
-                // Remotion Iframe Kurulumu
-                liveArea.innerHTML = `
-                    <iframe src="/video-preview?command=${encodedText}&videoData=${encodedData}" 
-                            style="width:100%; height:100%; border:none;" 
-                            allow="autoplay"></iframe>`;
+                // /video-preview veya senin preview yolun
+                liveArea.innerHTML = `<iframe src="/video-preview?command=${encodedText}&videoData=${encodedData}" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe>`;
                 
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
                     liveArea.classList.remove('opacity-0');
                     document.getElementById('download-btn').classList.remove('hidden');
-                    statusText.innerText = "İçerikler ve Video Hazır!";
+                    statusText.innerText = "Hazır!";
                 }, 2000);
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("Hata:", error);
-                statusText.innerText = "Hata oluştu, tekrar deneyin.";
-                loaderText.innerText = "Kurgu Hatası: " + error.message;
-            } finally {
-                isProcessing = false; 
-            }
+                statusText.innerText = "Hata oluştu.";
+                loaderText.innerText = "Hata: " + error.message;
+            } finally { isProcessing = false; }
         }
 
-        // Diğer yardımcı fonksiyonlar
         function processManualText() {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             const text = document.getElementById('manual-text').value;
