@@ -464,12 +464,14 @@
             };
         }
 
+        // GÜNCEL FONKSİYON: taymuronur83 / voice2post uyumlu
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka Hazırlıyor...";
+            statusText.innerText = "Yapay Zeka İçeriği Hazırlıyor...";
             
             try {
+                // 1. ADIM: İçerik Üretimi (Vercel API)
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -477,16 +479,17 @@
                 });
                 
                 const data = await response.json();
-                if(!response.ok) throw new Error(data.error || "Sunucu hatası");
+                if(!response.ok) throw new Error(data.error || "İçerik üretim hatası");
 
+                // Sonuçları göster
                 document.getElementById('ai-result-container').classList.remove('hidden');
-                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
-                document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
-                document.getElementById('video-res').innerText = data.video_script || "Senaryo oluşturulamadı.";
+                document.getElementById('linkedin-res').innerText = data.linkedin || "Hata oluştu.";
+                document.getElementById('x-res').innerText = data.twitter || "Hata oluştu.";
+                document.getElementById('video-res').innerText = data.video_script || "Hata oluştu.";
                 
-                statusText.innerText = "Video Kurgusu Başlatılıyor...";
+                // 2. ADIM: GitHub Video Tetikleme
+                statusText.innerText = "GitHub Actions: Video Kurgusu Tetikleniyor...";
                 
-                // GÜNCELLEME: GitHub Video Tetikleme
                 const videoTrigger = await fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -496,16 +499,16 @@
                 const triggerResult = await videoTrigger.json();
 
                 if (videoTrigger.ok) {
-                    statusText.innerText = "Başarıyla Oluşturuldu! Video GitHub'da işleniyor.";
+                    statusText.innerText = "Başarıyla Tetiklendi! Video GitHub Actions'da işleniyor.";
                 } else {
-                    console.error("Video tetikleme hatası:", triggerResult);
-                    statusText.innerText = "Metinler hazır ama video başlatılamadı: " + (triggerResult.detail || triggerResult.error);
+                    console.error("Video hatası:", triggerResult);
+                    statusText.innerText = "Metinler hazır ama video hatası: " + (triggerResult.detail || triggerResult.error);
                 }
 
                 document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("İşlem Hatası:", error);
+                console.error("Süreç Hatası:", error);
                 statusText.innerText = "Hata oluştu: " + error.message; 
             }
         }
