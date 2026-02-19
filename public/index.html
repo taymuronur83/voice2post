@@ -269,12 +269,13 @@
                                         <i class="fas fa-download mr-1"></i> MP4 İndir
                                     </button>
                                 </div>
+                                
                                 <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
-                                    <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/80 backdrop-blur-sm z-10">
-                                        <i class="fas fa-circle-notch fa-spin text-3xl text-pink-500 mb-4"></i>
-                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Claude Videoyu Kurguluyor...</p>
+                                    <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/90 backdrop-blur-sm z-10">
+                                        <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Claude Videoyu Hazırlıyor...</p>
                                     </div>
-                                    <div id="remotion-player-container" class="w-full h-full opacity-0 transition-opacity duration-500">
+                                    <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700">
                                         </div>
                                 </div>
                             </div>
@@ -473,19 +474,20 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ AI İŞLEME FONKSİYONU ---
+        // --- GÜNCELLENMİŞ AI VE CANLI VİDEO İŞLEME FONKSİYONU ---
         async function processAIResult(text) {
             if(!text.trim()) return;
             const statusText = document.getElementById('status-text');
             statusText.innerText = "Yapay Zeka Hazırlanıyor...";
             
-            // UI hazırlığı
-            document.getElementById('ai-result-container').classList.remove('hidden');
+            // UI hazırlığı: Önce sonuç alanını göster
+            const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
-            const playerContainer = document.getElementById('remotion-player-container');
+            const liveArea = document.getElementById('remotion-live-area');
             
+            resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
-            playerContainer.classList.add('opacity-0');
+            liveArea.classList.add('opacity-0');
 
             try {
                 const response = await fetch('/api/generate', {
@@ -495,30 +497,30 @@
                 });
                 
                 const data = await response.json();
-                if(!response.ok) throw new Error(data.error || "İçerik üretim hatası");
+                if(!response.ok) throw new Error(data.error || "Hata oluştu");
 
-                // Metinleri bas
+                // Metin sonuçlarını bas
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
                 
-                // --- CANLI VİDEO PLAYER ENTEGRASYONU ---
-                // Claude'dan gelen video_script'i direkt player'a iframe ile basıyoruz
-                playerContainer.innerHTML = `
+                // CANLI PLAYER'I IFRAME İLE İNJECT ET
+                // Claude'dan gelen video_script verisini Remotion Player URL'ine ekliyoruz.
+                liveArea.innerHTML = `
                     <iframe src="/video-preview?command=${encodeURIComponent(data.video_script)}" 
                             style="width:100%; height:100%; border:none;" 
                             allow="autoplay"></iframe>`;
                 
-                // Video kurgusunu simüle et ve göster
+                // Loader'ı kapat ve Player'ı göster (Yumuşak geçiş)
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
-                    playerContainer.classList.remove('opacity-0');
+                    liveArea.classList.remove('opacity-0');
                     document.getElementById('download-btn').classList.remove('hidden');
-                }, 1500);
+                    statusText.innerText = "İçerikler ve Video Hazır!";
+                }, 2000);
 
-                statusText.innerText = "Her Şey Hazır!";
-                document.getElementById('ai-result-container').scrollIntoView({ behavior: 'smooth' });
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-                // Arka planda gerçek MP4 render işlemini tetikle
+                // Arka planda gerçek MP4 render işlemini başlat
                 fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -526,8 +528,8 @@
                 });
 
             } catch (error) { 
-                statusText.innerText = "Hata oluştu: " + error.message; 
-                videoLoader.innerHTML = `<p class="text-red-400 text-[10px]">Video oluşturulamadı.</p>`;
+                statusText.innerText = "Hata: " + error.message; 
+                videoLoader.innerHTML = `<p class="text-red-400 text-[10px] p-4 text-center">Video kurgusu sırasında bir hata oluştu.</p>`;
             }
         }
 
