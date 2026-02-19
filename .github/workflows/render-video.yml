@@ -1,10 +1,11 @@
 name: Render Video
+
 on:
   push:
     branches:
       - main
       - master
-  workflow_dispatch: # Bu satır çok önemli: "Actions" sekmesinden elle başlatmanı sağlar.
+  workflow_dispatch: # Bu satırı silmedim, istersen hala elle de başlatabilirsin.
 
 permissions:
   contents: write
@@ -29,9 +30,9 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        run: npm run render
+        run: npm run render # package.json'daki "render" komutunu tetikler
 
-      - name: Upload Video
+      - name: Upload Video Artifact
         uses: actions/upload-artifact@v4
         with:
           name: my-video
