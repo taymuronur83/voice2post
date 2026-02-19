@@ -1,40 +1,44 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
-
-    const { script } = req.body;
-    const token = process.env.GH_TOKEN;
-
-    // Log ekleyelim (Vercel > Logs kısmından görebiliriz)
-    console.log("Tetikleme başlatıldı. Script:", script);
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST gerekli' });
 
     try {
-        const response = await fetch('https://api.github.com/repos/taymuronur83/voice2post/dispatches', {
+        const { script } = req.body;
+        const GITHUB_TOKEN = process.env.GH_TOKEN;
+
+        // GitHub API adresi (Kullanıcı adın ve repo ismin eklendi)
+        const url = "https://api.github.com/repos/taymuronur83/voice2post/dispatches";
+
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token.trim()}`,
+                'Authorization': `token ${GITHUB_TOKEN.trim()}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json',
                 'User-Agent': 'Vercel-App'
             },
             body: JSON.stringify({
-                event_type: 'render-video', // .yml dosyasındaki types: [render-video] ile aynı olmalı
+                event_type: 'render-video',
                 client_payload: {
-                    props: { text: script || "Metin yok" }
+                    props: { text: script || "Metin gelmedi" }
                 }
             })
         });
 
-        console.log("GitHub Yanıt Durumu:", response.status);
+        // Hata ayıklama için loglar
+        console.log("GitHub Response Status:", response.status);
 
         if (response.status === 204 || response.ok) {
-            return res.status(200).json({ success: true, message: "GitHub tetiklendi!" });
+            return res.status(200).json({ ok: true, message: "Aksiyon tetiklendi!" });
         } else {
             const errorText = await response.text();
-            console.error("GitHub Hata Detayı:", errorText);
-            return res.status(response.status).json({ error: errorText });
+            console.error("GitHub Error Detail:", errorText);
+            return res.status(response.status).json({ 
+                error: "GitHub Hatası", 
+                status: response.status, 
+                detail: errorText 
+            });
         }
     } catch (error) {
-        console.error("Sistem Hatası:", error.message);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: "Sunucu hatası", message: error.message });
     }
 }
