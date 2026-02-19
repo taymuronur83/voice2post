@@ -1,14 +1,9 @@
 name: Render Video
-
 on:
   push:
     branches:
-      - main
-      - master
-  workflow_dispatch: # Bu satırı silmedim, istersen hala elle de başlatabilirsin.
-
-permissions:
-  contents: write
+      - '**'  # Hangi branch olursa olsun (main, master, dev) push yapınca başla
+  workflow_dispatch: # Manuel butonun da orada durmasını sağlar
 
 jobs:
   render:
@@ -21,7 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
@@ -30,9 +24,9 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        run: npm run render # package.json'daki "render" komutunu tetikler
+        run: npm run render
 
-      - name: Upload Video Artifact
+      - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
           name: my-video
