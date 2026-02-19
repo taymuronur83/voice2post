@@ -103,7 +103,7 @@
         .text-input-area {
             width: 100%;
             background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
             padding: 20px;
             color: white;
@@ -231,7 +231,6 @@
 
                 <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
-                        
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
                                 <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> SOSYAL MEDYA METİNLERİ
@@ -276,7 +275,7 @@
                                         <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Claude Videoyu Hazırlıyor...</p>
                                     </div>
                                     <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700">
-                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -393,7 +392,7 @@
         let finalTranscript = ""; 
         let recognition;
         let currentLang = 'tr';
-        let isProcessing = false; // HAYALET AKSİYONLARI ENGELLEYEN KİLİT
+        let isProcessing = false; 
 
         const translations = {
             tr: {
@@ -475,18 +474,17 @@
             };
         }
 
-        // --- GÜNCELLENMİŞ ENTEGRE VE KİLİTLİ FONKSİYON ---
+        // --- GÜNCELLENMİŞ VE ENTEGRE EDİLMİŞ processAIResult ---
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             
-            isProcessing = true; // SİSTEMİ KİLİTLE
+            isProcessing = true; 
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Claude Videoyu Tasarlıyor...";
-            
             const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
             
+            statusText.innerText = "Claude Videoyu Tasarlıyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
@@ -501,9 +499,17 @@
                 const data = await response.json();
                 if(!response.ok) throw new Error(data.error || "Hata oluştu");
 
+                // --- KRİTİK VERİ KONTROLÜ ---
+                if(!data.video_script || typeof data.video_script !== 'object') {
+                    console.log("Ara mesaj alındı:", data);
+                    statusText.innerText = "Claude süreci analiz ediyor...";
+                    isProcessing = false;
+                    return; 
+                }
+
                 // Metin sonuçlarını güncelle
-                document.getElementById('linkedin-res').innerText = data.linkedin;
-                document.getElementById('x-res').innerText = data.twitter;
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
                 
                 // Remotion için URL parametrelerini hazırla
                 const videoPlanStr = JSON.stringify(data.video_script);
@@ -525,19 +531,19 @@
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
-                // RENDER İSTEĞİNİ ANA SÜRECE ENTEGRE ET
-                await fetch('/api/render-video', {
+                // Arka planda render işlemini başlat
+                fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ script: data.video_script })
-                });
+                }).catch(err => console.error("Render hatası:", err));
 
             } catch (error) { 
                 console.error("Hata:", error);
                 statusText.innerText = "Hata: " + error.message; 
-                videoLoader.innerHTML = `<p class="text-red-400 text-[10px] p-4 text-center">Video kurgusu sırasında bir hata oluştu.</p>`;
+                videoLoader.innerHTML = `<p class="text-red-400 text-[10px] p-4 text-center">İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.</p>`;
             } finally {
-                isProcessing = false; // İŞLEM BİTİNCE KİLİDİ AÇ
+                isProcessing = false; 
             }
         }
 
@@ -561,7 +567,8 @@
         };
 
         document.getElementById('cancel-btn').onclick = () => {
-            isRecording = false; recognition.stop(); finalTranscript = "";
+            isRecording = false; try { recognition.stop(); } catch(e) {}
+            finalTranscript = "";
             document.getElementById('record-btn').classList.remove('recording-pulse');
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
