@@ -1,0 +1,15 @@
+{
+  "name": "voice2post",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts Main out/video.mp4",
+    "render": "remotion render src/index.ts Main out/video.mp4"
+  },
+  "dependencies": {
+    "remotion": "latest",
+    "@remotion/cli": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  }
+}
