@@ -1,11 +1,13 @@
 {
   "name": "voice2post",
   "version": "1.0.0",
+  "description": "Voice to Social Media Post & Video Automation",
   "main": "src/index.ts",
   "scripts": {
     "start": "remotion preview src/index.ts",
-    "build": "echo 'Build bypass' && exit 0",
-    "render": "remotion render src/index.ts MyVideo out/video.mp4"
+    "build": "echo 'Build bypass for Vercel' && exit 0",
+    "render": "remotion render src/index.ts MyVideo out/video.mp4",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "remotion": "^4.0.0",
@@ -16,10 +18,13 @@
     "react-dom": "^18.2.0",
     "firebase": "^10.1.0",
     "openai": "^4.0.0",
+    "lucide-react": "^0.263.1",
     "axios": "^1.5.0",
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "typescript": "^5.1.0"
   },
   "engines": {
