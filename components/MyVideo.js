@@ -1,21 +1,24 @@
-import { AbsoluteFill, useCurrentFrame } from 'remotion';
+import { getInputProps } from 'remotion';
+// ... senin diğer importların varsa burada kalsın (React vb.)
 
-export const MyVideo = ({ scenes = [] }) => {
-    const frame = useCurrentFrame();
+export const MyVideo = () => {
+    // Vercel'den gönderdiğimiz "script" verisini burada yakalıyoruz
+    // Eğer koddaki isim 'text' ise text, 'script' ise script olarak karşıla
+    const { text } = getInputProps(); 
+
     return (
-        <AbsoluteFill style={{ backgroundColor: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            {scenes.map((scene, index) => {
-                const start = scenes.slice(0, index).reduce((acc, s) => acc + s.duration, 0);
-                const end = start + scene.duration;
-                if (frame >= start && frame < end) {
-                    return (
-                        <div key={index} style={{ color: scene.color || 'white', fontSize: 50, fontWeight: 'bold', textAlign: 'center' }}>
-                            {scene.text}
-                        </div>
-                    );
-                }
-                return null;
-            })}
-        </AbsoluteFill>
+        <div style={{ 
+            flex: 1, 
+            backgroundColor: 'white', // Arka plan rengini sen belirleyebilirsin
+            justifyContent: 'center', 
+            alignItems: 'center', 
+            display: 'flex',
+            fontSize: '40px', // Yazı boyutu
+            textAlign: 'center',
+            padding: '20px'
+        }}>
+            {/* Vercel'den gelen metin burada görünecek */}
+            {text || "Video Hazırlanıyor..."}
+        </div>
     );
 };
