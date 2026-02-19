@@ -1,5 +1,4 @@
 name: Render Video
-
 on:
   push:
     branches:
@@ -30,7 +29,7 @@ jobs:
       - name: Render Video
         run: npm run render
 
-      - name: Upload Video Artifact
+      - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
           name: my-video
