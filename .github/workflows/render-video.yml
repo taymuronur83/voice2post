@@ -8,13 +8,24 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 18
-      - run: npm install
-      - run: npm run render -- --props='{"text": "${{ github.event.client_payload.props.text }}"}'
-      - uses: actions/upload-artifact@v4
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      # Remotion render komutu burada çalışıyor
+      - name: Render Video
+        run: npx remotion render src/index.ts MyVideo out/video.mp4 --props='{"text": "${{ github.event.client_payload.props.text }}"}'
+
+      - name: Upload Video
+        uses: actions/upload-artifact@v4
         with:
-          name: video
+          name: output-video
           path: out/video.mp4
