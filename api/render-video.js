@@ -1,33 +1,33 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    if (req.method !== 'POST') return res.status(405).json({ error: 'POST gerekli' });
 
     try {
         const { script } = req.body;
-        const REPO_OWNER = "taymuronur83"; 
-        const REPO_NAME = "voice2post";
-
-        const response = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`, {
+        
+        // GitHub API'sine sinyal gönderiyoruz
+        const response = await fetch("https://api.github.com/repos/taymuronur83/voice2post/dispatches", {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${process.env.GH_TOKEN}`,
+                'Authorization': `token ${process.env.GH_TOKEN.trim()}`,
                 'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'User-Agent': 'Vercel-App'
             },
             body: JSON.stringify({
                 event_type: 'render-video', 
                 client_payload: {
-                    props: { text: script || "Metin gelmedi" }
+                    props: { text: script || "Metin yok" }
                 }
             })
         });
 
-        if (response.ok || response.status === 204) {
+        if (response.status === 204 || response.ok) {
             return res.status(200).json({ ok: true });
         } else {
-            const errorDetail = await response.text();
-            return res.status(500).json({ error: "GitHub Hatası", detail: errorDetail });
+            const errorText = await response.text();
+            return res.status(500).json({ error: "GitHub Hatası", details: errorText });
         }
-    } catch (error) {
-        return res.status(500).json({ error: error.message });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
     }
 }
