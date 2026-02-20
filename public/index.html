@@ -357,32 +357,47 @@
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             
             isProcessing = true;
-            const statusText = document.getElementById('status-text'), videoLoader = document.getElementById('video-loader'), liveArea = document.getElementById('remotion-live-area');
+            const statusText = document.getElementById('status-text');
+            const videoLoader = document.getElementById('video-loader');
+            const liveArea = document.getElementById('remotion-live-area');
+            
             statusText.innerText = "Yapay Zeka Yanıtlıyor...";
             document.getElementById('ai-result-container').classList.remove('hidden');
             videoLoader.classList.remove('hidden');
 
             try {
+                // Vercel /api/generate yoluna istek atıyoruz
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
+
+                if (!response.ok) throw new Error("API Hatası: " + response.status);
+
                 const data = await response.json();
                 
-                document.getElementById('linkedin-res').innerText = data.linkedin;
-                document.getElementById('x-res').innerText = data.twitter;
-                lastVideoScript = data.video_script;
-
-                const encodedData = encodeURIComponent(JSON.stringify(lastVideoScript));
-                // /preview rotası VideoPreview.js dosyasını çalıştırmalıdır
-                liveArea.innerHTML = `<iframe src="/preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                // Backend'den gelen verileri kontrollü bir şekilde atıyoruz
+                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik üretilemedi.";
+                document.getElementById('x-res').innerText = data.twitter || "İçerik üretilemedi.";
                 
+                if (data.video_script) {
+                    lastVideoScript = data.video_script;
+                    const encodedData = encodeURIComponent(JSON.stringify(lastVideoScript));
+                    // Önizleme alanını render ediyoruz
+                    liveArea.innerHTML = `<iframe src="/preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    document.getElementById('download-btn').classList.remove('hidden');
+                }
+
                 videoLoader.classList.add('hidden');
-                document.getElementById('download-btn').classList.remove('hidden');
                 statusText.innerText = "İçerik Hazır!";
-            } catch (error) { statusText.innerText = "Hata oluştu."; videoLoader.classList.add('hidden'); }
-            finally { isProcessing = false; }
+            } catch (error) { 
+                console.error("İşlem Hatası:", error);
+                statusText.innerText = "Hata oluştu."; 
+                videoLoader.classList.add('hidden'); 
+            } finally { 
+                isProcessing = false; 
+            }
         }
 
         async function triggerGitHubRender() {
