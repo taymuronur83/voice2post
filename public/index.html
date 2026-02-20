@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="data:,"> <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
+    <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://unpkg.com/@remotion/player@latest/dist/index.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #0f172a; color: #e2e8f0; }
@@ -51,7 +50,6 @@
             .min-w-table { min-width: 600px !important; } 
             .plan-text-mobile { font-size: 12px !important; }
             .mobile-btn-container { transform: scale(0.9); }
-            #nav-login-btn { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         }
 
         .populer-badge { top: -1.2rem !important; font-size: 9px !important; padding: 2px 10px !important; white-space: nowrap; z-index: 20; }
@@ -60,7 +58,7 @@
         .mode-slider { position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); background: #2563eb; border-radius: 100px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; height: 40px; }
         .mode-option { position: relative; z-index: 2; padding: 10px 30px; border-radius: 100px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s; }
         .mode-option.active { color: white; }
-        .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
+        .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
         .text-input-area:focus { border-color: #3b82f6; }
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
     </style>
@@ -140,6 +138,7 @@
         <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
             <span data-i18n="hero_1">Sesini</span> <br><span class="gradient-text" data-i18n="hero_2">Profesyonel Posta</span> <span data-i18n="hero_3">Dönüştür</span>
         </h1>
+
         <div class="max-w-4xl mx-auto p-8 md:p-12 rounded-[2.5rem] glass shadow-2xl border border-white/10 mt-12 relative overflow-hidden">
             <div class="flex flex-col items-center">
                 <div class="input-mode-container" id="mode-toggle">
@@ -178,11 +177,11 @@
                     <div class="w-1.5 bg-emerald-500 animate-bounce h-4"></div>
                 </div>
 
-                <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+                <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10 text-left">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> SOSYAL MEDYA METİNLERİ
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Sosyal Medya Metinleri
                             </h4>
                             <div class="animate-fade-in">
                                 <div class="flex justify-between items-center mb-3">
@@ -211,20 +210,19 @@
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
-                                        <i class="fas fa-play-circle text-lg mr-2"></i> CANLI ÖNİZLEME
+                                        <i class="fas fa-play-circle text-lg mr-2"></i> Canlı Önizleme
                                     </span>
                                     <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
                                         <i class="fas fa-download mr-1"></i> MP4 İndir
                                     </button>
                                 </div>
                                 
-                                <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
+                                <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 300px; margin: 0 auto;">
                                     <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/90 backdrop-blur-sm z-10">
                                         <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
-                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold" id="video-loader-text">Claude Videoyu Hazırlıyor...</p>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Videoyu Hazırlıyoruz...</p>
                                     </div>
-                                    <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700">
-                                    </div>
+                                    <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700"></div>
                                 </div>
                             </div>
                         </div>
@@ -234,74 +232,49 @@
         </div>
     </header>
 
-    <section id="fiyatlandirma" class="py-24 px-6">
-        <div class="max-w-6xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4" data-i18n="pricing_title">Sana Uygun Planı Seç</h2>
-                <p class="text-slate-400 max-w-2xl mx-auto" data-i18n="pricing_desc">Şeffaf fiyatlandırma ile ihtiyacın olan krediyi seç, hemen içerik üretmeye başla.</p>
+    <section id="fiyatlandirma" class="py-24 px-6 max-w-5xl mx-auto">
+        <h2 class="text-center text-4xl font-bold text-white mb-16" data-i18n="pricing_title">Planları Karşılaştır</h2>
+        <div class="glass rounded-[2.5rem] table-container border border-white/10 shadow-2xl overflow-hidden">
+            <div class="min-w-table">
+                <div class="grid grid-cols-3 bg-white/5 p-8 border-b border-white/10 text-center items-center">
+                    <div class="text-left font-bold text-slate-400 uppercase tracking-widest text-[10px] md:text-xs">Özellikler</div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white plan-text-mobile">Starter</h3>
+                        <p class="text-blue-400 text-2xl font-black mt-1 plan-text-mobile">$0</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute populer-badge left-1/2 -translate-x-1/2 bg-blue-600 text-white rounded-full font-bold uppercase tracking-tighter shadow-lg">En Popüler</span>
+                        <h3 class="text-lg font-bold text-white plan-text-mobile">Pro</h3>
+                        <p class="text-emerald-400 text-2xl font-black mt-1 plan-text-mobile">$19,99</p>
+                    </div>
+                </div>
+                <div class="p-4 md:p-8 space-y-2">
+                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Günlük Kredi</div>
+                        <div class="text-slate-400">3 Kredi</div>
+                        <div class="text-white font-bold">50 Kredi</div>
+                    </div>
+                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Video Çıktısı</div>
+                        <div><i class="fas fa-times text-red-500/50"></i></div>
+                        <div><i class="fas fa-check text-emerald-500"></i></div>
+                    </div>
+                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center border-none">
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Öncelikli Destek</div>
+                        <div><i class="fas fa-times text-red-500/50"></i></div>
+                        <div><i class="fas fa-check text-emerald-500"></i></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 p-8 bg-white/2 gap-4 items-center">
+                    <div></div>
+                    <div class="mobile-btn-container">
+                        <button onclick="handleNavClick()" class="w-full py-3 rounded-xl border border-white/10 hover:bg-white/5 transition text-[10px] font-bold uppercase tracking-widest text-slate-300">Ücretsiz Başla</button>
+                    </div>
+                    <div class="mobile-btn-container">
+                        <div id="paypal-button-container"></div>
+                    </div>
+                </div>
             </div>
-            <div class="table-container bg-white/5 rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md shadow-2xl">
-                <table class="w-full text-left min-w-table border-collapse">
-                    <thead>
-                        <tr class="bg-white/5 border-b border-white/10">
-                            <th class="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest" data-i18n="plan_features">Özellikler</th>
-                            <th class="px-8 py-6 text-center">
-                                <span class="text-white font-bold block">STARTER</span>
-                                <span class="text-blue-400 text-2xl font-black mt-2 block">$0 <small class="text-xs text-slate-500">/mo</small></span>
-                            </th>
-                            <th class="px-8 py-6 text-center relative bg-blue-600/10">
-                                <span class="populer-badge absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-black rounded-full shadow-lg" data-i18n="popular">EN POPÜLER</span>
-                                <span class="text-white font-bold block">PRO</span>
-                                <span class="text-emerald-400 text-2xl font-black mt-2 block">$19 <small class="text-xs text-slate-500">/mo</small></span>
-                            </th>
-                            <th class="px-8 py-6 text-center">
-                                <span class="text-white font-bold block">BUSINESS</span>
-                                <span class="text-purple-400 text-2xl font-black mt-2 block">$49 <small class="text-xs text-slate-500">/mo</small></span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-sm">
-                        <tr class="plan-table-row">
-                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="credit_limit">Aylık Kredi</td>
-                            <td class="px-8 py-5 text-center text-slate-400">3 Kredi</td>
-                            <td class="px-8 py-5 text-center text-white font-bold">50 Kredi</td>
-                            <td class="px-8 py-5 text-center text-slate-400">Sınırsız</td>
-                        </tr>
-                        <tr class="plan-table-row">
-                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="ai_models">Yapay Zeka Modelleri</td>
-                            <td class="px-8 py-5 text-center text-slate-400 italic">Standart</td>
-                            <td class="px-8 py-5 text-center text-emerald-400 font-bold">Premium (GPT-4o)</td>
-                            <td class="px-8 py-5 text-center text-slate-400">Premium + Özel</td>
-                        </tr>
-                        <tr class="plan-table-row">
-                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="video_export">Video Çıktısı (MP4)</td>
-                            <td class="px-8 py-5 text-center"><i class="fas fa-times text-red-500/50"></i></td>
-                            <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
-                            <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
-                        </tr>
-                        <tr>
-                            <td class="px-8 py-8"></td>
-                            <td class="px-8 py-8 text-center">
-                                <button class="text-xs font-bold text-slate-500 border border-white/10 px-6 py-2 rounded-full hover:bg-white/5 transition" data-i18n="current_plan">Mevcut Plan</button>
-                            </td>
-                            <td class="px-8 py-8 text-center">
-                                <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-8 py-3 rounded-full transition shadow-lg shadow-blue-500/20" data-i18n="get_started">HEMEN BAŞLA</button>
-                            </td>
-                            <td class="px-8 py-8 text-center">
-                                <button class="text-xs font-bold text-white border border-purple-500/50 px-6 py-2 rounded-full hover:bg-purple-500/10 transition" data-i18n="upgrade">YÜKSELT</button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </section>
-
-    <section id="ozellikler" class="py-24 px-6 bg-slate-900/40">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center">
-            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
-            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
-            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
         </div>
     </section>
 
@@ -312,17 +285,21 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+            sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // Firebase Config (Ana Siteden Gelen)
         const firebaseConfig = {
-            apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA", 
+            apiKey: "AIzaSyDB7JZCqe4Z30UZ6ItNp28PNbH_28tpjtA",
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
             storageBucket: "voice2post-9e8ca.firebasestorage.app",
             messagingSenderId: "511446656614",
-            appId: "1:511446656614:web:16537fc8fd3a343e716fa7"
+            appId: "1:511446656614:web:508d3f81985e6946716fa7"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
@@ -341,11 +318,10 @@
         window.handleSignIn = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if(!email || !pass) return alert("Giriş bilgilerini yazın.");
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
                 if (userCredential.user.emailVerified) { window.isLoggedIn = true; closeModals(); } 
-                else { alert("Lütfen önce e-postanızı doğrulayın!"); await signOut(auth); }
+                else { alert("Doğrulama mailini kontrol edin!"); await signOut(auth); }
             } catch (error) { alert("Hata: " + error.message); }
         };
 
@@ -364,20 +340,32 @@
                 btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
-            } else { 
-                window.isLoggedIn = false; btn.innerText = "Giriş Yap";
-                if(btn.classList.contains('bg-emerald-600')) btn.classList.replace('bg-emerald-600', 'bg-blue-600');
-            }
+            } else { window.isLoggedIn = false; btn.innerText = "Giriş Yap"; }
         });
     </script>
+
+    <script src="https://www.paypal.com/sdk/js?client-id=AdOeigm877SXMe7mMtuEMPUeGkY9WcgyIJPbzGJU2HP1CS_eaGcn4O0FnUEoB3JFmDXEHSnxx5Do-pIN&currency=EUR"></script>
 
     <script>
         window.isProUser = false;
         let isRecording = false; 
         let finalTranscript = ""; 
         let recognition;
-        let isProcessing = false; 
+        let isProcessing = false;
 
+        // PayPal Altyapısı
+        paypal.Buttons({
+            style: { layout: 'vertical', color: 'blue', shape: 'rect' },
+            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '19.99' } }] }); },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    window.isProUser = true;
+                    alert("Ödeme Başarılı! Pro özellikler aktif edildi.");
+                });
+            }
+        }).render('#paypal-button-container');
+
+        // Mod Değiştirme
         function setMode(mode) {
             const slider = document.getElementById('mode-slider');
             const micUi = document.getElementById('voice-input-ui');
@@ -391,7 +379,7 @@
             }
         }
 
-        // GÜNCEL VE HATA GİDERİLMİŞ FONKSİYON
+        // AI İşleme (Gelişmiş JSON Parse + Video)
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -402,7 +390,7 @@
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
 
-            statusText.innerText = "Yapay Zeka Hazırlıyor...";
+            statusText.innerText = "Yapay Zeka Yanıtlıyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
@@ -414,33 +402,23 @@
                     body: JSON.stringify({ prompt: text })
                 });
 
-                // GÖRSELDEKİ HATAYI ÇÖZEN BÖLÜM: Response metnini güvenli parse etme
                 const rawResponse = await response.text();
                 let data;
                 try {
                     data = JSON.parse(rawResponse);
-                } catch (parseError) {
-                    // Eğer response içinde gereksiz metinler varsa sadece JSON kısmını ayıkla
-                    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        data = JSON.parse(jsonMatch[0]);
-                    } else {
-                        throw new Error("JSON Parse Error");
-                    }
+                } catch (e) {
+                    const match = rawResponse.match(/\{[\s\S]*\}/);
+                    data = match ? JSON.parse(match[0]) : null;
                 }
+
+                if(!data) throw new Error("Yanıt formatı hatalı.");
 
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
 
                 if (data.video_script) {
-                    const videoData = {
-                        text: data.video_script.text,
-                        accentColor: data.video_script.accentColor,
-                        animation: data.video_script.animation
-                    };
-
-                    const encodedData = encodeURIComponent(JSON.stringify(videoData));
-                    liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe>`;
+                    const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
+                    liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
                     
                     setTimeout(() => {
                         videoLoader.classList.add('hidden');
@@ -451,12 +429,9 @@
                 } else {
                     videoLoader.classList.add('hidden');
                 }
-
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
-
             } catch (error) { 
-                console.error("Hata Detayı:", error);
-                statusText.innerText = "Bir hata oluştu. Lütfen tekrar deneyin.";
+                statusText.innerText = "Hata oluştu. Tekrar deneyin.";
                 videoLoader.classList.add('hidden');
             } finally { isProcessing = false; }
         }
@@ -466,26 +441,26 @@
             if(text.trim()) processAIResult(text);
         }
 
+        // Ses Tanıma Başlatma
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.lang = 'tr-TR';
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.onresult = (e) => {
-                let interimTranscript = "";
+                let interim = "";
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
                     if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
-                    else interimTranscript += e.results[i][0].transcript;
+                    else interim += e.results[i][0].transcript;
                 }
-                document.getElementById('status-text').innerText = finalTranscript + interimTranscript;
+                document.getElementById('status-text').innerText = finalTranscript + interim;
             };
         }
 
         document.getElementById('record-btn').onclick = () => {
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             if (!isRecording) {
-                finalTranscript = ""; isRecording = true; 
-                try { recognition.start(); } catch(e) {}
+                finalTranscript = ""; isRecording = true; recognition.start();
                 document.getElementById('record-btn').classList.add('recording-pulse');
                 document.getElementById('mic-icon').className = "fas fa-stop text-4xl text-white";
                 document.getElementById('recording-anim').classList.remove('hidden');
@@ -495,7 +470,7 @@
         };
 
         function stopRecording() {
-            isRecording = false; try { recognition.stop(); } catch(e) {}
+            isRecording = false; recognition.stop();
             document.getElementById('record-btn').classList.remove('recording-pulse');
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
@@ -503,6 +478,7 @@
             setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
         }
 
+        // Genel UI Fonksiyonları
         function toggleLangMenu() { document.getElementById('lang-list').classList.toggle('show'); }
         function closeModals() { document.getElementById('auth-modal').classList.remove('active'); }
         function handleNavClick() {
