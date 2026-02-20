@@ -354,7 +354,7 @@
             }
         }
 
-        // --- GÖRSELDEKİ HATAYI ÇÖZEN ZIRHLI FONKSİYON ---
+        // --- GÖRSELDEKİ "BIR HATA OLUŞTU" SORUNUNU ÇÖZEN GÜNCELLEME ---
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -381,17 +381,18 @@
                 const rawData = await response.text();
                 let data;
 
-                // HATA ÇÖZÜCÜ: Gelen metin içinden sadece JSON kısmını ayıkla
+                // CRITICAL FIX: Extract JSON from potentially messy AI response
                 try {
-                    const start = rawData.indexOf('{');
-                    const end = rawData.lastIndexOf('}') + 1;
-                    data = JSON.parse(rawData.substring(start, end));
+                    const jsonStart = rawData.indexOf('{');
+                    const jsonEnd = rawData.lastIndexOf('}') + 1;
+                    if(jsonStart === -1) throw new Error("Format Hatası");
+                    data = JSON.parse(rawData.substring(jsonStart, jsonEnd));
                 } catch (e) {
-                    throw new Error("Veri formatı uyumsuz.");
+                    throw new Error("Veri ayrıştırılamadı. Lütfen tekrar deneyin.");
                 }
 
-                document.getElementById('linkedin-res').innerText = data.linkedin || "";
-                document.getElementById('x-res').innerText = data.twitter || "";
+                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
+                document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
 
                 if (data.video_script) {
                     const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
@@ -401,8 +402,8 @@
                         videoLoader.classList.add('hidden');
                         liveArea.classList.remove('opacity-0');
                         document.getElementById('download-btn').classList.remove('hidden');
-                        statusText.innerText = "Hazır!";
-                    }, 2000);
+                        statusText.innerText = "İçerik Hazır!";
+                    }, 2500);
                 } else {
                     videoLoader.classList.add('hidden');
                     statusText.innerText = "Metinler hazır.";
@@ -411,9 +412,9 @@
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("Hata Detayı:", error);
+                console.error("Hata:", error);
                 statusText.innerText = "Bir hata oluştu.";
-                loaderText.innerText = "API Hatası: " + error.message;
+                loaderText.innerText = error.message;
             } finally { isProcessing = false; }
         }
 
