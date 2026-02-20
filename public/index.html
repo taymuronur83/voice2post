@@ -6,6 +6,7 @@
     <link rel="icon" href="data:,"> <title>Voice2Post AI | Sesini Markaya Dönüştür</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/@remotion/player@latest/dist/index.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: #0f172a; color: #e2e8f0; }
@@ -19,48 +20,88 @@
         .modal-content { transform: scale(0.95); transition: transform 0.3s ease; }
         .active .modal-content { transform: scale(1); }
         
-        .dropdown-menu { display: none; transform-origin: top right; background: #020617; border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+        .dropdown-menu { 
+            display: none; 
+            transform-origin: top right; 
+            background: #020617; 
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+        }
         .dropdown-menu.active { display: block; animation: fadeIn 0.2s ease-out; }
 
-        .lang-list { display: none; position: absolute; right: 0; top: 100%; background: #020617; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; min-width: 140px; overflow: hidden; z-index: 100; }
+        .lang-dropdown { position: relative; display: inline-block; }
+        .lang-list { 
+            display: none; position: absolute; right: 0; top: 100%; 
+            background: #020617; border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 12px; min-width: 140px; overflow: hidden; z-index: 100;
+        }
         .lang-list.show { display: block; animation: fadeIn 0.2s ease-out; }
-        .lang-item { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: white; }
+        .lang-item { padding: 10px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; }
         .lang-item:hover { background: rgba(255,255,255,0.05); }
-
         .hidden-view { display: none; }
         .recording-pulse { animation: mic-pulse 1.5s infinite; background: #ef4444 !important; }
         @keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
         
+        .plan-table-row { border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; }
+        .plan-table-row:hover { background: rgba(255,255,255,0.02); }
+
+        @media (max-width: 640px) {
+            .table-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+            .table-container::-webkit-scrollbar { display: none; }
+            .min-w-table { min-width: 600px !important; } 
+            .plan-text-mobile { font-size: 12px !important; }
+            .mobile-btn-container { transform: scale(0.9); }
+            #nav-login-btn { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        }
+
+        .populer-badge { top: -1.2rem !important; font-size: 9px !important; padding: 2px 10px !important; white-space: nowrap; z-index: 20; }
+
         .input-mode-container { position: relative; display: flex; background: rgba(255, 255, 255, 0.05); padding: 5px; border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 2rem; cursor: pointer; user-select: none; }
         .mode-slider { position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); background: #2563eb; border-radius: 100px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; height: 40px; }
         .mode-option { position: relative; z-index: 2; padding: 10px 30px; border-radius: 100px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s; }
         .mode-option.active { color: white; }
         .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
+        .text-input-area:focus { border-color: #3b82f6; }
+        .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
     </style>
 </head>
 <body>
 
     <div id="auth-modal" class="modal-overlay fixed inset-0 z-[100] items-center justify-center bg-black/80 backdrop-blur-md px-4">
         <div class="modal-content glass max-w-md w-full p-8 rounded-[2.5rem] border border-white/20 shadow-2xl relative">
-            <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+            <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <div id="login-view">
                 <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-white mb-2">Hoş Geldiniz</h3>
-                    <p class="text-slate-400 text-sm">Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.</p>
+                    <h3 class="text-2xl font-bold text-white mb-2" data-i18n="auth_welcome">Hoş Geldiniz</h3>
+                    <p class="text-slate-400 text-sm" data-i18n="auth_subtitle">Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.</p>
                 </div>
                 <div class="space-y-4">
-                    <input type="email" id="login-email" placeholder="ornek@mail.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition">
-                    <input type="password" id="login-pass" placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1" data-i18n="email">E-Posta</label>
+                        <input type="email" id="login-email" placeholder="ornek@mail.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                    <div>
+                        <div class="flex justify-between">
+                            <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 ml-1" data-i18n="password">Şifre</label>
+                            <button type="button" onclick="handleForgotPassword()" class="text-xs text-blue-400 hover:text-blue-300 mb-2" data-i18n="forgot_pass">Şifremi Unuttum</button>
+                        </div>
+                        <input type="password" id="login-pass" placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition">
+                    </div>
                     <div class="flex gap-2">
-                        <button onclick="handleSignIn()" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition">Giriş Yap</button>
-                        <button onclick="handleSignUp()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg">Kayıt Ol</button>
+                        <button onclick="handleSignIn()" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition" data-i18n="login_btn">Giriş Yap</button>
+                        <button onclick="handleSignUp()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-500/20">Kayıt Ol</button>
                     </div>
                 </div>
             </div>
             <div id="verify-view" class="hidden-view text-center">
-                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-envelope-open-text text-3xl text-blue-400"></i></div>
+                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
+                </div>
                 <h3 class="text-2xl font-bold text-white mb-2">E-Postanı Kontrol Et</h3>
-                <button onclick="location.reload()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl mt-4">Doğruladım, Giriş Yap</button>
+                <p class="text-slate-400 text-sm mb-6">Hesabını aktif etmek için gönderdiğimiz linke tıklaman gerekiyor. Spam klasörüne bakmayı unutma!</p>
+                <button onclick="location.reload()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl">Doğruladım, Giriş Yap</button>
             </div>
         </div>
     </div>
@@ -69,77 +110,122 @@
         <div class="text-2xl font-extrabold tracking-tighter text-white">VOICE<span class="text-blue-500">2</span>POST</div>
         <div class="flex items-center space-x-4 md:space-x-8">
             <div class="hidden md:flex space-x-8 text-sm font-medium">
-                <a href="#arac" class="hover:text-blue-400 transition">Hemen Dene</a>
-                <a href="#ozellikler" class="hover:text-blue-400 transition">Özellikler</a>
-                <a href="#fiyatlandirma" class="hover:text-blue-400 transition">Fiyatlandırma</a>
+                <a href="#arac" class="hover:text-blue-400 transition" data-i18n="nav_try">Hemen Dene</a>
+                <a href="#ozellikler" class="hover:text-blue-400 transition" data-i18n="nav_features">Özellikler</a>
+                <a href="#fiyatlandirma" class="hover:text-blue-400 transition" data-i18n="nav_pricing">Fiyatlandırma</a>
             </div>
-            <div class="lang-dropdown relative">
+            <div class="lang-dropdown">
                 <button onclick="toggleLangMenu()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-2 text-sm text-white">
                     <span id="current-lang-flag">🇹🇷</span> <span id="current-lang-name">TR</span> <i class="fas fa-chevron-down text-[10px]"></i>
                 </button>
                 <div id="lang-list" class="lang-list">
-                    <div class="lang-item" onclick="changeLanguage('tr')"><span>🇹🇷</span> Türkçe</div>
-                    <div class="lang-item" onclick="changeLanguage('en')"><span>🇺🇸</span> English</div>
+                    <div class="lang-item text-white" onclick="changeLanguage('tr')"><span>🇹🇷</span> Türkçe</div>
+                    <div class="lang-item text-white" onclick="changeLanguage('en')"><span>🇺🇸</span> English</div>
                 </div>
             </div>
             <div class="relative">
-                <button id="nav-login-btn" onclick="handleNavClick()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg">Giriş Yap</button>
+                <button id="nav-login-btn" onclick="handleNavClick()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg" data-i18n="login_btn">Giriş Yap</button>
                 <div id="user-dropdown" class="dropdown-menu absolute right-0 mt-4 w-64 rounded-2xl py-3 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-white/10 bg-white/5"><p id="user-display-email" class="text-sm text-white truncate">misafir@mail.com</p></div>
-                    <div class="p-2"><button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 rounded-xl transition font-semibold">Oturumu Kapat</button></div>
+                    <div class="px-6 py-4 border-b border-white/10 bg-white/5">
+                        <p id="user-display-email" class="text-sm text-white font-medium truncate">misafir@mail.com</p>
+                    </div>
+                    <div class="p-2"><button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 rounded-xl transition font-semibold" data-i18n="logout">Oturumu Kapat</button></div>
                 </div>
             </div>
         </div>
     </nav>
 
     <header id="arac" class="pt-32 pb-20 px-6 text-center">
-        <span class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-8">AI İçerik Asistanı</span>
+        <span class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-8" data-i18n="badge">AI İçerik Asistanı</span>
         <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
-            <span>Sesini</span> <br><span class="gradient-text">Profesyonel Posta</span> <span>Dönüştür</span>
+            <span data-i18n="hero_1">Sesini</span> <br><span class="gradient-text" data-i18n="hero_2">Profesyonel Posta</span> <span data-i18n="hero_3">Dönüştür</span>
         </h1>
-        
         <div class="max-w-4xl mx-auto p-8 md:p-12 rounded-[2.5rem] glass shadow-2xl border border-white/10 mt-12 relative overflow-hidden">
             <div class="flex flex-col items-center">
                 <div class="input-mode-container" id="mode-toggle">
                     <div class="mode-slider" id="mode-slider"></div>
-                    <div class="mode-option active" id="opt-mic" onclick="setMode('mic')"><i class="fas fa-microphone"></i> <span>Ses</span></div>
-                    <div class="mode-option" id="opt-text" onclick="setMode('text')"><i class="fas fa-keyboard"></i> <span>Metin</span></div>
+                    <div class="mode-option active" id="opt-mic" onclick="setMode('mic')">
+                        <i class="fas fa-microphone"></i> <span data-i18n="mode_mic">Ses</span>
+                    </div>
+                    <div class="mode-option" id="opt-text" onclick="setMode('text')">
+                        <i class="fas fa-keyboard"></i> <span data-i18n="mode_text">Metin</span>
+                    </div>
                 </div>
                 
-                <div id="voice-input-ui">
-                    <div id="record-btn" class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition shadow-xl">
-                        <i id="mic-icon" class="fas fa-microphone text-4xl text-white"></i>
+                <div id="voice-input-ui" class="flex flex-col items-center">
+                    <div class="flex items-center gap-4 relative">
+                        <div id="record-btn" class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-xl shadow-blue-500/40">
+                            <i id="mic-icon" class="fas fa-microphone text-4xl text-white"></i>
+                        </div>
+                        <button id="cancel-btn" class="hidden w-12 h-12 bg-red-500/20 border border-red-500/50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500/40 transition">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <p id="status-text" class="mt-8 font-medium text-slate-300 italic text-lg">Dokun ve anlatmaya başla...</p>
+                    <p id="status-text" class="mt-8 font-medium text-slate-300 italic text-lg min-h-[1.5rem]" data-i18n="mic_ready">Dokun ve anlatmaya başla...</p>
                 </div>
 
                 <div id="text-input-ui" class="hidden w-full">
                     <textarea id="manual-text" class="text-input-area" placeholder="İçeriğe dönüştürmek istediğin metni buraya yaz..."></textarea>
-                    <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition">Oluştur</button>
+                    <div class="flex justify-center">
+                        <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
+                    </div>
+                </div>
+
+                <div id="recording-anim" class="hidden mt-4 flex items-end space-x-1 h-8">
+                    <div class="w-1.5 bg-blue-500 animate-bounce h-4"></div>
+                    <div class="w-1.5 bg-emerald-500 animate-bounce h-8"></div>
+                    <div class="w-1.5 bg-blue-500 animate-bounce h-6"></div>
+                    <div class="w-1.5 bg-emerald-500 animate-bounce h-4"></div>
                 </div>
 
                 <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
                         <div class="space-y-8">
-                            <h4 class="text-xs font-black text-slate-500 tracking-widest uppercase">SOSYAL MEDYA METİNLERİ</h4>
+                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> SOSYAL MEDYA METİNLERİ
+                            </h4>
                             <div class="animate-fade-in">
-                                <span class="flex items-center text-[11px] font-bold text-blue-400 uppercase mb-2"><i class="fab fa-linkedin text-lg mr-2"></i> LinkedIn Postu</span>
-                                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-200 text-sm" id="linkedin-res"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="flex items-center text-[11px] font-bold text-blue-400 tracking-widest uppercase">
+                                        <i class="fab fa-linkedin text-lg mr-2"></i> LinkedIn Postu
+                                    </span>
+                                    <button onclick="copyText('linkedin-res')" class="text-xs text-slate-500 hover:text-white transition"><i class="fas fa-copy mr-1"></i> <span data-i18n="copy">Kopyala</span></button>
+                                </div>
+                                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-200 text-sm leading-relaxed" id="linkedin-res"></div>
                             </div>
                             <div class="animate-fade-in" style="animation-delay: 0.1s">
-                                <span class="flex items-center text-[11px] font-bold text-slate-400 uppercase mb-2"><i class="fab fa-x-twitter text-lg mr-2"></i> X (Twitter)</span>
-                                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-300 text-sm italic" id="x-res"></div>
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="flex items-center text-[11px] font-bold text-slate-400 tracking-widest uppercase">
+                                        <i class="fab fa-x-twitter text-lg mr-2"></i> X (Twitter) Akışı
+                                    </span>
+                                    <button onclick="copyText('x-res')" class="text-xs text-slate-500 hover:text-white transition"><i class="fas fa-copy mr-1"></i> <span data-i18n="copy">Kopyala</span></button>
+                                </div>
+                                <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-300 text-sm italic leading-relaxed" id="x-res"></div>
                             </div>
                         </div>
 
                         <div class="space-y-8">
-                            <h4 class="text-xs font-black text-slate-500 tracking-widest uppercase">OLUŞTURULAN VİDEO</h4>
-                            <div id="video-frame-container" class="relative glass rounded-[2.5rem] overflow-hidden bg-black aspect-[9/16] w-full max-w-[320px] mx-auto border border-pink-500/20 shadow-2xl">
-                                <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 z-10">
-                                    <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
-                                    <p class="text-[10px] uppercase font-bold text-slate-400">Claude Videoyu Hazırlıyor...</p>
+                            <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> OLUŞTURULAN VİDEO
+                            </h4>
+                            <div class="animate-fade-in" style="animation-delay: 0.2s">
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
+                                        <i class="fas fa-play-circle text-lg mr-2"></i> CANLI ÖNİZLEME
+                                    </span>
+                                    <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
+                                        <i class="fas fa-download mr-1"></i> MP4 İndir
+                                    </button>
                                 </div>
-                                <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700"></div>
+                                
+                                <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 320px; margin: 0 auto;">
+                                    <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/90 backdrop-blur-sm z-10">
+                                        <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold" id="video-loader-text">Claude Videoyu Hazırlıyor...</p>
+                                    </div>
+                                    <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -148,79 +234,175 @@
         </div>
     </header>
 
+    <section id="fiyatlandirma" class="py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4" data-i18n="pricing_title">Sana Uygun Planı Seç</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto" data-i18n="pricing_desc">Şeffaf fiyatlandırma ile ihtiyacın olan krediyi seç, hemen içerik üretmeye başla.</p>
+            </div>
+            <div class="table-container bg-white/5 rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md shadow-2xl">
+                <table class="w-full text-left min-w-table border-collapse">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/10">
+                            <th class="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest" data-i18n="plan_features">Özellikler</th>
+                            <th class="px-8 py-6 text-center">
+                                <span class="text-white font-bold block">STARTER</span>
+                                <span class="text-blue-400 text-2xl font-black mt-2 block">$0 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
+                            <th class="px-8 py-6 text-center relative bg-blue-600/10">
+                                <span class="populer-badge absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-black rounded-full shadow-lg" data-i18n="popular">EN POPÜLER</span>
+                                <span class="text-white font-bold block">PRO</span>
+                                <span class="text-emerald-400 text-2xl font-black mt-2 block">$19 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
+                            <th class="px-8 py-6 text-center">
+                                <span class="text-white font-bold block">BUSINESS</span>
+                                <span class="text-purple-400 text-2xl font-black mt-2 block">$49 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="plan-table-row">
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="credit_limit">Aylık Kredi</td>
+                            <td class="px-8 py-5 text-center text-slate-400">3 Kredi</td>
+                            <td class="px-8 py-5 text-center text-white font-bold">50 Kredi</td>
+                            <td class="px-8 py-5 text-center text-slate-400">Sınırsız</td>
+                        </tr>
+                        <tr class="plan-table-row">
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="ai_models">Yapay Zeka Modelleri</td>
+                            <td class="px-8 py-5 text-center text-slate-400 italic">Standart</td>
+                            <td class="px-8 py-5 text-center text-emerald-400 font-bold">Premium (GPT-4o)</td>
+                            <td class="px-8 py-5 text-center text-slate-400">Premium + Özel</td>
+                        </tr>
+                        <tr class="plan-table-row">
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="video_export">Video Çıktısı (MP4)</td>
+                            <td class="px-8 py-5 text-center"><i class="fas fa-times text-red-500/50"></i></td>
+                            <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
+                            <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="px-8 py-8"></td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="text-xs font-bold text-slate-500 border border-white/10 px-6 py-2 rounded-full hover:bg-white/5 transition" data-i18n="current_plan">Mevcut Plan</button>
+                            </td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-8 py-3 rounded-full transition shadow-lg shadow-blue-500/20" data-i18n="get_started">HEMEN BAŞLA</button>
+                            </td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="text-xs font-bold text-white border border-purple-500/50 px-6 py-2 rounded-full hover:bg-purple-500/10 transition" data-i18n="upgrade">YÜKSELT</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
     <section id="ozellikler" class="py-24 px-6 bg-slate-900/40">
         <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center">
-            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Hızlı İşleme</h3><p class="text-slate-400 text-sm">Sesiniz saniyeler içinde metne dönüşür.</p></div>
-            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Akıllı AI</h3><p class="text-slate-400 text-sm">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
-            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Çoklu Format</h3><p class="text-slate-400 text-sm">LinkedIn ve X için hazır şablonlar.</p></div>
+            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
+            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
+            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
         </div>
     </section>
 
     <footer class="py-12 text-center border-t border-white/5 text-slate-600 text-sm">
         <div class="text-xl font-extrabold tracking-tighter text-white mb-4">VOICE<span class="text-blue-500">2</span>POST</div>
-        <p>&copy; 2026 Voice2Post AI. <span>Tüm Hakları Saklıdır.</span></p>
+        <p>&copy; 2026 Voice2Post AI. <span data-i18n="rights">Tüm Hakları Saklıdır.</span></p>
     </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA", 
             authDomain: "voice2post-9e8ca.firebaseapp.com",
             projectId: "voice2post-9e8ca",
+            storageBucket: "voice2post-9e8ca.firebasestorage.app",
+            messagingSenderId: "511446656614",
             appId: "1:511446656614:web:16537fc8fd3a343e716fa7"
         };
+        
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        window.handleSignIn = async () => {
-            const e = document.getElementById('login-email').value;
-            const p = document.getElementById('login-pass').value;
-            try { await signInWithEmailAndPassword(auth, e, p); closeModals(); } catch(err) { alert(err.message); }
+        window.handleSignUp = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return alert("Bilgileri doldurun.");
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                await sendEmailVerification(userCredential.user);
+                document.getElementById('login-view').classList.add('hidden-view');
+                document.getElementById('verify-view').classList.remove('hidden-view');
+            } catch (error) { alert("Hata: " + error.message); }
         };
+
+        window.handleSignIn = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            if(!email || !pass) return alert("Giriş bilgilerini yazın.");
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                if (userCredential.user.emailVerified) { window.isLoggedIn = true; closeModals(); } 
+                else { alert("Lütfen önce e-postanızı doğrulayın!"); await signOut(auth); }
+            } catch (error) { alert("Hata: " + error.message); }
+        };
+
+        window.handleForgotPassword = async () => {
+            const email = document.getElementById('login-email').value;
+            if (!email) return alert("E-posta yazın.");
+            try { await sendPasswordResetEmail(auth, email); alert("Sıfırlama maili gönderildi."); } catch (error) { alert(error.message); }
+        };
+
         window.logout = () => signOut(auth).then(() => location.reload());
+
         onAuthStateChanged(auth, (user) => {
-            if(user) {
-                window.isLoggedIn = true;
-                document.getElementById('nav-login-btn').innerText = "Hesabım";
+            const btn = document.getElementById('nav-login-btn');
+            if (user && user.emailVerified) {
+                window.isLoggedIn = true; btn.innerText = "Hesabım";
+                btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
+                closeModals();
+            } else { 
+                window.isLoggedIn = false; btn.innerText = "Giriş Yap";
+                if(btn.classList.contains('bg-emerald-600')) btn.classList.replace('bg-emerald-600', 'bg-blue-600');
             }
         });
     </script>
 
     <script>
-        let isRecording = false;
+        window.isProUser = false;
+        let isRecording = false; 
+        let finalTranscript = ""; 
         let recognition;
+        let isProcessing = false; 
 
         function setMode(mode) {
-            const s = document.getElementById('mode-slider');
+            const slider = document.getElementById('mode-slider');
+            const micUi = document.getElementById('voice-input-ui');
+            const textUi = document.getElementById('text-input-ui');
             const optMic = document.getElementById('opt-mic');
             const optText = document.getElementById('opt-text');
-            
             if(mode === 'mic') {
-                s.style.transform = 'translateX(0)';
-                optMic.classList.add('active');
-                optText.classList.remove('active');
-                document.getElementById('voice-input-ui').classList.remove('hidden');
-                document.getElementById('text-input-ui').classList.add('hidden');
+                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden'); optMic.classList.add('active'); optText.classList.remove('active');
             } else {
-                s.style.transform = 'translateX(100%)';
-                optMic.classList.remove('active');
-                optText.classList.add('active');
-                document.getElementById('voice-input-ui').classList.add('hidden');
-                document.getElementById('text-input-ui').classList.remove('hidden');
+                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden'); optMic.classList.remove('active'); optText.classList.add('active');
             }
         }
 
         async function processAIResult(text) {
-            if(!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
+            if(!text.trim() || isProcessing) return;
+            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
             
-            const resContainer = document.getElementById('ai-result-container');
+            isProcessing = true;
+            const statusText = document.getElementById('status-text');
+            const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
 
-            resContainer.classList.remove('hidden');
+            statusText.innerText = "Yapay Zeka Hazırlıyor...";
+            resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
 
@@ -230,61 +412,88 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
+
                 const data = await response.json();
 
-                document.getElementById('linkedin-res').innerText = data.linkedin;
-                document.getElementById('x-res').innerText = data.twitter;
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
 
-                // CLAUDE SONNET VERİSİNİ REMOTION PLAYER'A JSON OLARAK GÖNDERME
+                // GÜNCEL CLAUDE VERİSİ İLE VİDEO ÖNİZLEME
                 const videoData = {
                     text: data.video_script.text,
                     accentColor: data.video_script.accentColor,
-                    theme: data.video_script.theme,
-                    animation: data.video_script.animation
+                    animation: data.video_script.animation // Claude'dan gelen sarsıntı/zoom datası
                 };
 
-                const videoUrl = `/api/render-preview?videoData=${encodeURIComponent(JSON.stringify(videoData))}`;
-                
-                liveArea.innerHTML = `<iframe src="${videoUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
+                const encodedData = encodeURIComponent(JSON.stringify(videoData));
+                liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe>`;
                 
                 setTimeout(() => {
                     videoLoader.classList.add('hidden');
                     liveArea.classList.remove('opacity-0');
-                }, 3000);
-            } catch(e) { 
-                console.error(e);
-                alert("Hata oluştu."); 
-            }
+                    document.getElementById('download-btn').classList.remove('hidden');
+                    statusText.innerText = "İçerik Hazır!";
+                }, 2000);
+
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) { 
+                console.error(error);
+                statusText.innerText = "Bir hata oluştu.";
+            } finally { isProcessing = false; }
         }
 
         function processManualText() {
-            const t = document.getElementById('manual-text').value;
-            if(t.trim()) processAIResult(t);
+            const text = document.getElementById('manual-text').value;
+            if(text.trim()) processAIResult(text);
         }
 
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.lang = 'tr-TR';
-            recognition.onresult = (e) => processAIResult(e.results[0][0].transcript);
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onresult = (e) => {
+                let interimTranscript = "";
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
+                    else interimTranscript += e.results[i][0].transcript;
+                }
+                document.getElementById('status-text').innerText = finalTranscript + interimTranscript;
+            };
         }
 
         document.getElementById('record-btn').onclick = () => {
-            if(!isRecording) {
-                recognition.start();
-                isRecording = true;
+            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
+            if (!isRecording) {
+                finalTranscript = ""; isRecording = true; 
+                try { recognition.start(); } catch(e) {}
                 document.getElementById('record-btn').classList.add('recording-pulse');
-            } else {
-                recognition.stop();
-                isRecording = false;
-                document.getElementById('record-btn').classList.remove('recording-pulse');
-            }
+                document.getElementById('mic-icon').className = "fas fa-stop text-4xl text-white";
+                document.getElementById('recording-anim').classList.remove('hidden');
+                document.getElementById('cancel-btn').classList.remove('hidden');
+                document.getElementById('status-text').innerText = "Dinliyorum...";
+            } else { stopRecording(); }
         };
+
+        function stopRecording() {
+            isRecording = false; try { recognition.stop(); } catch(e) {}
+            document.getElementById('record-btn').classList.remove('recording-pulse');
+            document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
+            document.getElementById('recording-anim').classList.add('hidden');
+            document.getElementById('cancel-btn').classList.add('hidden');
+            setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
+        }
 
         function toggleLangMenu() { document.getElementById('lang-list').classList.toggle('show'); }
         function closeModals() { document.getElementById('auth-modal').classList.remove('active'); }
         function handleNavClick() {
             if (window.isLoggedIn) document.getElementById('user-dropdown').classList.toggle('active');
             else document.getElementById('auth-modal').classList.add('active');
+        }
+        async function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            await navigator.clipboard.writeText(text); alert("Kopyalandı!");
         }
     </script>
 </body>
