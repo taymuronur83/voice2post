@@ -1,9 +1,13 @@
 name: Render Video
 on:
-  push:
-    branches:
-      - '**'
+  repository_dispatch:
+    types: [render-video] # API'den gelen tetikleyiciyi yakalar
   workflow_dispatch:
+    inputs:
+      props:
+        description: 'Remotion Props JSON'
+        required: false
+        default: '{}'
 
 permissions:
   contents: write
@@ -19,6 +23,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm' # Hızlı render için önbellekleme ekledik
 
       - name: Install Dependencies
         run: npm install
@@ -27,10 +32,14 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        run: npm run render
+        # API'den gelen 'props' verisini Remotion render komutuna enjekte ediyoruz
+        run: |
+          PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
+          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS"
 
       - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
-          name: my-video
+          name: final-video
           path: out/video.mp4
+          retention-days: 1 # Gereksiz depolamayı önler
