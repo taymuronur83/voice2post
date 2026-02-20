@@ -35,7 +35,7 @@ export default async function handler(req, res) {
                 response_format: { type: "json_object" }
             }),
             anthropic.messages.create({
-                model: "claude-3-opus-20240229",
+                model: "claude-3-5-sonnet-latest",
                 max_tokens: 1200,
                 system: systemPromptClaude,
                 messages: [{ role: "user", content: `Komut: ${prompt}` }],
