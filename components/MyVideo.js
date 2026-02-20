@@ -3,27 +3,33 @@ import React from 'react';
 
 export const MyVideo = () => {
     // 1. VERİ YAKALAMA: Vercel/HTML tarafından gelen tüm paketi alıyoruz
-    const { text, backgroundUrl, accentColor, audioUrl } = getInputProps();
+    // Claude'dan gelen "animation" objesini de buraya ekliyoruz
+    const { text, backgroundUrl, accentColor, audioUrl, animation } = getInputProps();
     
     const frame = useCurrentFrame();
     const { fps } = useVideoConfig();
 
+    // Claude'dan gelen animasyon ayarları (Yoksa varsayılan değerleri kullanır)
+    const config = animation || { shakeIntensity: 0, zoomScale: 1.15, textSpeed: 1 };
+
     // 2. ANİMASYONLAR
-    // Metnin girişte yaylanarak gelmesi (Spring efekti)
-    const opacity = spring({
+    // Metnin girişte yaylanarak gelmesi
+    const entryOpacity = spring({
         frame,
         fps,
         config: { damping: 200 },
     });
 
-    // Arka planın sürekli yavaşça büyümesi (Ken Burns / Sinematik etki)
-    const scale = interpolate(frame, [0, 300], [1, 1.15]);
+    // ARKA PLAN ZOOM: Claude'un gönderdiği zoomScale değerine göre dinamikleşti
+    const scale = interpolate(frame, [0, 300], [1, config.zoomScale || 1.15]);
+
+    // SARSINTI EFEKTİ (Putin gibi konularda Claude burayı artıracaktır)
+    const shake = Math.sin(frame * (config.textSpeed || 1)) * (config.shakeIntensity || 0);
 
     return (
         <AbsoluteFill style={{ backgroundColor: 'black' }}>
             
             {/* 3. ARKA PLAN GÖRSELİ */}
-            {/* Claude'un seçtiği görseli arkaya döşer, hafifçe büyütür */}
             <AbsoluteFill style={{ transform: `scale(${scale})` }}>
                 <Img 
                     src={backgroundUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1080&q=80"} 
@@ -31,13 +37,12 @@ export const MyVideo = () => {
                         width: '100%', 
                         height: '100%', 
                         objectFit: 'cover', 
-                        opacity: 0.5 // Yazıların okunması için görseli karartıyoruz
+                        opacity: 0.5 
                     }} 
                 />
             </AbsoluteFill>
 
             {/* 4. RENK VURGUSU (Overlay) */}
-            {/* Gelen accentColor'ı kullanarak alt tarafa renkli bir hava katar */}
             <AbsoluteFill style={{ 
                 background: `linear-gradient(to top, ${accentColor || '#3b82f6'}aa, transparent 70%)`,
                 mixBlendMode: 'multiply'
@@ -48,7 +53,9 @@ export const MyVideo = () => {
                 justifyContent: 'center', 
                 alignItems: 'center', 
                 padding: '0 80px',
-                opacity: opacity 
+                opacity: entryOpacity,
+                // Sarsıntı efekti transform'a eklendi
+                transform: `translate(${shake}px, ${shake}px)`
             }}>
                 {/* Dinamik Renkli Çizgi */}
                 <div style={{
@@ -76,7 +83,6 @@ export const MyVideo = () => {
             </AbsoluteFill>
 
             {/* 6. MÜZİK */}
-            {/* Claude müzik linki gönderdiyse çalar */}
             {audioUrl && <Audio src={audioUrl} />}
             
         </AbsoluteFill>
