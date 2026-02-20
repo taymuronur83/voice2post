@@ -1,7 +1,6 @@
 const Anthropic = require('@anthropic-ai/sdk');
 const OpenAI = require('openai');
 
-// Vercel ortam değişkenlerinden anahtarları alıyoruz
 const anthropic = new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -11,14 +10,12 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req, res) {
-    // Sadece POST isteklerini kabul et
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
     const { prompt } = req.body;
 
-    // API Anahtarı kontrolü
     if (!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY) {
         return res.status(500).json({ 
             error: "API anahtarları eksik! Vercel Dashboard > Settings > Environment Variables kısmına ekleyin." 
@@ -44,7 +41,6 @@ export default async function handler(req, res) {
     }`;
 
     try {
-        // PARALEL ÇALIŞMA: İki yapay zeka aynı anda çalışır
         const [oaiResponse, antResponse] = await Promise.all([
             openai.chat.completions.create({
                 model: "gpt-4o-mini",
@@ -65,24 +61,33 @@ export default async function handler(req, res) {
             })
         ]);
 
-        // OpenAI Verisini İşle
-        const oaiData = JSON.parse(oaiResponse.choices[0].message.content);
+        // OpenAI Verisini Güvenli İşle
+        const oaiContent = oaiResponse.choices[0].message.content;
+        const oaiData = JSON.parse(oaiContent || "{}");
         
-        // Claude Verisini İşle (Regex ile JSON temizleme garantisi)
+        // Claude Verisini Güvenli İşle
         const antRawText = antResponse.content[0].text;
         const jsonMatch = antRawText.match(/\{[\s\S]*\}/);
         
-        if (!jsonMatch) {
-            throw new Error("Claude geçerli bir JSON üretmedi.");
+        let antData = { video_script: null };
+        if (jsonMatch) {
+            try {
+                antData = JSON.parse(jsonMatch[0]);
+            } catch (e) {
+                console.error("Claude JSON Parse Hatası:", e);
+            }
         }
-        
-        const antData = JSON.parse(jsonMatch[0]);
 
-        // Birleştirilmiş Yanıt (HTML'deki fonksiyonun beklediği format)
+        // Birleştirilmiş Yanıt - "undefined" yazmasını engellemek için varsayılan değerler eklendi
         return res.status(200).json({
-            linkedin: oaiData.linkedin,
-            twitter: oaiData.twitter,
-            video_script: antData.video_script
+            linkedin: oaiData.linkedin || "LinkedIn içeriği oluşturulamadı.",
+            twitter: oaiData.twitter || "X (Twitter) içeriği oluşturulamadı.",
+            video_script: antData.video_script || {
+                text: "İçerik hazır",
+                theme: "teknoloji",
+                accentColor: "#3b82f6",
+                animation: { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 }
+            }
         });
 
     } catch (error) {
