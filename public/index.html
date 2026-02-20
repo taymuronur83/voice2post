@@ -403,8 +403,11 @@
 
                 const rawResponse = await response.text();
                 let data;
+                
+                // GÜNCELLEME: JSON Temizleme Mantığı
                 try {
-                    data = JSON.parse(rawResponse);
+                    const cleanJson = rawResponse.replace(/```json|```/g, "").trim();
+                    data = JSON.parse(cleanJson);
                 } catch (e) {
                     const match = rawResponse.match(/\{[\s\S]*\}/);
                     data = match ? JSON.parse(match[0]) : null;
@@ -415,16 +418,18 @@
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
 
+                // GÜNCELLEME: Video Render Tetikleyici ve Iframe Onload Kontrolü
                 if (data.video_script) {
                     const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
-                    liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" id="preview-frame" style="width:100%; height:100%; border:none;"></iframe>`;
                     
-                    setTimeout(() => {
+                    const iframe = document.getElementById('preview-frame');
+                    iframe.onload = () => {
                         videoLoader.classList.add('hidden');
                         liveArea.classList.remove('opacity-0');
                         document.getElementById('download-btn').classList.remove('hidden');
                         statusText.innerText = "İçerik Hazır!";
-                    }, 2000);
+                    };
                 } else {
                     videoLoader.classList.add('hidden');
                 }
