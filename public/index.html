@@ -352,6 +352,7 @@
             }
         }
 
+        // GÜNCELLENMİŞ VE GENİŞ DÜŞÜNÜLMÜŞ SÜREÇ FONKSİYONU
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -373,13 +374,20 @@
                     body: JSON.stringify({ prompt: text })
                 });
 
-                if (!response.ok) throw new Error("API Hatası: " + response.status);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Sunucu hatası!");
+                }
 
                 const data = await response.json();
+                console.log("Gelen Ham Veri:", data); // Tarayıcı konsolunda incelemek için
                 
-                // Backend'den gelen verileri kontrollü bir şekilde atıyoruz
-                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik üretilemedi.";
-                document.getElementById('x-res').innerText = data.twitter || "İçerik üretilemedi.";
+                // VERİLERİ ZORLA VE GÜVENLİ ATAMA (KEY UYUŞMAZLIĞINI BİTİRİR)
+                const linkedinVal = data.linkedin || data.LinkedIn || data.post || "İçerik üretilemedi.";
+                const twitterVal = data.twitter || data.Twitter || data.x || "İçerik üretilemedi.";
+                
+                document.getElementById('linkedin-res').innerText = linkedinVal;
+                document.getElementById('x-res').innerText = twitterVal;
                 
                 if (data.video_script) {
                     lastVideoScript = data.video_script;
@@ -387,13 +395,17 @@
                     // Önizleme alanını render ediyoruz
                     liveArea.innerHTML = `<iframe src="/preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
                     document.getElementById('download-btn').classList.remove('hidden');
+                } else {
+                    console.warn("video_script verisi eksik!");
                 }
 
                 videoLoader.classList.add('hidden');
                 statusText.innerText = "İçerik Hazır!";
             } catch (error) { 
                 console.error("İşlem Hatası:", error);
-                statusText.innerText = "Hata oluştu."; 
+                statusText.innerText = "Hata: " + error.message; 
+                document.getElementById('linkedin-res').innerText = "Hata oluştu, lütfen API anahtarlarınızı kontrol edin.";
+                document.getElementById('x-res').innerText = "Bağlantı kesilmiş olabilir.";
                 videoLoader.classList.add('hidden'); 
             } finally { 
                 isProcessing = false; 
@@ -405,13 +417,15 @@
             const btn = document.getElementById('download-btn');
             btn.innerText = "Render Başlatıldı...";
             try {
-                await fetch('/api/render-video', {
+                const resp = await fetch('/api/render-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ script: lastVideoScript })
                 });
-                alert("GitHub Actions tetiklendi. Video hazırlanıyor.");
+                if(resp.ok) alert("GitHub Actions tetiklendi. Video hazırlanıyor.");
+                else alert("Render başlatılamadı!");
             } catch (e) { alert("Hata!"); }
+            finally { btn.innerText = "MP4 Render Al (GitHub)"; }
         }
 
         function processManualText() { const t = document.getElementById('manual-text').value; if(t.trim()) processAIResult(t); }
@@ -452,7 +466,12 @@
             if (window.isLoggedIn) document.getElementById('user-dropdown').classList.toggle('active');
             else document.getElementById('auth-modal').classList.add('active');
         };
-        window.copyText = async (id) => { await navigator.clipboard.writeText(document.getElementById(id).innerText); alert("Kopyalandı!"); };
+        window.copyText = async (id) => { 
+            const text = document.getElementById(id).innerText;
+            if(text && text !== "İçerik üretilemedi.") {
+                await navigator.clipboard.writeText(text); alert("Kopyalandı!"); 
+            }
+        };
     </script>
 </body>
 </html>
