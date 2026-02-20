@@ -45,74 +45,21 @@
         .plan-table-row:hover { background: rgba(255,255,255,0.02); }
 
         @media (max-width: 640px) {
-            .table-container { 
-                overflow-x: auto !important; 
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
-            }
+            .table-container { overflow-x: auto !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
             .table-container::-webkit-scrollbar { display: none; }
             .min-w-table { min-width: 600px !important; } 
             .plan-text-mobile { font-size: 12px !important; }
             .mobile-btn-container { transform: scale(0.9); }
-            #paypal-button-container { min-width: 120px; }
-            #nav-login-btn { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         }
 
-        .populer-badge {
-            top: -1.2rem !important;
-            font-size: 9px !important;
-            padding: 2px 10px !important;
-            white-space: nowrap;
-            z-index: 20;
-        }
+        .populer-badge { top: -1.2rem !important; font-size: 9px !important; padding: 2px 10px !important; white-space: nowrap; z-index: 20; }
 
-        .input-mode-container {
-            position: relative;
-            display: flex;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 5px;
-            border-radius: 100px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 2rem;
-            cursor: pointer;
-            user-select: none;
-        }
-        .mode-slider {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            width: calc(50% - 5px);
-            background: #2563eb;
-            border-radius: 100px;
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1;
-            height: 40px;
-        }
-        .mode-option {
-            position: relative;
-            z-index: 2;
-            padding: 10px 30px;
-            border-radius: 100px;
-            font-size: 14px;
-            font-weight: 700;
-            display: flex;
-            align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s;
-        }
+        .input-mode-container { position: relative; display: flex; background: rgba(255, 255, 255, 0.05); padding: 5px; border-radius: 100px; border: 1px solid rgba(255, 255, 255, 0.1); margin-bottom: 2rem; cursor: pointer; user-select: none; }
+        .mode-slider { position: absolute; top: 5px; left: 5px; width: calc(50% - 5px); background: #2563eb; border-radius: 100px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; height: 40px; }
+        .mode-option { position: relative; z-index: 2; padding: 10px 30px; border-radius: 100px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; color: #94a3b8; transition: color 0.3s; }
         .mode-option.active { color: white; }
-        .text-input-area {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 20px;
-            color: white;
-            resize: none;
-            min-height: 150px;
-            margin-bottom: 20px;
-            outline: none;
-        }
+        .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
         .text-input-area:focus { border-color: #3b82f6; }
-        
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
     </style>
 </head>
@@ -123,7 +70,6 @@
             <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition">
                 <i class="fas fa-times text-xl"></i>
             </button>
-
             <div id="login-view">
                 <div class="text-center mb-8">
                     <h3 class="text-2xl font-bold text-white mb-2" data-i18n="auth_welcome">Hoş Geldiniz</h3>
@@ -147,7 +93,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="verify-view" class="hidden-view text-center">
                 <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                     <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
@@ -161,14 +106,12 @@
 
     <nav class="fixed w-full z-50 glass py-4 px-6 flex justify-between items-center">
         <div class="text-2xl font-extrabold tracking-tighter text-white">VOICE<span class="text-blue-500">2</span>POST</div>
-        
         <div class="flex items-center space-x-4 md:space-x-8">
             <div class="hidden md:flex space-x-8 text-sm font-medium">
                 <a href="#arac" class="hover:text-blue-400 transition" data-i18n="nav_try">Hemen Dene</a>
                 <a href="#ozellikler" class="hover:text-blue-400 transition" data-i18n="nav_features">Özellikler</a>
                 <a href="#fiyatlandirma" class="hover:text-blue-400 transition" data-i18n="nav_pricing">Fiyatlandırma</a>
             </div>
-
             <div class="lang-dropdown">
                 <button onclick="toggleLangMenu()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-2 text-sm text-white">
                     <span id="current-lang-flag">🇹🇷</span> <span id="current-lang-name">TR</span> <i class="fas fa-chevron-down text-[10px]"></i>
@@ -178,7 +121,6 @@
                     <div class="lang-item text-white" onclick="changeLanguage('en')"><span>🇺🇸</span> English</div>
                 </div>
             </div>
-
             <div class="relative">
                 <button id="nav-login-btn" onclick="handleNavClick()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-full text-sm font-bold transition shadow-lg" data-i18n="login_btn">Giriş Yap</button>
                 <div id="user-dropdown" class="dropdown-menu absolute right-0 mt-4 w-64 rounded-2xl py-3 overflow-hidden">
@@ -196,10 +138,9 @@
         <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
             <span data-i18n="hero_1">Sesini</span> <br><span class="gradient-text" data-i18n="hero_2">Profesyonel Posta</span> <span data-i18n="hero_3">Dönüştür</span>
         </h1>
-        
+
         <div class="max-w-4xl mx-auto p-8 md:p-12 rounded-[2.5rem] glass shadow-2xl border border-white/10 mt-12 relative overflow-hidden">
             <div class="flex flex-col items-center">
-                
                 <div class="input-mode-container" id="mode-toggle">
                     <div class="mode-slider" id="mode-slider"></div>
                     <div class="mode-option active" id="opt-mic" onclick="setMode('mic')">
@@ -209,7 +150,7 @@
                         <i class="fas fa-keyboard"></i> <span data-i18n="mode_text">Metin</span>
                     </div>
                 </div>
-
+                
                 <div id="voice-input-ui" class="flex flex-col items-center">
                     <div class="flex items-center gap-4 relative">
                         <div id="record-btn" class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition-all shadow-xl shadow-blue-500/40">
@@ -224,9 +165,11 @@
 
                 <div id="text-input-ui" class="hidden w-full">
                     <textarea id="manual-text" class="text-input-area" placeholder="İçeriğe dönüştürmek istediğin metni buraya yaz..."></textarea>
-                    <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
+                    <div class="flex justify-center">
+                        <button onclick="processManualText()" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-bold transition btn-create-active">Oluştur</button>
+                    </div>
                 </div>
-                
+
                 <div id="recording-anim" class="hidden mt-4 flex items-end space-x-1 h-8">
                     <div class="w-1.5 bg-blue-500 animate-bounce h-4"></div>
                     <div class="w-1.5 bg-emerald-500 animate-bounce h-8"></div>
@@ -234,11 +177,11 @@
                     <div class="w-1.5 bg-emerald-500 animate-bounce h-4"></div>
                 </div>
 
-                <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 text-left">
+                <div id="ai-result-container" class="hidden w-full mt-12 border-t border-white/10 pt-10 text-left">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Metin Medyası
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Sosyal Medya Metinleri
                             </h4>
                             <div class="animate-fade-in">
                                 <div class="flex justify-between items-center mb-3">
@@ -259,18 +202,28 @@
                                 <div class="p-6 bg-white/5 rounded-2xl border border-white/5 text-slate-300 text-sm italic leading-relaxed" id="x-res"></div>
                             </div>
                         </div>
+
                         <div class="space-y-8">
                             <h4 class="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center">
-                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> Video Platformları
+                                <span class="w-8 h-[1px] bg-slate-700 mr-2"></span> OLUŞTURULAN VİDEO
                             </h4>
                             <div class="animate-fade-in" style="animation-delay: 0.2s">
                                 <div class="flex justify-between items-center mb-3">
                                     <span class="flex items-center text-[11px] font-bold text-pink-500 tracking-widest uppercase">
-                                        <i class="fas fa-video text-lg mr-2"></i> Reels / Shorts Senaryosu
+                                        <i class="fas fa-play-circle text-lg mr-2"></i> Canlı Önizleme
                                     </span>
-                                    <button onclick="copyText('video-res')" class="text-xs text-slate-500 hover:text-white transition"><i class="fas fa-copy mr-1"></i> <span data-i18n="copy">Kopyala</span></button>
+                                    <button id="download-btn" class="hidden text-xs bg-pink-600/20 hover:bg-pink-600/40 text-pink-400 px-3 py-1 rounded-full border border-pink-500/30 transition">
+                                        <i class="fas fa-download mr-1"></i> MP4 İndir
+                                    </button>
                                 </div>
-                                <div class="p-6 bg-white/5 rounded-2xl border border-pink-500/20 text-slate-300 text-sm leading-relaxed min-h-[200px]" id="video-res"></div>
+                                
+                                <div id="video-frame-container" class="relative glass rounded-[2.5rem] border border-pink-500/20 overflow-hidden bg-black shadow-2xl" style="aspect-ratio: 9/16; width: 100%; max-width: 300px; margin: 0 auto;">
+                                    <div id="video-loader" class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-slate-900/90 backdrop-blur-sm z-10">
+                                        <i class="fas fa-circle-notch fa-spin text-4xl text-pink-500 mb-4"></i>
+                                        <p class="text-slate-400 text-[10px] uppercase tracking-widest font-bold">Videoyu Hazırlıyoruz...</p>
+                                    </div>
+                                    <div id="remotion-live-area" class="w-full h-full opacity-0 transition-opacity duration-700"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -279,60 +232,39 @@
         </div>
     </header>
 
-    <section id="ozellikler" class="py-24 px-6 bg-slate-900/40">
-        <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center">
-            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
-            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
-            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
-        </div>
-    </section>
-
     <section id="fiyatlandirma" class="py-24 px-6 max-w-5xl mx-auto">
         <h2 class="text-center text-4xl font-bold text-white mb-16" data-i18n="pricing_title">Planları Karşılaştır</h2>
-        
         <div class="glass rounded-[2.5rem] table-container border border-white/10 shadow-2xl overflow-hidden">
             <div class="min-w-table">
                 <div class="grid grid-cols-3 bg-white/5 p-8 border-b border-white/10 text-center items-center">
                     <div class="text-left font-bold text-slate-400 uppercase tracking-widest text-[10px] md:text-xs">Özellikler</div>
                     <div>
-                        <h3 class="text-lg font-bold text-white plan-text-mobile">Basic</h3>
+                        <h3 class="text-lg font-bold text-white plan-text-mobile">Starter</h3>
                         <p class="text-blue-400 text-2xl font-black mt-1 plan-text-mobile">$0</p>
                     </div>
                     <div class="relative">
-                        <span class="absolute populer-badge left-1/2 -translate-x-1/2 bg-blue-600 text-white rounded-full font-bold uppercase tracking-tighter shadow-lg shadow-blue-500/20">Popüler</span>
+                        <span class="absolute populer-badge left-1/2 -translate-x-1/2 bg-blue-600 text-white rounded-full font-bold uppercase tracking-tighter shadow-lg">En Popüler</span>
                         <h3 class="text-lg font-bold text-white plan-text-mobile">Pro</h3>
-                        <p class="text-emerald-400 text-2xl font-black mt-1 plan-text-mobile">$3,99</p>
+                        <p class="text-emerald-400 text-2xl font-black mt-1 plan-text-mobile">$19,99</p>
                     </div>
                 </div>
-
                 <div class="p-4 md:p-8 space-y-2">
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
-                        <div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Günlük Video Üretimi</div>
-                        <div class="text-slate-400 text-xs md:text-sm plan-text-mobile">2 Video</div>
-                        <div class="text-white font-bold text-xs md:text-sm plan-text-mobile">10 Video</div>
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Günlük Kredi</div>
+                        <div class="text-slate-400">3 Kredi</div>
+                        <div class="text-white font-bold">50 Kredi</div>
                     </div>
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
-                        <div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Senkronize #</div>
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Video Çıktısı</div>
+                        <div><i class="fas fa-times text-red-500/50"></i></div>
                         <div><i class="fas fa-check text-emerald-500"></i></div>
-                        <div><i class="fas fa-check text-emerald-500"></i></div>
-                    </div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
-                        <div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Ses + Metin</div>
-                        <div><i class="fas fa-check text-emerald-500"></i></div>
-                        <div><i class="fas fa-check text-emerald-500"></i></div>
-                    </div>
-                    <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center">
-                        <div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Günlük Görsel Oluşturma</div>
-                        <div class="text-slate-400 text-xs md:text-sm plan-text-mobile">2 Görsel</div>
-                        <div class="text-white font-bold text-xs md:text-sm plan-text-mobile">10 Görsel</div>
                     </div>
                     <div class="grid grid-cols-3 p-4 plan-table-row items-center text-center border-none">
-                        <div class="text-left text-xs md:text-sm font-medium text-slate-300 plan-text-mobile">Dosya Yükleme Desteği</div>
+                        <div class="text-left text-xs md:text-sm font-medium text-slate-300">Öncelikli Destek</div>
                         <div><i class="fas fa-times text-red-500/50"></i></div>
                         <div><i class="fas fa-check text-emerald-500"></i></div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-3 p-8 bg-white/2 gap-4 items-center">
                     <div></div>
                     <div class="mobile-btn-container">
@@ -344,7 +276,6 @@
                 </div>
             </div>
         </div>
-        <p class="sm:hidden text-center text-slate-500 text-[10px] mt-4 italic">← Yana kaydırarak planları inceleyin →</p>
     </section>
 
     <footer class="py-12 text-center border-t border-white/5 text-slate-600 text-sm">
@@ -354,31 +285,28 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { 
             getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
             sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Senin verdiğin yeni yapılandırma bilgileri
+        // Firebase Config (Ana Siteden Gelen)
         const firebaseConfig = {
-          apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA",
-          authDomain: "voice2post-9e8ca.firebaseapp.com",
-          projectId: "voice2post-9e8ca",
-          storageBucket: "voice2post-9e8ca.firebasestorage.app",
-          messagingSenderId: "511446656614",
-          appId: "1:511446656614:web:925aed5ec7d6f3fb716fa7",
-          measurementId: "G-RWZBXDR02Y"
+            apiKey: "AIzaSyDB7JZCqe4Z30UZ6ItNp28PNbH_28tpjtA",
+            authDomain: "voice2post-9e8ca.firebaseapp.com",
+            projectId: "voice2post-9e8ca",
+            storageBucket: "voice2post-9e8ca.firebasestorage.app",
+            messagingSenderId: "511446656614",
+            appId: "1:511446656614:web:508d3f81985e6946716fa7"
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const auth = getAuth(app);
 
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if(!email || !pass) return alert("Lütfen bilgileri doldurun.");
+            if(!email || !pass) return alert("Bilgileri doldurun.");
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                 await sendEmailVerification(userCredential.user);
@@ -392,16 +320,14 @@
             const pass = document.getElementById('login-pass').value;
             try {
                 const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-                if (userCredential.user.emailVerified) {
-                    window.isLoggedIn = true;
-                    closeModals();
-                } else { alert("Lütfen mailinizi doğrulayın!"); await signOut(auth); }
-            } catch (error) { alert("Giriş Hatası: " + error.message); }
+                if (userCredential.user.emailVerified) { window.isLoggedIn = true; closeModals(); } 
+                else { alert("Doğrulama mailini kontrol edin!"); await signOut(auth); }
+            } catch (error) { alert("Hata: " + error.message); }
         };
 
         window.handleForgotPassword = async () => {
             const email = document.getElementById('login-email').value;
-            if (!email) return alert("E-posta yazmalısınız.");
+            if (!email) return alert("E-posta yazın.");
             try { await sendPasswordResetEmail(auth, email); alert("Sıfırlama maili gönderildi."); } catch (error) { alert(error.message); }
         };
 
@@ -410,16 +336,11 @@
         onAuthStateChanged(auth, (user) => {
             const btn = document.getElementById('nav-login-btn');
             if (user && user.emailVerified) {
-                window.isLoggedIn = true;
-                btn.innerText = "Çıkış Yap";
+                window.isLoggedIn = true; btn.innerText = "Hesabım";
                 btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
-            } else { 
-                window.isLoggedIn = false; 
-                btn.innerText = "Giriş Yap";
-                btn.classList.replace('bg-emerald-600', 'bg-blue-600');
-            }
+            } else { window.isLoggedIn = false; btn.innerText = "Giriş Yap"; }
         });
     </script>
 
@@ -429,130 +350,111 @@
         window.isProUser = false;
         let isRecording = false; 
         let finalTranscript = ""; 
+        let recognition;
+        let isProcessing = false;
 
+        // PayPal Altyapısı
+        paypal.Buttons({
+            style: { layout: 'vertical', color: 'blue', shape: 'rect' },
+            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '19.99' } }] }); },
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    window.isProUser = true;
+                    alert("Ödeme Başarılı! Pro özellikler aktif edildi.");
+                });
+            }
+        }).render('#paypal-button-container');
+
+        // Mod Değiştirme
         function setMode(mode) {
             const slider = document.getElementById('mode-slider');
             const micUi = document.getElementById('voice-input-ui');
             const textUi = document.getElementById('text-input-ui');
             const optMic = document.getElementById('opt-mic');
             const optText = document.getElementById('opt-text');
-
             if(mode === 'mic') {
-                slider.style.transform = 'translateX(0)';
-                micUi.classList.remove('hidden');
-                textUi.classList.add('hidden');
-                optMic.classList.add('active');
-                optText.classList.remove('active');
+                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden'); optMic.classList.add('active'); optText.classList.remove('active');
             } else {
-                slider.style.transform = 'translateX(100%)';
-                micUi.classList.add('hidden');
-                textUi.classList.remove('hidden');
-                optMic.classList.remove('active');
-                optText.classList.add('active');
+                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden'); optMic.classList.remove('active'); optText.classList.add('active');
             }
         }
 
-        paypal.Buttons({
-            style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
-            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '3.99' } }] }); },
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    window.isProUser = true;
-                    document.getElementById('fiyatlandirma').innerHTML = `
-                        <div class="text-center p-20 glass rounded-[2.5rem] border border-emerald-500/30">
-                            <i class="fas fa-check-circle text-6xl text-emerald-500 mb-6"></i>
-                            <h2 class="text-3xl font-bold text-white tracking-widest uppercase">PRO ÜYELİĞİNİZ AKTİF EDİLDİ</h2>
-                        </div>`;
-                });
-            }
-        }).render('#paypal-button-container');
-
-        const translations = {
-            tr: {
-                nav_try: "Hemen Dene", nav_features: "Özellikler", nav_pricing: "Fiyatlandırma",
-                auth_welcome: "Hoş Geldiniz", auth_subtitle: "Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.",
-                email: "E-Posta", password: "Şifre", forgot_pass: "Şifremi Unuttum",
-                login_btn: "Giriş Yap", logout: "Oturumu Kapat",
-                badge: "AI İÇERİK ASİSTANI", hero_1: "Sesini", hero_2: "Profesyonel Posta", hero_3: "Dönüştür",
-                mic_ready: "Dokun ve anlatmaya başla...", copy: "Kopyala",
-                feat_1_t: "Hızlı İşleme", feat_1_d: "Sesiniz saniyeler içinde metne dönüşür.",
-                feat_2_t: "Akıllı AI", feat_2_d: "Gereksiz kelimeleri atar, fikre odaklanır.",
-                feat_3_t: "Çoklu Format", feat_3_d: "LinkedIn ve X için hazır şablonlar.",
-                pricing_title: "Planları Karşılaştır", rights: "Tüm Hakları Saklıdır.",
-                mode_mic: "Ses", mode_text: "Metin"
-            },
-            en: {
-                nav_try: "Try Now", nav_features: "Features", nav_pricing: "Pricing",
-                auth_welcome: "Welcome Back", auth_subtitle: "Sign in to turn your voice into content.",
-                email: "E-Mail", password: "Password", forgot_pass: "Forgot Password?",
-                login_btn: "Login", logout: "Logout",
-                badge: "AI CONTENT ASSISTANT", hero_1: "Turn Your", hero_2: "Voice Into Posts", hero_3: "Professionally",
-                mic_ready: "Tap and start talking...", copy: "Copy",
-                feat_1_t: "Fast Processing", feat_1_d: "Voice turns to text in seconds.",
-                feat_2_t: "Smart AI", feat_2_d: "Focuses on core idea, removes fluff.",
-                feat_3_t: "Multi Format", feat_3_d: "Ready templates for LinkedIn and X.",
-                pricing_title: "Compare Plans", rights: "All Rights Reserved.",
-                mode_mic: "Voice", mode_text: "Text"
-            }
-        };
-
-        let currentLang = 'tr';
-        function changeLanguage(lang) {
-            currentLang = lang;
-            document.getElementById('current-lang-name').innerText = lang.toUpperCase();
-            document.getElementById('current-lang-flag').innerText = lang === 'tr' ? '🇹🇷' : '🇺🇸';
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if(translations[lang][key]) el.innerText = translations[lang][key];
-            });
-            if (recognition) recognition.lang = lang === 'tr' ? 'tr-TR' : 'en-US';
-            toggleLangMenu();
-        }
-
-        let recognition;
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.lang = 'tr-TR';
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.onresult = (e) => {
-                let interimTranscript = "";
-                for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
-                    else interimTranscript += e.results[i][0].transcript;
-                }
-                document.getElementById('status-text').innerText = finalTranscript + interimTranscript;
-            };
-            recognition.onend = () => { if (!isRecording && finalTranscript.trim().length > 0) processAIResult(finalTranscript); };
-        }
-
+        // AI İşleme (Gelişmiş JSON Parse + Video)
         async function processAIResult(text) {
-            if(!text.trim()) return;
+            if(!text.trim() || isProcessing) return;
+            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
+            
+            isProcessing = true;
             const statusText = document.getElementById('status-text');
-            statusText.innerText = "Yapay Zeka yanıtı hazırlıyor...";
+            const resultContainer = document.getElementById('ai-result-container');
+            const videoLoader = document.getElementById('video-loader');
+            const liveArea = document.getElementById('remotion-live-area');
+
+            statusText.innerText = "Yapay Zeka Yanıtlıyor...";
+            resultContainer.classList.remove('hidden');
+            videoLoader.classList.remove('hidden');
+            liveArea.classList.add('opacity-0');
+
             try {
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt: text })
                 });
-                const data = await response.json();
-                if(data.error) throw new Error(data.error);
-                document.getElementById('ai-result-container').classList.remove('hidden');
-                document.getElementById('linkedin-res').innerText = data.linkedin;
-                document.getElementById('x-res').innerText = data.twitter;
-                document.getElementById('video-res').innerText = data.video;
-                statusText.innerText = "AI Cevabı Hazır!";
-            } catch (error) { statusText.innerText = "Hizmet şu an meşgul."; }
+
+                const rawResponse = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(rawResponse);
+                } catch (e) {
+                    const match = rawResponse.match(/\{[\s\S]*\}/);
+                    data = match ? JSON.parse(match[0]) : null;
+                }
+
+                if(!data) throw new Error("Yanıt formatı hatalı.");
+
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
+
+                if (data.video_script) {
+                    const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
+                    liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    
+                    setTimeout(() => {
+                        videoLoader.classList.add('hidden');
+                        liveArea.classList.remove('opacity-0');
+                        document.getElementById('download-btn').classList.remove('hidden');
+                        statusText.innerText = "İçerik Hazır!";
+                    }, 2000);
+                } else {
+                    videoLoader.classList.add('hidden');
+                }
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) { 
+                statusText.innerText = "Hata oluştu. Tekrar deneyin.";
+                videoLoader.classList.add('hidden');
+            } finally { isProcessing = false; }
         }
 
         function processManualText() {
-            if (!window.isLoggedIn) {
-                document.getElementById('auth-modal').classList.add('active');
-                return;
-            }
             const text = document.getElementById('manual-text').value;
             if(text.trim()) processAIResult(text);
+        }
+
+        // Ses Tanıma Başlatma
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'tr-TR';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.onresult = (e) => {
+                let interim = "";
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
+                    else interim += e.results[i][0].transcript;
+                }
+                document.getElementById('status-text').innerText = finalTranscript + interim;
+            };
         }
 
         document.getElementById('record-btn').onclick = () => {
@@ -564,18 +466,7 @@
                 document.getElementById('recording-anim').classList.remove('hidden');
                 document.getElementById('cancel-btn').classList.remove('hidden');
                 document.getElementById('status-text').innerText = "Dinliyorum...";
-            } else {
-                stopRecording();
-            }
-        };
-
-        document.getElementById('cancel-btn').onclick = () => {
-            isRecording = false; recognition.stop(); finalTranscript = "";
-            document.getElementById('record-btn').classList.remove('recording-pulse');
-            document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
-            document.getElementById('recording-anim').classList.add('hidden');
-            document.getElementById('cancel-btn').classList.add('hidden');
-            document.getElementById('status-text').innerText = "Kayıt iptal edildi.";
+            } else { stopRecording(); }
         };
 
         function stopRecording() {
@@ -584,24 +475,19 @@
             document.getElementById('mic-icon').className = "fas fa-microphone text-4xl text-white";
             document.getElementById('recording-anim').classList.add('hidden');
             document.getElementById('cancel-btn').classList.add('hidden');
+            setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
         }
 
-        async function copyText(id) {
-            const text = document.getElementById(id).innerText;
-            await navigator.clipboard.writeText(text);
-            alert("Kopyalandı!");
-        }
-
+        // Genel UI Fonksiyonları
         function toggleLangMenu() { document.getElementById('lang-list').classList.toggle('show'); }
         function closeModals() { document.getElementById('auth-modal').classList.remove('active'); }
         function handleNavClick() {
             if (window.isLoggedIn) document.getElementById('user-dropdown').classList.toggle('active');
             else document.getElementById('auth-modal').classList.add('active');
         }
-
-        window.onclick = (e) => {
-            if (e.target.classList.contains('modal-overlay')) closeModals();
-            if (!e.target.closest('.lang-dropdown')) document.getElementById('lang-list').classList.remove('show');
+        async function copyText(id) {
+            const text = document.getElementById(id).innerText;
+            await navigator.clipboard.writeText(text); alert("Kopyalandı!");
         }
     </script>
 </body>
