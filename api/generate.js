@@ -1,18 +1,34 @@
+const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
+
+// Vercel ortam değişkenlerinden anahtarları alıyoruz
+const anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+    // Sadece POST isteklerini kabul et
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
 
     const { prompt } = req.body;
-    const openAIKey = process.env.OPENAI_API_KEY;
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
-    if (!openAIKey || !anthropicKey) {
-        return res.status(500).json({ error: "API anahtarları eksik! Vercel panelini kontrol et." });
+    // API Anahtarı kontrolü
+    if (!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY) {
+        return res.status(500).json({ 
+            error: "API anahtarları eksik! Vercel Dashboard > Settings > Environment Variables kısmına ekleyin." 
+        });
     }
 
     const systemPromptClaude = `Sen bir video yönetmeni ve Remotion kurgu uzmanısın. 
     GÖREVİN: Kullanıcının komutunu analiz edip profesyonel bir video kurgusu JSON'ı üretmek.
-    KURAL 1: SADECE JSON döndür. Markdown kullanma.
-    KURAL 2: Animasyon değerlerini (shake, zoom, speed) konunun ciddiyetine göre belirle. (Örn: Putin gibi konular için shake: 5, accentColor: #ff0000)
+    KURAL 1: SADECE JSON döndür. Markdown veya açıklama yazma.
+    KURAL 2: Animasyon değerlerini konunun ciddiyetine göre belirle. 
     YAPI:
     {
       "video_script": {
@@ -28,49 +44,52 @@ export default async function handler(req, res) {
     }`;
 
     try {
-        const [oaiRes, antRes] = await Promise.all([
-            fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openAIKey}` },
-                body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        { role: "system", content: "Sen bir sosyal medya uzmanısın. SADECE JSON: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
-                        { role: "user", content: `Konu: ${prompt}` }
-                    ],
-                    response_format: { type: "json_object" }
-                })
+        // PARALEL ÇALIŞMA: İki yapay zeka aynı anda çalışır
+        const [oaiResponse, antResponse] = await Promise.all([
+            openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "Sen bir sosyal medya uzmanısın. LinkedIn ve Twitter postları üret. SADECE JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
+                    { role: "user", content: `Konu: ${prompt}` }
+                ],
+                response_format: { type: "json_object" }
             }),
-            fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': anthropicKey, 'anthropic-version': '2023-06-01' },
-                body: JSON.stringify({
-                    model: "claude-3-5-sonnet-20240620",
-                    max_tokens: 1200,
-                    system: systemPromptClaude, 
-                    messages: [{ role: "user", content: `Komut: ${prompt}` }]
-                })
+            anthropic.messages.create({
+                model: "claude-3-5-sonnet-20240620",
+                max_tokens: 1200,
+                system: systemPromptClaude,
+                messages: [{
+                    role: "user",
+                    content: `Komut: ${prompt}`
+                }],
             })
         ]);
 
-        const oaiData = await oaiRes.json();
-        const antData = await antRes.json();
+        // OpenAI Verisini İşle
+        const oaiData = JSON.parse(oaiResponse.choices[0].message.content);
+        
+        // Claude Verisini İşle (Regex ile JSON temizleme garantisi)
+        const antRawText = antResponse.content[0].text;
+        const jsonMatch = antRawText.match(/\{[\s\S]*\}/);
+        
+        if (!jsonMatch) {
+            throw new Error("Claude geçerli bir JSON üretmedi.");
+        }
+        
+        const antData = JSON.parse(jsonMatch[0]);
 
-        const extractJSON = (text) => {
-            const match = text.match(/\{[\s\S]*\}/);
-            return JSON.parse(match[0]);
-        };
-
-        const finalOai = extractJSON(oaiData.choices[0].message.content);
-        const finalAnt = extractJSON(antData.content[0].text);
-
+        // Birleştirilmiş Yanıt (HTML'deki fonksiyonun beklediği format)
         return res.status(200).json({
-            linkedin: finalOai.linkedin,
-            twitter: finalOai.twitter,
-            video_script: finalAnt.video_script
+            linkedin: oaiData.linkedin,
+            twitter: oaiData.twitter,
+            video_script: antData.video_script
         });
 
     } catch (error) {
-        return res.status(500).json({ error: "Hata", message: error.message });
+        console.error("Vercel Backend Error:", error);
+        return res.status(500).json({ 
+            error: "İçerik üretiminde bir hata oluştu.",
+            message: error.message 
+        });
     }
 }
