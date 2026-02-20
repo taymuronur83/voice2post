@@ -16,13 +16,19 @@ export default function VideoPreview() {
                 const decodedData = JSON.parse(decodeURIComponent(videoDataRaw));
                 
                 // 3. Remotion Player'ın anlayacağı formata çevir
-                // MyVideo.js içinde bu isimleri kullanacağız: text, backgroundUrl, accentColor
+                // MyVideo.js içindeki getInputProps() artık buradaki tüm objeyi yakalayacak
                 setVideoProps({
                     text: decodedData.text || "Başlık Hazırlanıyor...",
                     backgroundUrl: decodedData.backgroundUrl || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
                     accentColor: decodedData.accentColor || "#3b82f6",
                     audioUrl: decodedData.audioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-                    theme: decodedData.theme || "teknoloji"
+                    theme: decodedData.theme || "teknoloji",
+                    // CLAUDE'DAN GELEN ANİMASYON KOMUTLARINI BURADA ENJEKTE EDİYORUZ
+                    animation: decodedData.animation || {
+                        shakeIntensity: 0,
+                        zoomScale: 1.15,
+                        textSpeed: 1
+                    }
                 });
             } catch (e) {
                 console.error("Video verisi ayrıştırılamadı:", e);
@@ -30,15 +36,19 @@ export default function VideoPreview() {
         }
     }, []);
 
-    // Eğer veri henüz gelmediyse boş dönme, bir yükleme ekranı göster
+    // Eğer veri henüz gelmediyse yükleme ekranı göster
     if (!videoProps) {
         return (
             <div style={{ 
                 width: '100%', height: '100%', 
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: '#000', color: '#fff', fontSize: '12px' 
+                backgroundColor: '#000', color: '#fff', fontSize: '12px',
+                fontFamily: 'sans-serif'
             }}>
-                Claude Verisi Bekleniyor...
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ marginBottom: '10px' }}>🎬</div>
+                    Claude Verisi Bekleniyor...
+                </div>
             </div>
         );
     }
@@ -52,8 +62,8 @@ export default function VideoPreview() {
         }}>
             <Player
                 component={MyVideo}
-                inputProps={videoProps} // Artık içini doldurduğumuz obje gidiyor
-                durationInFrames={300}
+                inputProps={videoProps} 
+                durationInFrames={300} // Yaklaşık 10 saniye
                 fps={30}
                 compositionWidth={1080}
                 compositionHeight={1920}
