@@ -100,7 +100,7 @@
                     <i class="fas fa-envelope-open-text text-3xl text-blue-400"></i>
                 </div>
                 <h3 class="text-2xl font-bold text-white mb-2">E-Postanı Kontrol Et</h3>
-                <p class="text-slate-400 text-sm mb-6">Hesabını aktif etmek için gönderdiğimiz linke tıklaman gerekiyor.</p>
+                <p class="text-slate-400 text-sm mb-6">Hesabını aktif etmek için gönderdiğimiz linke tıklaman gerekiyor. Spam klasörüne bakmayı unutma!</p>
                 <button onclick="location.reload()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl">Doğruladım, Giriş Yap</button>
             </div>
         </div>
@@ -238,29 +238,58 @@
         <div class="max-w-6xl mx-auto">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4" data-i18n="pricing_title">Sana Uygun Planı Seç</h2>
+                <p class="text-slate-400 max-w-2xl mx-auto" data-i18n="pricing_desc">Şeffaf fiyatlandırma ile ihtiyacın olan krediyi seç, hemen içerik üretmeye başla.</p>
             </div>
-            <div class="table-container bg-white/5 rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md">
+            <div class="table-container bg-white/5 rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md shadow-2xl">
                 <table class="w-full text-left min-w-table border-collapse">
                     <thead>
                         <tr class="bg-white/5 border-b border-white/10">
-                            <th class="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest">Özellikler</th>
-                            <th class="px-8 py-6 text-center text-white font-bold uppercase">Starter</th>
-                            <th class="px-8 py-6 text-center text-white font-bold uppercase bg-blue-600/10">Pro</th>
-                            <th class="px-8 py-6 text-center text-white font-bold uppercase">Business</th>
+                            <th class="px-8 py-6 text-xs font-black text-slate-400 uppercase tracking-widest" data-i18n="plan_features">Özellikler</th>
+                            <th class="px-8 py-6 text-center">
+                                <span class="text-white font-bold block">STARTER</span>
+                                <span class="text-blue-400 text-2xl font-black mt-2 block">$0 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
+                            <th class="px-8 py-6 text-center relative bg-blue-600/10">
+                                <span class="populer-badge absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-blue-500 to-emerald-500 text-white font-black rounded-full shadow-lg" data-i18n="popular">EN POPÜLER</span>
+                                <span class="text-white font-bold block">PRO</span>
+                                <span class="text-emerald-400 text-2xl font-black mt-2 block">$19 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
+                            <th class="px-8 py-6 text-center">
+                                <span class="text-white font-bold block">BUSINESS</span>
+                                <span class="text-purple-400 text-2xl font-black mt-2 block">$49 <small class="text-xs text-slate-500">/mo</small></span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="text-sm">
                         <tr class="plan-table-row">
-                            <td class="px-8 py-5 text-slate-300 font-medium">Aylık Kredi</td>
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="credit_limit">Aylık Kredi</td>
                             <td class="px-8 py-5 text-center text-slate-400">3 Kredi</td>
                             <td class="px-8 py-5 text-center text-white font-bold">50 Kredi</td>
                             <td class="px-8 py-5 text-center text-slate-400">Sınırsız</td>
                         </tr>
                         <tr class="plan-table-row">
-                            <td class="px-8 py-5 text-slate-300 font-medium">Video Çıktısı</td>
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="ai_models">Yapay Zeka Modelleri</td>
+                            <td class="px-8 py-5 text-center text-slate-400 italic">Standart</td>
+                            <td class="px-8 py-5 text-center text-emerald-400 font-bold">Premium (GPT-4o)</td>
+                            <td class="px-8 py-5 text-center text-slate-400">Premium + Özel</td>
+                        </tr>
+                        <tr class="plan-table-row">
+                            <td class="px-8 py-5 text-slate-300 font-medium" data-i18n="video_export">Video Çıktısı (MP4)</td>
                             <td class="px-8 py-5 text-center"><i class="fas fa-times text-red-500/50"></i></td>
                             <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
                             <td class="px-8 py-5 text-center"><i class="fas fa-check text-emerald-500"></i></td>
+                        </tr>
+                        <tr>
+                            <td class="px-8 py-8"></td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="text-xs font-bold text-slate-500 border border-white/10 px-6 py-2 rounded-full hover:bg-white/5 transition" data-i18n="current_plan">Mevcut Plan</button>
+                            </td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-8 py-3 rounded-full transition shadow-lg shadow-blue-500/20" data-i18n="get_started">HEMEN BAŞLA</button>
+                            </td>
+                            <td class="px-8 py-8 text-center">
+                                <button class="text-xs font-bold text-white border border-purple-500/50 px-6 py-2 rounded-full hover:bg-purple-500/10 transition" data-i18n="upgrade">YÜKSELT</button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -268,9 +297,17 @@
         </div>
     </section>
 
+    <section id="ozellikler" class="py-24 px-6 bg-slate-900/40">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center">
+            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
+            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
+            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
+        </div>
+    </section>
+
     <footer class="py-12 text-center border-t border-white/5 text-slate-600 text-sm">
         <div class="text-xl font-extrabold tracking-tighter text-white mb-4">VOICE<span class="text-blue-500">2</span>POST</div>
-        <p>&copy; 2026 Voice2Post AI. Tüm Hakları Saklıdır.</p>
+        <p>&copy; 2026 Voice2Post AI. <span data-i18n="rights">Tüm Hakları Saklıdır.</span></p>
     </footer>
 
     <script type="module">
@@ -354,7 +391,7 @@
             }
         }
 
-        // --- GÖRSELDEKİ "BIR HATA OLUŞTU" SORUNUNU ÇÖZEN GÜNCELLEME ---
+        // GÜNCEL VE HATA GİDERİLMİŞ FONKSİYON
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -364,9 +401,8 @@
             const resultContainer = document.getElementById('ai-result-container');
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
-            const loaderText = document.getElementById('video-loader-text');
 
-            statusText.innerText = "Analiz ediliyor...";
+            statusText.innerText = "Yapay Zeka Hazırlıyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
@@ -378,24 +414,32 @@
                     body: JSON.stringify({ prompt: text })
                 });
 
-                const rawData = await response.text();
+                // GÖRSELDEKİ HATAYI ÇÖZEN BÖLÜM: Response metnini güvenli parse etme
+                const rawResponse = await response.text();
                 let data;
-
-                // CRITICAL FIX: Extract JSON from potentially messy AI response
                 try {
-                    const jsonStart = rawData.indexOf('{');
-                    const jsonEnd = rawData.lastIndexOf('}') + 1;
-                    if(jsonStart === -1) throw new Error("Format Hatası");
-                    data = JSON.parse(rawData.substring(jsonStart, jsonEnd));
-                } catch (e) {
-                    throw new Error("Veri ayrıştırılamadı. Lütfen tekrar deneyin.");
+                    data = JSON.parse(rawResponse);
+                } catch (parseError) {
+                    // Eğer response içinde gereksiz metinler varsa sadece JSON kısmını ayıkla
+                    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        data = JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("JSON Parse Error");
+                    }
                 }
 
-                document.getElementById('linkedin-res').innerText = data.linkedin || "İçerik oluşturulamadı.";
-                document.getElementById('x-res').innerText = data.twitter || "İçerik oluşturulamadı.";
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
 
                 if (data.video_script) {
-                    const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
+                    const videoData = {
+                        text: data.video_script.text,
+                        accentColor: data.video_script.accentColor,
+                        animation: data.video_script.animation
+                    };
+
+                    const encodedData = encodeURIComponent(JSON.stringify(videoData));
                     liveArea.innerHTML = `<iframe src="/api/render-preview?videoData=${encodedData}" style="width:100%; height:100%; border:none;" allow="autoplay"></iframe>`;
                     
                     setTimeout(() => {
@@ -403,18 +447,17 @@
                         liveArea.classList.remove('opacity-0');
                         document.getElementById('download-btn').classList.remove('hidden');
                         statusText.innerText = "İçerik Hazır!";
-                    }, 2500);
+                    }, 2000);
                 } else {
                     videoLoader.classList.add('hidden');
-                    statusText.innerText = "Metinler hazır.";
                 }
 
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) { 
-                console.error("Hata:", error);
-                statusText.innerText = "Bir hata oluştu.";
-                loaderText.innerText = error.message;
+                console.error("Hata Detayı:", error);
+                statusText.innerText = "Bir hata oluştu. Lütfen tekrar deneyin.";
+                videoLoader.classList.add('hidden');
             } finally { isProcessing = false; }
         }
 
