@@ -45,14 +45,14 @@
             <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
             <div id="login-view">
                 <div class="text-center mb-8">
-                    <h3 class="text-2xl font-bold text-white mb-2" data-i18n="auth_welcome">Hoş Geldiniz</h3>
-                    <p class="text-slate-400 text-sm" data-i18n="auth_subtitle">Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.</p>
+                    <h3 class="text-2xl font-bold text-white mb-2">Hoş Geldiniz</h3>
+                    <p class="text-slate-400 text-sm">Sesini içeriğe dönüştürmek için giriş yap veya kayıt ol.</p>
                 </div>
                 <div class="space-y-4">
                     <input type="email" id="login-email" placeholder="ornek@mail.com" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition">
                     <input type="password" id="login-pass" placeholder="••••••••" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition">
                     <div class="flex gap-2">
-                        <button onclick="handleSignIn()" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition" data-i18n="login_btn">Giriş Yap</button>
+                        <button onclick="handleSignIn()" class="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-4 rounded-xl transition">Giriş Yap</button>
                         <button onclick="handleSignUp()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg">Kayıt Ol</button>
                     </div>
                 </div>
@@ -69,9 +69,9 @@
         <div class="text-2xl font-extrabold tracking-tighter text-white">VOICE<span class="text-blue-500">2</span>POST</div>
         <div class="flex items-center space-x-4 md:space-x-8">
             <div class="hidden md:flex space-x-8 text-sm font-medium">
-                <a href="#arac" class="hover:text-blue-400 transition" data-i18n="nav_try">Hemen Dene</a>
-                <a href="#ozellikler" class="hover:text-blue-400 transition" data-i18n="nav_features">Özellikler</a>
-                <a href="#fiyatlandirma" class="hover:text-blue-400 transition" data-i18n="nav_pricing">Fiyatlandırma</a>
+                <a href="#arac" class="hover:text-blue-400 transition">Hemen Dene</a>
+                <a href="#ozellikler" class="hover:text-blue-400 transition">Özellikler</a>
+                <a href="#fiyatlandirma" class="hover:text-blue-400 transition">Fiyatlandırma</a>
             </div>
             <div class="lang-dropdown relative">
                 <button onclick="toggleLangMenu()" class="bg-white/5 border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-2 text-sm text-white">
@@ -93,24 +93,24 @@
     </nav>
 
     <header id="arac" class="pt-32 pb-20 px-6 text-center">
-        <span class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-8" data-i18n="badge">AI İçerik Asistanı</span>
+        <span class="inline-block bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-8">AI İçerik Asistanı</span>
         <h1 class="text-5xl md:text-7xl font-extrabold text-white leading-tight mb-6">
-            <span data-i18n="hero_1">Sesini</span> <br><span class="gradient-text" data-i18n="hero_2">Profesyonel Posta</span> <span data-i18n="hero_3">Dönüştür</span>
+            <span>Sesini</span> <br><span class="gradient-text">Profesyonel Posta</span> <span>Dönüştür</span>
         </h1>
         
         <div class="max-w-4xl mx-auto p-8 md:p-12 rounded-[2.5rem] glass shadow-2xl border border-white/10 mt-12 relative overflow-hidden">
             <div class="flex flex-col items-center">
                 <div class="input-mode-container" id="mode-toggle">
                     <div class="mode-slider" id="mode-slider"></div>
-                    <div class="mode-option active" id="opt-mic" onclick="setMode('mic')"><i class="fas fa-microphone"></i> <span data-i18n="mode_mic">Ses</span></div>
-                    <div class="mode-option" id="opt-text" onclick="setMode('text')"><i class="fas fa-keyboard"></i> <span data-i18n="mode_text">Metin</span></div>
+                    <div class="mode-option active" id="opt-mic" onclick="setMode('mic')"><i class="fas fa-microphone"></i> <span>Ses</span></div>
+                    <div class="mode-option" id="opt-text" onclick="setMode('text')"><i class="fas fa-keyboard"></i> <span>Metin</span></div>
                 </div>
                 
                 <div id="voice-input-ui">
                     <div id="record-btn" class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition shadow-xl">
                         <i id="mic-icon" class="fas fa-microphone text-4xl text-white"></i>
                     </div>
-                    <p id="status-text" class="mt-8 font-medium text-slate-300 italic text-lg" data-i18n="mic_ready">Dokun ve anlatmaya başla...</p>
+                    <p id="status-text" class="mt-8 font-medium text-slate-300 italic text-lg">Dokun ve anlatmaya başla...</p>
                 </div>
 
                 <div id="text-input-ui" class="hidden w-full">
@@ -150,15 +150,15 @@
 
     <section id="ozellikler" class="py-24 px-6 bg-slate-900/40">
         <div class="max-w-6xl mx-auto grid md:grid-cols-3 gap-12 text-center">
-            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_1_t">Hızlı İşleme</h3><p class="text-slate-400 text-sm" data-i18n="feat_1_d">Sesiniz saniyeler içinde metne dönüşür.</p></div>
-            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_2_t">Akıllı AI</h3><p class="text-slate-400 text-sm" data-i18n="feat_2_d">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
-            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2" data-i18n="feat_3_t">Çoklu Format</h3><p class="text-slate-400 text-sm" data-i18n="feat_3_d">LinkedIn ve X için hazır şablonlar.</p></div>
+            <div><i class="fas fa-bolt text-blue-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Hızlı İşleme</h3><p class="text-slate-400 text-sm">Sesiniz saniyeler içinde metne dönüşür.</p></div>
+            <div><i class="fas fa-brain text-emerald-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Akıllı AI</h3><p class="text-slate-400 text-sm">Gereksiz kelimeleri atar, fikre odaklanır.</p></div>
+            <div><i class="fas fa-magic text-purple-500 text-3xl mb-4"></i><h3 class="text-xl font-bold mb-2">Çoklu Format</h3><p class="text-slate-400 text-sm">LinkedIn ve X için hazır şablonlar.</p></div>
         </div>
     </section>
 
     <footer class="py-12 text-center border-t border-white/5 text-slate-600 text-sm">
         <div class="text-xl font-extrabold tracking-tighter text-white mb-4">VOICE<span class="text-blue-500">2</span>POST</div>
-        <p>&copy; 2026 Voice2Post AI. <span data-i18n="rights">Tüm Hakları Saklıdır.</span></p>
+        <p>&copy; 2026 Voice2Post AI. <span>Tüm Hakları Saklıdır.</span></p>
     </footer>
 
     <script type="module">
@@ -195,12 +195,19 @@
 
         function setMode(mode) {
             const s = document.getElementById('mode-slider');
+            const optMic = document.getElementById('opt-mic');
+            const optText = document.getElementById('opt-text');
+            
             if(mode === 'mic') {
                 s.style.transform = 'translateX(0)';
+                optMic.classList.add('active');
+                optText.classList.remove('active');
                 document.getElementById('voice-input-ui').classList.remove('hidden');
                 document.getElementById('text-input-ui').classList.add('hidden');
             } else {
                 s.style.transform = 'translateX(100%)';
+                optMic.classList.remove('active');
+                optText.classList.add('active');
                 document.getElementById('voice-input-ui').classList.add('hidden');
                 document.getElementById('text-input-ui').classList.remove('hidden');
             }
@@ -228,8 +235,15 @@
                 document.getElementById('linkedin-res').innerText = data.linkedin;
                 document.getElementById('x-res').innerText = data.twitter;
 
-                // CLAUDE'dan gelen veriyi (Başlık, Alt Metin, Renk) REMOTION'a gönderiyoruz
-                const videoUrl = `/api/render-preview?id=MyVideo&title=${encodeURIComponent(data.video_script.text)}&sub=${encodeURIComponent(data.video_script.theme)}&accentColor=${encodeURIComponent(data.video_script.accentColor)}`;
+                // CLAUDE SONNET VERİSİNİ REMOTION PLAYER'A JSON OLARAK GÖNDERME
+                const videoData = {
+                    text: data.video_script.text,
+                    accentColor: data.video_script.accentColor,
+                    theme: data.video_script.theme,
+                    animation: data.video_script.animation
+                };
+
+                const videoUrl = `/api/render-preview?videoData=${encodeURIComponent(JSON.stringify(videoData))}`;
                 
                 liveArea.innerHTML = `<iframe src="${videoUrl}" style="width:100%; height:100%; border:none;"></iframe>`;
                 
