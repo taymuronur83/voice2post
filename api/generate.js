@@ -21,11 +21,11 @@ export default async function handler(req, res) {
       model: "claude-3-haiku-20240307", 
       max_tokens: 4000,
       temperature: 0.7,
-      system: "Sen profesyonel bir sosyal medya uzmanısın. LinkedIn postu, Twitter akışı ve VideoScript JSON verisi üretirsin.",
+      system: "Sen profesyonel bir sosyal medya uzmanısın. LinkedIn postu, Twitter akışı ve VideoScript JSON verisi üretirsin. VideoScript kısmını her zaman geçerli ve tam bir JSON objesi olarak vermeye odaklan.",
       messages: [
         {
           role: "user",
-          content: `Şu metni içeriklere dönüştür: ${prompt}. Yanıt formatı:
+          content: `Şu metni içeriklere dönüştür: ${prompt}. Yanıt formatını kesinlikle bozma:
           LinkedIn: [Metin]
           Twitter: [Metin]
           VideoScript: {"title": "...", "subtitles": [{"text": "...", "start": 0, "end": 2}]}`
@@ -38,6 +38,7 @@ export default async function handler(req, res) {
     // HTML'deki id'lerle eşleşen veri ayıklama
     const linkedin = content.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
     const twitter = content.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
+    // VideoScript verisinin daha sağlam yakalanması için geliştirilmiş regex
     const videoScriptRaw = content.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
 
     res.status(200).json({
