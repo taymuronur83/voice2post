@@ -1,7 +1,7 @@
-Name: Render Video
+name: Render Video
 on:
   repository_dispatch:
-    types: [render-video] # API'den gelen tetikleyiciyi yakalar
+    types: [render-video]
   workflow_dispatch:
     inputs:
       props:
@@ -23,29 +23,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Hızlı render için önbellekleme ekledik
+          cache: 'npm'
 
       - name: Install Dependencies
         run: npm install
 
-      - name: Install Chrome and System Dependencies
-        # GitHub Actions sunucusuna render için gerekli Linux kütüphanelerini kuruyoruz
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libasound2 libpangocairo-1.0-0 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libnss3 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 libgtk-3-0
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libasound2 libpangocairo-1.0-0 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 libgtk-3-0
 
       - name: Install Remotion Browser
         run: npx remotion browser install
 
       - name: Render Video
-        # Hata veren kısmı 'xvfb-run' ile sarmalıyoruz ki sanal bir ekran oluşsun
-        run: |
-          PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
-          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS"
+        # 67. satır ve çevresindeki hata riskini sıfırlayan doğrudan komut yapısı:
+        run: npx remotion render src/index.tsx MyVideo out/video.mp4 --props='${{ github.event.client_payload.props || github.event.inputs.props }}'
 
       - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
           name: final-video
           path: out/video.mp4
-          retention-days: 1 # Gereksiz depolamayı önler
+          retention-days: 1
