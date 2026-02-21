@@ -1,81 +1,75 @@
 import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
 
-// Vercel Timeout limitini artırıyoruz (Geniş düşünme adımı)
-export const config = {
-    maxDuration: 60,
-};
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // CORS ve Metod Kontrolü
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-    const { prompt } = req.body;
+  const { prompt } = req.body;
 
-    if (!process.env.OPENAI_API_KEY || !process.env.ANTHROPIC_API_KEY) {
-        return res.status(500).json({ 
-            linkedin: "Hata: API anahtarları Vercel'de eksik!", 
-            twitter: "Hata: API anahtarları Vercel'de eksik!" 
-        });
-    }
+  if (!prompt) {
+    return res.status(400).json({ error: 'Prompt is required' });
+  }
 
-    const systemPromptClaude = `Sen bir video yönetmeni ve Remotion kurgu uzmanısın. SADECE JSON döndür. 
-    YAPI: { "video_script": { "text": "Başlık", "theme": "ekonomi", "accentColor": "#3b82f6", "animation": { "shakeIntensity": 2, "zoomScale": 1.2, "textSpeed": 1 } } }`;
-
-    try {
-        const [oaiResponse, antResponse] = await Promise.all([
-            openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: [
-                    { role: "system", content: "Sosyal medya uzmanısın. SADECE JSON döndür: {\"linkedin\": \"...\", \"twitter\": \"...\"}" },
-                    { role: "user", content: `Konu: ${prompt}` }
-                ],
-                response_format: { type: "json_object" }
-            }),
-            anthropic.messages.create({
-                model: "claude-3-5-sonnet-latest",
-                max_tokens: 1200,
-                system: systemPromptClaude,
-                messages: [{ role: "user", content: `Komut: ${prompt}` }],
-            })
-        ]);
-
-        // VERİ TEMİZLEME VE AYIKLAMA (Undefined engelleyici)
-        let linkedinData = "LinkedIn içeriği üretilemedi.";
-        let twitterData = "X içeriği üretilemedi.";
-        let videoScriptData = null;
-
-        try {
-            const oaiParsed = JSON.parse(oaiResponse.choices[0].message.content || "{}");
-            // Büyük/küçük harf duyarlılığını bitiriyoruz
-            linkedinData = oaiParsed.linkedin || oaiParsed.LinkedIn || oaiParsed.post || linkedinData;
-            twitterData = oaiParsed.twitter || oaiParsed.Twitter || oaiParsed.x || twitterData;
-        } catch (e) { console.error("OAI Parse Hatası"); }
-
-        try {
-            const antRaw = antResponse.content[0].text;
-            const match = antRaw.match(/\{[\s\S]*\}/); // Regex ile JSON'ı metinden çekip alıyoruz
-            if (match) {
-                const antParsed = JSON.parse(match[0]);
-                videoScriptData = antParsed.video_script || antParsed;
-            }
-        } catch (e) { console.error("Claude Parse Hatası"); }
-
-        // Video script boşsa arayüz çökmesin diye varsayılan veri
-        if (!videoScriptData) {
-            videoScriptData = { text: prompt, theme: "teknoloji", accentColor: "#3b82f6", animation: { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 } };
+  try {
+    const msg = await anthropic.messages.create({
+      // HATA ALDIĞIN YER BURASIYDI, GÜNCELLEDİM:
+      model: "claude-3-5-sonnet-latest", 
+      max_tokens: 4000,
+      temperature: 0.7,
+      system: `Sen profesyonel bir sosyal medya uzmanısın. Kullanıcının sesli notunu veya metnini alıp 3 farklı formata dönüştürürsün:
+      1. LinkedIn Postu (Profesyonel, emojili, kancalı giriş).
+      2. X (Twitter) Akışı (En az 3 tweetlik seri).
+      3. Video Script (JSON formatında, Remotion projesine uygun).
+      
+      Yanıtını MUTLAKA şu yapıda vermelisin:
+      LinkedIn: [Metin]
+      Twitter: [Metin]
+      VideoScript: {"title": "...", "subtitles": [{"text": "...", "start": 0, "end": 2}]}`,
+      messages: [
+        {
+          role: "user",
+          content: `Şu içeriği işle: ${prompt}`
         }
+      ],
+    });
 
-        return res.status(200).json({
-            linkedin: linkedinData,
-            twitter: twitterData,
-            video_script: videoScriptData
-        });
+    const responseText = msg.content[0].text;
 
-    } catch (error) {
-        console.error("Backend Hatası:", error);
-        return res.status(500).json({ error: error.message, linkedin: "Sunucu hatası!", twitter: "Sunucu hatası!" });
+    // HTML kodundaki (linkedin-res, x-res) id'leri ile tam uyumlu parçalama
+    const linkedin = responseText.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
+    const twitter = responseText.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
+    const videoScriptRaw = responseText.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
+
+    let parsedVideoScript = null;
+    try {
+      if (videoScriptRaw) parsedVideoScript = JSON.parse(videoScriptRaw);
+    } catch (e) {
+      console.error("JSON Parse Hatası:", e);
     }
+
+    // Frontend'deki processAIResult fonksiyonunun beklediği JSON yapısı
+    res.status(200).json({
+      linkedin: linkedin || "LinkedIn içeriği oluşturulamadı.",
+      twitter: twitter || "Twitter içeriği oluşturulamadı.",
+      video_script: parsedVideoScript
+    });
+
+  } catch (error) {
+    console.error("Anthropic API Hatası:", error);
+    
+    // Eğer hala 404 hatası alırsan (API yetkisi kaynaklı), otomatik Haiku modeline geçiş uyarısı
+    if (error.message.includes("not_found")) {
+       return res.status(404).json({ 
+         error: "Sizin API anahtarınız henüz Claude 3.5 sürümünü desteklemiyor olabilir. Lütfen 'claude-3-haiku-20240307' modelini deneyin veya Anthropic panelinden kredi yükleyin." 
+       });
+    }
+
+    res.status(500).json({ error: "Yapay zeka yanıt veremedi: " + error.message });
+  }
 }
