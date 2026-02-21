@@ -285,22 +285,24 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { 
             getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
             sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // Firebase Config (Ana Siteden Gelen)
         const firebaseConfig = {
-            apiKey: "AIzaSyDB7JZCqe4Z30UZ6ItNp28PNbH_28tpjtA",
-            authDomain: "voice2post-9e8ca.firebaseapp.com",
-            projectId: "voice2post-9e8ca",
-            storageBucket: "voice2post-9e8ca.firebasestorage.app",
-            messagingSenderId: "511446656614",
-            appId: "1:511446656614:web:508d3f81985e6946716fa7"
+          apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA",
+          authDomain: "voice2post-9e8ca.firebaseapp.com",
+          projectId: "voice2post-9e8ca",
+          storageBucket: "voice2post-9e8ca.firebasestorage.app",
+          messagingSenderId: "511446656614",
+          appId: "1:511446656614:web:925aed5ec7d6f3fb716fa7",
+          measurementId: "G-RWZBXDR02Y"
         };
 
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const auth = getAuth(app);
 
         window.handleSignUp = async () => {
@@ -353,7 +355,6 @@
         let recognition;
         let isProcessing = false;
 
-        // PayPal Altyapısı
         paypal.Buttons({
             style: { layout: 'vertical', color: 'blue', shape: 'rect' },
             createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '19.99' } }] }); },
@@ -365,7 +366,6 @@
             }
         }).render('#paypal-button-container');
 
-        // Mod Değiştirme
         function setMode(mode) {
             const slider = document.getElementById('mode-slider');
             const micUi = document.getElementById('voice-input-ui');
@@ -379,7 +379,6 @@
             }
         }
 
-        // AI İşleme (Gelişmiş JSON Parse + Video)
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -441,7 +440,6 @@
             if(text.trim()) processAIResult(text);
         }
 
-        // Ses Tanıma Başlatma
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.lang = 'tr-TR';
@@ -478,7 +476,6 @@
             setTimeout(() => { if(finalTranscript.trim()) processAIResult(finalTranscript); }, 500);
         }
 
-        // Genel UI Fonksiyonları
         function toggleLangMenu() { document.getElementById('lang-list').classList.toggle('show'); }
         function closeModals() { document.getElementById('auth-modal').classList.remove('active'); }
         function handleNavClick() {
