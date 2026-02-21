@@ -11,34 +11,43 @@ export default async function handler(req, res) {
 
   const { prompt } = req.body;
 
+  if (!prompt) {
+    return res.status(400).json({ error: 'Metin bulunamadı.' });
+  }
+
   try {
     const msg = await anthropic.messages.create({
-      // GARANTİ ÇALIŞAN MODEL: Haiku her hesapta açıktır ve çok hızlıdır.
+      // Senin API anahtarının kesin izin verdiği model:
       model: "claude-3-haiku-20240307", 
       max_tokens: 4000,
       temperature: 0.7,
-      system: `Sen profesyonel bir içerik üreticisisin. Yanıtını şu yapıda ver:
-      LinkedIn: [LinkedIn içeriği]
-      Twitter: [Twitter içeriği]
-      VideoScript: {"title": "Başlık", "subtitles": [{"text": "Söz", "start": 0, "end": 2}]}`,
-      messages: [{ role: "user", content: `Şu metni işle: ${prompt}` }],
+      system: "Sen profesyonel bir sosyal medya uzmanısın. LinkedIn postu, Twitter akışı ve VideoScript JSON verisi üretirsin.",
+      messages: [
+        {
+          role: "user",
+          content: `Şu metni içeriklere dönüştür: ${prompt}. Yanıt formatı:
+          LinkedIn: [Metin]
+          Twitter: [Metin]
+          VideoScript: {"title": "...", "subtitles": [{"text": "...", "start": 0, "end": 2}]}`
+        }
+      ],
     });
 
-    const responseText = msg.content[0].text;
+    const content = msg.content[0].text;
     
-    // Verileri HTML id'lerine göre parçalıyoruz
-    const linkedin = responseText.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
-    const twitter = responseText.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
-    const videoScriptRaw = responseText.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
+    // HTML'deki id'lerle eşleşen veri ayıklama
+    const linkedin = content.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
+    const twitter = content.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
+    const videoScriptRaw = content.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
 
     res.status(200).json({
-      linkedin: linkedin || "İçerik hazırlanamadı.",
-      twitter: twitter || "İçerik hazırlanamadı.",
+      linkedin: linkedin || "LinkedIn metni hazırlanamadı.",
+      twitter: twitter || "Twitter metni hazırlanamadı.",
       video_script: videoScriptRaw ? JSON.parse(videoScriptRaw) : null
     });
 
   } catch (error) {
-    console.error("Hata:", error);
-    res.status(500).json({ error: "Sistem hatası: " + error.message });
+    console.error("API Error:", error);
+    res.status(500).json({ error: error.message });
   }
 }
