@@ -1,44 +1,73 @@
-import Anthropic from '@anthropic-ai/sdk';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method not allowed' });
+    }
 
-  const { prompt } = req.body;
+    const { prompt } = req.body;
+    const apiKey = process.env.OPENAI_API_KEY;
 
-  try {
-    const msg = await anthropic.messages.create({
-      // GARANTİ ÇALIŞAN MODEL: Haiku her hesapta açıktır ve çok hızlıdır.
-      model: "claude-3-haiku-20240307", 
-      max_tokens: 4000,
-      temperature: 0.7,
-      system: `Sen profesyonel bir içerik üreticisisin. Yanıtını şu yapıda ver:
-      LinkedIn: [LinkedIn içeriği]
-      Twitter: [Twitter içeriği]
-      VideoScript: {"title": "Başlık", "subtitles": [{"text": "Söz", "start": 0, "end": 2}]}`,
-      messages: [{ role: "user", content: `Şu metni işle: ${prompt}` }],
-    });
+    if (!apiKey) {
+        return res.status(500).json({ error: 'API anahtarı bulunamadı.' });
+    }
 
-    const responseText = msg.content[0].text;
-    
-    // Verileri HTML id'lerine göre parçalıyoruz
-    const linkedin = responseText.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
-    const twitter = responseText.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
-    const videoScriptRaw = responseText.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [
+                    { 
+                        role: "system", 
+                        content: `Sen uzman bir içerik üreticisisin. Sana gelen metni analiz et ve aşağıdaki JSON formatında 4 farklı içerik üret.
 
-    res.status(200).json({
-      linkedin: linkedin || "İçerik hazırlanamadı.",
-      twitter: twitter || "İçerik hazırlanamadı.",
-      video_script: videoScriptRaw ? JSON.parse(videoScriptRaw) : null
-    });
+TALİMATLAR:
+1. linkedin: Profesyonel ve kurumsal bir LinkedIn postu.
+2. twitter: Kısa, vurucu ve zekice bir X (Twitter) postu.
+3. video_script: Okunacak video senaryosunun tam metni.
+4. video_scenes: Video önizlemesi için kullanılacak sahneler dizisi. 
 
-  } catch (error) {
-    console.error("Hata:", error);
-    res.status(500).json({ error: "Sistem hatası: " + error.message });
-  }
+ÖNEMLİ: "video_scenes" kısmı mutlaka şu yapıda olmalı: Her sahne bir obje olmalı, içinde "text" (maks 5 kelime) ve "color" (Hex kodu) bulunmalı. Toplam 3-5 sahne üret.
+
+Yanıtını SADECE şu JSON formatında ver:
+{
+  "linkedin": "...",
+  "twitter": "...",
+  "video_script": "...",
+  "video_scenes": [
+    {"text": "Kısa Başlık", "color": "#2563eb"},
+    {"text": "Ana Mesaj", "color": "#10b981"},
+    {"text": "Harekete Geç", "color": "#f59e0b"}
+  ]
+}` 
+                    },
+                    { role: "user", content: prompt }
+                ],
+                temperature: 0.8
+            })
+        });
+
+        const data = await response.json();
+        const aiResponseText = data.choices[0].message.content;
+        
+        let formattedResult;
+        try {
+            // Metin içindeki JSON yapısını ayıklayıp parse et
+            const startJson = aiResponseText.indexOf('{');
+            const endJson = aiResponseText.lastIndexOf('}') + 1;
+            formattedResult = JSON.parse(aiResponseText.substring(startJson, endJson));
+        } catch (e) {
+            console.error("Parse Hatası:", e);
+            return res.status(500).json({ error: 'Yapay zeka yanıtı ayrıştırılamadı.' });
+        }
+
+        return res.status(200).json(formattedResult);
+
+    } catch (error) {
+        console.error("OpenAI Hatası:", error);
+        return res.status(500).json({ error: 'Yapay zeka yanıt verirken bir hata oluştu.' });
+    }
 }
