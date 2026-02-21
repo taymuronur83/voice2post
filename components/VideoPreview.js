@@ -16,9 +16,9 @@ export default function VideoPreview() {
                 const decodedData = JSON.parse(decodeURIComponent(videoDataRaw));
                 
                 // 3. Remotion Player'ın anlayacağı formata çevir
-                // MyVideo.js içindeki getInputProps() artık buradaki tüm objeyi yakalayacak
+                // HTML tarafındaki 'video_script' içindeki başlığı (title) veya ilk alt yazıyı yakalıyoruz.
                 setVideoProps({
-                    text: decodedData.text || "Başlık Hazırlanıyor...",
+                    text: decodedData.title || (decodedData.subtitles ? decodedData.subtitles[0].text : "Başlık Hazırlanıyor..."),
                     backgroundUrl: decodedData.backgroundUrl || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1080&q=80",
                     accentColor: decodedData.accentColor || "#3b82f6",
                     audioUrl: decodedData.audioUrl || "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -28,7 +28,9 @@ export default function VideoPreview() {
                         shakeIntensity: 0,
                         zoomScale: 1.15,
                         textSpeed: 1
-                    }
+                    },
+                    // Claude'dan gelen tüm script verisini de içeri aktaralım
+                    subtitles: decodedData.subtitles || []
                 });
             } catch (e) {
                 console.error("Video verisi ayrıştırılamadı:", e);
