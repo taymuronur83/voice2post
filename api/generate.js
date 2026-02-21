@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+Import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -18,8 +18,8 @@ export default async function handler(req, res) {
 
   try {
     const msg = await anthropic.messages.create({
-      // HATA ALDIĞIN YER BURASIYDI, GÜNCELLEDİM:
-      model: "claude-3-5-sonnet-latest", 
+      // Tier 1 hesaplar için en stabil ve güncel Claude 3.5 Sonnet ID'si kullanıldı:
+      model: "claude-3-5-sonnet-20240620", 
       max_tokens: 4000,
       temperature: 0.7,
       system: `Sen profesyonel bir sosyal medya uzmanısın. Kullanıcının sesli notunu veya metnini alıp 3 farklı formata dönüştürürsün:
@@ -63,8 +63,8 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Anthropic API Hatası:", error);
     
-    // Eğer hala 404 hatası alırsan (API yetkisi kaynaklı), otomatik Haiku modeline geçiş uyarısı
-    if (error.message.includes("not_found")) {
+    // Eğer hala 404 hatası alırsan (API yetkisi kaynaklı), kullanıcıyı bilgilendir
+    if (error.message.includes("not_found") || error.message.includes("permission")) {
        return res.status(404).json({ 
          error: "Sizin API anahtarınız henüz Claude 3.5 sürümünü desteklemiyor olabilir. Lütfen 'claude-3-haiku-20240307' modelini deneyin veya Anthropic panelinden kredi yükleyin." 
        });
