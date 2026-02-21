@@ -1,4 +1,4 @@
-name: Render Video
+Name: Render Video
 on:
   repository_dispatch:
     types: [render-video] # API'den gelen tetikleyiciyi yakalar
@@ -32,10 +32,10 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        # API'den gelen 'props' verisini Remotion render komutuna enjekte ediyoruz
+        # Claude'dan gelen video_script verisini Remotion'ın anlayacağı 'props' formatına dönüştürüp render ediyoruz
         run: |
           PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
-          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS"
+          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS" --browser-executable=$(npx remotion browser locate)
 
       - name: Upload Video
         uses: actions/upload-artifact@v4
