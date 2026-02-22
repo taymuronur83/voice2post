@@ -30,7 +30,7 @@ jobs:
         run: npm install
 
       - name: Install System Dependencies
-        # Remotion'ın ihtiyaç duyduğu tüm Linux kütüphanelerini eksiksiz ekledim
+        # Remotion'ın Linux sunucuda ekran kartı olmadan render yapabilmesi için gereken kütüphaneler
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,16 +43,18 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        # 1. Props verisini güvenli bir Bash değişkenine alıyoruz
-        # 2. --chromium-flags ile sandbox hatalarını aşıyoruz
-        # 3. index.tsx içindeki 'MyVideo' ID'sini hedefliyoruz
+        # GÜNCELLEME: Props verisini API'den (client_payload) veya manuel (inputs) alıp Remotion'a tam uyumlu basıyoruz.
         run: |
           PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
+          
+          # Eğer veri boş gelirse sistemin çökmemesi için varsayılan değer atıyoruz
           if [ -z "$PROPS" ] || [ "$PROPS" == "null" ]; then 
-            PROPS='{"title": "Varsayılan", "sub": "VERİ GELMEDİ", "accentColor": "#3b82f6"}'; 
+            PROPS='{"title": "Sesini Markaya Dönüştür", "sub": "VOICE2POST AI", "accentColor": "#3b82f6"}'; 
           fi
           
           mkdir -p out
+          
+          # Remotion Render Komutu: index.tsx içindeki 'MyVideo' ID'li Composition'ı hedefler
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
             --props="$PROPS" \
             --browser-executable=$(npx remotion browser path) \
