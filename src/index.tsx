@@ -46,6 +46,8 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
+    // EKLENTİ: Videoyu yenilemek için cache-buster
+    const [videoKey, setVideoKey] = useState(Date.now());
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -65,9 +67,29 @@ const MainSocialSystem = () => {
         try {
             const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: userInput }) });
             const data = await response.json();
-            setOutputs({ twitter: data.twitter, linkedin: data.linkedin, videoTitle: data.video_script.title, videoSub: data.video_script.sub, videoColor: data.video_script.accentColor, storyline: data.video_script.storyline || [], animConfig: data.video_script.animation });
+            
+            setOutputs({ 
+                twitter: data.twitter, 
+                linkedin: data.linkedin, 
+                videoTitle: data.video_script.title, 
+                videoSub: data.video_script.sub, 
+                videoColor: data.video_script.accentColor, 
+                storyline: data.video_script.storyline || [], 
+                animConfig: data.video_script.animation 
+            });
+
+            // EKLENTİ: GitHub Actions Render işlemini otomatik başlat
+            await fetch('/api/render-video', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ script: data.video_script }) 
+            });
+
             setStatus('success');
-        } catch (err) { setStatus('error'); }
+            setVideoKey(Date.now()); // Video URL'sini tazele
+        } catch (err) { 
+            setStatus('error'); 
+        }
     };
 
     return (
@@ -82,8 +104,36 @@ const MainSocialSystem = () => {
                 </div>
             </div>
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
-                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden' }}>
-                    {status === 'success' ? <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} /> : <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>}
+                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
+                    {/* GÜNCELLEME: status success olduğunda videoyu doğrudan GitHub'dan oynatır */}
+                    {status === 'success' ? (
+                        <video 
+                            key={videoKey}
+                            src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
+                            controls 
+                            autoPlay 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => {
+                                // Video henüz hazır değilse SocialVideoContent önizlemesini göster
+                                console.log("Video dosyası henüz oluşturulmadı, önizleme gösteriliyor.");
+                            }}
+                        />
+                    ) : (
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>
+                            {status === 'processing' ? 'Video Hazırlanıyor...' : 'Hazırlanıyor...'}
+                        </div>
+                    )}
+                    
+                    {/* Orijinal SocialVideoContent yapını da burada gizli bir katman veya alternatif olarak tutuyoruz */}
+                    {status === 'success' && !videoKey && (
+                        <SocialVideoContent 
+                            title={outputs.videoTitle} 
+                            sub={outputs.videoSub} 
+                            accentColor={outputs.videoColor} 
+                            storyline={outputs.storyline} 
+                            animConfig={outputs.animConfig} 
+                        />
+                    )}
                 </div>
             </div>
         </div>
