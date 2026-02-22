@@ -24,19 +24,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # HATA BURADAYDI: Lock dosyası olmadığı için npm cache hata veriyordu. 
-          # Cache parametresini kaldırarak hatayı geçiyoruz.
-          cache: '' 
+          cache: '' # Önceki hatayı önlemek için boş bırakıldı
 
       - name: Install Dependencies
-        # package-lock.json yoksa 'npm ci' hata verir, bu yüzden 'npm install' kullanıyoruz.
         run: npm install
 
       - name: Install System Dependencies
+        # GÜNCELLEME: libasound2 paketi libasound2t64 olarak güncellendi (Ubuntu 24.04 uyumu için)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libnss3 libdbus-1-3 libatk1.0-0 libasound2 libpangocairo-1.0-0 \
+            libnss3 libdbus-1-3 libatk1.0-0 libasound2t64 libpangocairo-1.0-0 \
             libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 \
             libxtst6 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 \
             libgtk-3-0 libatk-bridge2.0-0 libxshmfence1
