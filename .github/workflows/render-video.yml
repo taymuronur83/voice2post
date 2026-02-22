@@ -30,7 +30,6 @@ jobs:
         run: npm install
 
       - name: Install System Dependencies
-        # Chromium ve Remotion için eksik olan tüm kütüphaneler eklendi
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,15 +42,14 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        # Hata Yönetimi: Props verisinin boş gelme ihtimaline karşı fallback eklendi
-        # Çakışmayı önlemek için --gl=angle veya --gl=egl parametreleri gerekebilir (Ubuntu üzerinde stabilite için)
+        # HATA ÇÖZÜMÜ: Tırnak çakışmasını önlemek için ifadeyi sadeleştirdik.
+        # Props varsa onu kullanır, yoksa boş obje gönderir.
         run: |
-          npx remotion render src/index.tsx MyVideo out/video.mp4 \
-          --props='${{ github.event.client_payload.props || github.event.inputs.props || "{}" }}' \
-          --browser-executable=$(npx remotion browser path)
+          PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
+          if [ -z "$PROPS" ]; then PROPS='{}'; fi
+          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS"
 
       - name: Upload Video
-        # Video başarıyla oluştuysa artifact olarak yükle
         if: success()
         uses: actions/upload-artifact@v4
         with:
