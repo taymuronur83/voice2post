@@ -19,8 +19,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -41,33 +39,17 @@ jobs:
 
       - name: Render Video
         run: |
-          # HATA ÇÖZÜMÜ: Veriyi tırnak hatası olmadan dosyaya yazdır
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
-          
-          mkdir -p public/outputs
-          
-          # Render komutu (Eski haline sadık, sadece çıktı yolu güncel)
-          npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 \
-            --props=./props.json \
-            --browser-executable=$(npx remotion browser path) \
-            --chromium-flags="--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage" \
-            --force \
-            --loglevel=verbose
+          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json; fi
+          mkdir -p out
+          npx remotion render src/index.tsx MyVideo out/video.mp4 --props=./props.json --force --loglevel=verbose
 
-      - name: Commit and Push Video
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add public/outputs/final-video.mp4
-          git commit -m "Video Updated" || echo "No changes"
-          git push origin main
-
-      - name: Upload Video Artifact
+      - name: Upload Video
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: final-video
-          path: public/outputs/final-video.mp4
+          path: out/video.mp4
           retention-days: 1
