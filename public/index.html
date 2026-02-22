@@ -61,9 +61,6 @@
         .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
         .text-input-area:focus { border-color: #3b82f6; }
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
-        
-        /* Logo için özel stil */
-        .site-logo { height: 40px; width: auto; object-fit: contain; }
     </style>
 </head>
 <body>
@@ -108,11 +105,7 @@
     </div>
 
     <nav class="fixed w-full z-50 glass py-4 px-6 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <img src="https://i.ibb.co/9HghfMTn/image.png" alt="Voice2Post Logo" class="site-logo">
-            <div class="text-2xl font-extrabold tracking-tighter text-white">VOICE<span class="text-blue-500">2</span>POST</div>
-        </div>
-        
+        <div class="text-2xl font-extrabold tracking-tighter text-white">VOICE<span class="text-blue-500">2</span>POST</div>
         <div class="flex items-center space-x-4 md:space-x-8">
             <div class="hidden md:flex space-x-8 text-sm font-medium">
                 <a href="#arac" class="hover:text-blue-400 transition" data-i18n="nav_try">Hemen Dene</a>
@@ -424,6 +417,7 @@
 
                 if (data.video_script) {
                     const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
+                    // BURASI GÜNCELLENDİ: Hatalı /api/render-preview yerine projedeki ana sayfayı veriyle çağırıyor.
                     liveArea.innerHTML = `<iframe src="/index.html?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
                     
                     setTimeout(() => {
