@@ -20,7 +20,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Depoya geri yükleme (push) yapabilmek için token ile checkout yapıyoruz
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
@@ -35,42 +34,34 @@ jobs:
       - name: Install System Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            libnss3 libdbus-1-3 libatk1.0-0 libasound2t64 libpangocairo-1.0-0 \
-            libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 \
-            libxtst6 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 \
-            libgtk-3-0 libatk-bridge2.0-0 libxshmfence1
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libasound2t64 libpangocairo-1.0-0 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 libgtk-3-0 libatk-bridge2.0-0 libxshmfence1
 
       - name: Install Remotion Browser
         run: npx remotion browser install
 
       - name: Render Video
         run: |
+          # HATA ÇÖZÜMÜ: Veriyi tırnak hatası olmadan dosyaya yazdır
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
           
-          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then 
-            echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json
-          fi
-          
-          # Videonun sitede görünebilmesi için klasörü oluşturuyoruz
           mkdir -p public/outputs
           
-          # Render işlemini doğrudan public klasörüne yapıyoruz
+          # Render komutu (Eski haline sadık, sadece çıktı yolu güncel)
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 \
             --props=./props.json \
+            --browser-executable=$(npx remotion browser path) \
+            --chromium-flags="--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage" \
             --force \
             --loglevel=verbose
 
-      # GÜNCELLEME: Videoyu depona geri yükler (Sitenin videoyu görebilmesi için)
       - name: Commit and Push Video
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add public/outputs/final-video.mp4
-          # Eğer video değişmediyse hata vermemesi için || true kullanıldı
-          git commit -m "Video içeriği güncellendi: public/outputs/final-video.mp4" || echo "Değişiklik yok."
+          git commit -m "Video Updated" || echo "No changes"
           git push origin main
 
       - name: Upload Video Artifact
