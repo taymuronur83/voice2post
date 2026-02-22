@@ -449,14 +449,36 @@
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
 
+                // GÜNCELLEME: Video script verisi varsa workflow tetiklenir
                 if (data.video_script) {
-                    const encodedData = encodeURIComponent(JSON.stringify(data.video_script));
+                    const videoData = data.video_script;
+                    const encodedData = encodeURIComponent(JSON.stringify(videoData));
+                    
+                    // Önizleme alanını güncelle (Vite/Remotion Server URL'sine bakar)
                     liveArea.innerHTML = `<iframe src="/index.html?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    
+                    // MP4 İndir butonu işlevini buraya ekliyoruz
+                    const downloadBtn = document.getElementById('download-btn');
+                    downloadBtn.onclick = async () => {
+                        downloadBtn.innerText = "Sıraya Alındı...";
+                        try {
+                            const renderRes = await fetch('/api/render-video', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ script: videoData }) 
+                            });
+                            const renderData = await renderRes.json();
+                            alert(renderData.message || "Video Render İşlemi GitHub Actions Üzerinde Başlatıldı!");
+                        } catch (err) { 
+                            alert("Hata oluştu: " + err.message); 
+                        }
+                        downloadBtn.innerText = "MP4 İndir";
+                    };
                     
                     setTimeout(() => {
                         videoLoader.classList.add('hidden');
                         liveArea.classList.remove('opacity-0');
-                        document.getElementById('download-btn').classList.remove('hidden');
+                        downloadBtn.classList.remove('hidden');
                         statusText.innerText = "İçerik Hazır!";
                     }, 2000);
                 } else {
