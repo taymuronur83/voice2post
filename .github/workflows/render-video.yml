@@ -20,14 +20,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Depoya geri yükleme yapabilmek için token ekledik
+          # ÖNEMLİ: GitHub Ayarlarından (Secrets) GH_TOKEN eklemiş olman gerekir
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: '' 
 
       - name: Install Dependencies
         run: npm install
@@ -42,27 +41,21 @@ jobs:
 
       - name: Render Video
         run: |
-          # Props dosyasını oluştur
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
-          
-          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then 
-            echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json
-          fi
-          
-          # KLASÖR GÜNCELLEMESİ: out yerine public/outputs kullanıyoruz ki siteye direkt gelsin
+          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json; fi
+          # GENEL ÇÖZÜM: Videoyu public klasörüne atıyoruz
           mkdir -p public/outputs
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --props=./props.json --force --loglevel=verbose
 
-      # GÜNCELLEME: Oluşan videoyu GitHub deposuna geri yükler (Sitede oynaması için şart)
       - name: Commit and Push Video
         if: success()
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add public/outputs/final-video.mp4
-          git commit -m "Video Güncellendi: final-video.mp4" || echo "Değişiklik yok"
+          git commit -m "Video Sync" || echo "No changes"
           git push origin main
 
       - name: Upload Video Artifact
