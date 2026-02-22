@@ -2,13 +2,13 @@ name: Render Video
 
 on:
   repository_dispatch:
-    types: [render-video] # api/render-video.js ile tam eşleşme sağlandı
+    types: [render-video]
   workflow_dispatch:
     inputs:
       props:
         description: 'Remotion Props JSON'
         required: false
-        default: '{"title": "Örnek", "sub": "VİDEO", "accentColor": "#3b82f6"}'
+        default: '{"title": "Hazır", "sub": "VİDEO OLUŞTURULUYOR", "accentColor": "#3b82f6"}'
 
 permissions:
   contents: write
@@ -24,9 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # HATA BURADAYDI: Lock dosyası olmadığı için npm cache hata veriyordu. 
+          # Cache parametresini kaldırarak hatayı geçiyoruz.
+          cache: '' 
 
       - name: Install Dependencies
+        # package-lock.json yoksa 'npm ci' hata verir, bu yüzden 'npm install' kullanıyoruz.
         run: npm install
 
       - name: Install System Dependencies
@@ -43,16 +46,12 @@ jobs:
 
       - name: Render Video
         run: |
-          # Payload'dan gelen veriyi güvenli bir değişkene alıyoruz
           PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
-          
-          # Boş gelirse patlamaması için default
           if [ -z "$PROPS" ] || [ "$PROPS" == "null" ]; then 
-            PROPS='{"title": "Hata", "sub": "VERI ALINAMADI", "accentColor": "#ff0000"}'; 
+            PROPS='{"title": "Sesini Markaya Dönüştür", "sub": "VOICE2POST AI", "accentColor": "#3b82f6"}'; 
           fi
           
           mkdir -p out
-          # index.tsx içindeki MyVideo ID'sini render eder
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
             --props="$PROPS" \
             --browser-executable=$(npx remotion browser path) \
