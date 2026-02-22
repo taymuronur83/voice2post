@@ -46,8 +46,8 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
-    // Yeni video yüklendiğinde cache temizlemek için
     const [videoKey, setVideoKey] = useState(Date.now());
+    const [videoReady, setVideoReady] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -64,6 +64,7 @@ const MainSocialSystem = () => {
     const handleGenerate = async () => {
         if (!userInput) return alert("Komut girin!");
         setStatus('processing');
+        setVideoReady(false);
         try {
             const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: userInput }) });
             const data = await response.json();
@@ -78,7 +79,7 @@ const MainSocialSystem = () => {
                 animConfig: data.video_script.animation 
             });
 
-            // GÜNCELLEME: GitHub Render işlemini buradan otomatik tetikliyoruz
+            // GitHub Render Tetikleyici
             await fetch('/api/render-video', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -86,6 +87,7 @@ const MainSocialSystem = () => {
             });
 
             setStatus('success');
+            // Videoyu kontrol etmeye başla
             setVideoKey(Date.now());
         } catch (err) { setStatus('error'); }
     };
@@ -94,45 +96,45 @@ const MainSocialSystem = () => {
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
             <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column' }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
-                <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px' }} placeholder="Ne anlatmak istersin?" />
+                <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px' }} />
                 <button onClick={handleGenerate} style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold' }}>{status === 'processing' ? 'İşleniyor...' : 'Üret'}</button>
                 <div style={{ marginTop: '20px', overflowY: 'auto' }}>
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}><strong>X:</strong> <p>{outputs.twitter}</p></div>
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px' }}><strong>LinkedIn:</strong> <p>{outputs.linkedin}</p></div>
                 </div>
             </div>
-            {/* SAĞ TARAF: İşte senin sitenin görüntüsü yerine videonun oynayacağı dikey alan */}
+            
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
                 <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative', background: '#111' }}>
                     {status === 'success' ? (
                         <>
-                            {/* Render bittiğinde GitHub'dan gelecek gerçek video */}
                             <video 
                                 key={videoKey}
-                                src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
+                                // Daha hızlı ve güvenli CDN üzerinden çekiyoruz
+                                src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
                                 controls 
                                 autoPlay 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 2 }}
-                                onError={(e) => {
-                                    // Video henüz GitHub'da hazır değilse, alttaki Remotion önizlemesi görünür kalır
-                                    (e.target as HTMLVideoElement).style.opacity = '0';
-                                }}
-                                onLoadedData={(e) => {
-                                    (e.target as HTMLVideoElement).style.opacity = '1';
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 5, opacity: videoReady ? 1 : 0 }}
+                                onCanPlay={() => setVideoReady(true)}
+                                onError={() => {
+                                    // Video bulunamazsa 5 saniye sonra tekrar denetiyoruz (GitHub gecikmesi için)
+                                    setTimeout(() => setVideoKey(Date.now()), 5000);
                                 }}
                             />
-                            {/* Video hazırlanana kadar Claude'un verileriyle çalışan anlık Remotion önizlemesi */}
-                            <SocialVideoContent 
-                                title={outputs.videoTitle} 
-                                sub={outputs.videoSub} 
-                                accentColor={outputs.videoColor} 
-                                storyline={outputs.storyline} 
-                                animConfig={outputs.animConfig} 
-                            />
+                            {/* Video hazır olana kadar Remotion Önizlemesi Altta Çalışır */}
+                            {!videoReady && (
+                                <SocialVideoContent 
+                                    title={outputs.videoTitle} 
+                                    sub={outputs.videoSub} 
+                                    accentColor={outputs.videoColor} 
+                                    storyline={outputs.storyline} 
+                                    animConfig={outputs.animConfig} 
+                                />
+                            )}
                         </>
                     ) : (
                         <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Üretiliyor...' : 'Hazırlanıyor...'}
+                            {status === 'processing' ? 'Video Hazırlanıyor...' : 'Hazırlanıyor...'}
                         </div>
                     )}
                 </div>
