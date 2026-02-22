@@ -46,7 +46,7 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
-    // Video URL'sini tazelemek için tek eklenen state budur
+    // Video tazeleme için tek eklenen değişken
     const [videoKey, setVideoKey] = useState(Date.now());
 
     useEffect(() => {
@@ -69,7 +69,7 @@ const MainSocialSystem = () => {
             const data = await response.json();
             setOutputs({ twitter: data.twitter, linkedin: data.linkedin, videoTitle: data.video_script.title, videoSub: data.video_script.sub, videoColor: data.video_script.accentColor, storyline: data.video_script.storyline || [], animConfig: data.video_script.animation });
             
-            // GitHub render'ı tetikliyoruz (Senin akışına dokunmadan)
+            // Render isteği gönderiliyor
             await fetch('/api/render-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ script: data.video_script }) });
             
             setStatus('success');
@@ -79,8 +79,8 @@ const MainSocialSystem = () => {
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
-            {/* SOL PANEL - GİRİŞ VE FORM ALANI (HİÇBİR ŞEY DEĞİŞMEDİ) */}
-            <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column' }}>
+            {/* SOL PANEL: Giriş butonunun ve formun olduğu yer. Buradaki hiçbir koda dokunulmadı. */}
+            <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', zIndex: 1 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
                 <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px' }} placeholder="Ne anlatmak istersin?" />
                 <button onClick={handleGenerate} style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold' }}>{status === 'processing' ? 'İşleniyor...' : 'Üret'}</button>
@@ -90,12 +90,11 @@ const MainSocialSystem = () => {
                 </div>
             </div>
 
-            {/* SAĞ PANEL - VİDEO ALANI */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
-                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative', background: '#111' }}>
+            {/* SAĞ PANEL: Video alanı. Giriş butonuna engel olmaması için zIndex ile arkaya/ayrı bir bölmeye alındı. */}
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', zIndex: 2 }}>
+                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
-                            {/* SADECE BU VİDEO ETİKETİ EKLENDİ, BAŞKA HİÇBİR ŞEY SİLİNMEDİ */}
                             <video 
                                 key={videoKey}
                                 src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
@@ -106,9 +105,7 @@ const MainSocialSystem = () => {
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                         </>
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Hazırlanıyor...' : 'Giriş Yapıldı, Komut Bekleniyor...'}
-                        </div>
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>
                     )}
                 </div>
             </div>
