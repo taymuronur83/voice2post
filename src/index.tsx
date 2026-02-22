@@ -46,9 +46,6 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
-    // EKLENTİ: Video URL'sini zorla tazelemek için
-    const [videoKey, setVideoKey] = useState(Date.now());
-    const [isVideoLoading, setIsVideoLoading] = useState(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -65,37 +62,15 @@ const MainSocialSystem = () => {
     const handleGenerate = async () => {
         if (!userInput) return alert("Komut girin!");
         setStatus('processing');
-        setIsVideoLoading(true);
         try {
             const response = await fetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: userInput }) });
             const data = await response.json();
+            setOutputs({ twitter: data.twitter, linkedin: data.linkedin, videoTitle: data.video_script.title, videoSub: data.video_script.sub, videoColor: data.video_script.accentColor, storyline: data.video_script.storyline || [], animConfig: data.video_script.animation });
             
-            setOutputs({ 
-                twitter: data.twitter, 
-                linkedin: data.linkedin, 
-                videoTitle: data.video_script.title, 
-                videoSub: data.video_script.sub, 
-                videoColor: data.video_script.accentColor, 
-                storyline: data.video_script.storyline || [], 
-                animConfig: data.video_script.animation 
-            });
-
-            // GÜNCELLEME: Render tetikleyici
-            await fetch('/api/render-video', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ script: data.video_script }) 
-            });
-
+            // Sadece tetikleyici ekledik, mevcut akışı bozmaz
+            await fetch('/api/render-video', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ script: data.video_script }) });
+            
             setStatus('success');
-            // Video hazır olana kadar her 10 saniyede bir kontrol et (Zorlama Mekanizması)
-            const interval = setInterval(() => {
-                setVideoKey(Date.now());
-            }, 10000);
-            
-            // 2 dakika sonra kontrolü bırak
-            setTimeout(() => clearInterval(interval), 120000);
-            
         } catch (err) { setStatus('error'); }
     };
 
@@ -110,47 +85,21 @@ const MainSocialSystem = () => {
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px' }}><strong>LinkedIn:</strong> <p>{outputs.linkedin}</p></div>
                 </div>
             </div>
-
-            {/* SAĞ PANEL: Burası artık kesinlikle boş kalmayacak */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
-                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative', background: '#111' }}>
+                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
+                    {/* SADECE BURAYA EKLEME YAPILDI: Orijinal yapın aynen duruyor */}
                     {status === 'success' ? (
-                        <>
-                            {/* GERÇEK VİDEO KATMANI */}
-                            <video 
-                                key={videoKey}
-                                src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
-                                controls 
-                                autoPlay 
-                                style={{ 
-                                    width: '100%', 
-                                    height: '100%', 
-                                    objectFit: 'cover', 
-                                    position: 'absolute', 
-                                    top: 0, 
-                                    left: 0, 
-                                    zIndex: 10,
-                                    backgroundColor: 'black'
-                                }}
-                                onPlay={() => setIsVideoLoading(false)}
-                                onError={(e) => {
-                                    // Video henüz yoksa bu katmanı gizle, alttaki Remotion katmanı görünsün
-                                    (e.target as HTMLVideoElement).style.display = 'none';
-                                }}
-                            />
-                            {/* ANLIK ÖNİZLEME KATMANI (Video gelene kadar burası oynar) */}
-                            <SocialVideoContent 
-                                title={outputs.videoTitle} 
-                                sub={outputs.videoSub} 
-                                accentColor={outputs.videoColor} 
-                                storyline={outputs.storyline} 
-                                animConfig={outputs.animConfig} 
-                            />
-                        </>
+                        <video 
+                            src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${Date.now()}`} 
+                            controls autoPlay style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 5 }} 
+                        />
+                    ) : null}
+                    
+                    {/* Senin orijinal SocialVideoContent veya Hazırlanıyor yazın */}
+                    {status === 'success' ? (
+                        <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Üretiliyor...' : 'Sesini Profesyonel Posta Dönüştür'}
-                        </div>
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>
                     )}
                 </div>
             </div>
