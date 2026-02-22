@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { registerRoot, Composition, useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion';
 
-// API Key Tanımlaması (Sistem içinde gerekirse kullanılmak üzere)
+// Verdiğin API Key
 const GEMINI_API_KEY = "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA";
 
 const SocialVideoContent = ({ 
@@ -67,11 +67,10 @@ const MainSocialSystem = () => {
         if (!userInput) return alert("Komut girin!");
         setStatus('processing');
         try {
-            // API Key isteğe ekleniyor
             const response = await fetch('/api/generate', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ prompt: userInput, apiKey: GEMINI_API_KEY }) 
+                body: JSON.stringify({ prompt: userInput, key: GEMINI_API_KEY }) 
             });
             const data = await response.json();
             setOutputs({ twitter: data.twitter, linkedin: data.linkedin, videoTitle: data.video_script.title, videoSub: data.video_script.sub, videoColor: data.video_script.accentColor, storyline: data.video_script.storyline || [], animConfig: data.video_script.animation });
@@ -88,20 +87,34 @@ const MainSocialSystem = () => {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden', position: 'relative' }}>
-            {/* SOL TARAF: Giriş ve Form Alanı - Tıklamayı engellememesi için z-index ve relative verildi */}
-            <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
+            {/* SOL TARAF - GİRİŞ VE FORM (Butonların her zaman tıklanabilir olması için relative ve yüksek z-index) */}
+            <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 100 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
                 <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px' }} placeholder="Ne anlatmak istersin?" />
-                <button onClick={handleGenerate} style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold', cursor: 'pointer' }}>{status === 'processing' ? 'İşleniyor...' : 'Üret'}</button>
+                <button 
+                    onClick={handleGenerate} 
+                    style={{ 
+                        padding: '15px', 
+                        background: '#2563eb', 
+                        color: '#fff', 
+                        borderRadius: '8px', 
+                        marginTop: '15px', 
+                        fontWeight: 'bold', 
+                        cursor: 'pointer',
+                        border: 'none' 
+                    }}
+                >
+                    {status === 'processing' ? 'İşleniyor...' : 'Üret'}
+                </button>
                 <div style={{ marginTop: '20px', overflowY: 'auto' }}>
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px', marginBottom: '10px' }}><strong>X:</strong> <p>{outputs.twitter}</p></div>
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px' }}><strong>LinkedIn:</strong> <p>{outputs.linkedin}</p></div>
                 </div>
             </div>
 
-            {/* SAĞ TARAF: Video Alanı - Sol taraftaki butonlara dokunmayı engellememesi için pointer-events ayarlandı */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 5 }}>
+            {/* SAĞ TARAF - VİDEO ÖNİZLEME (Sol tarafı asla etkilemez) */}
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 1 }}>
                 <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
@@ -110,12 +123,12 @@ const MainSocialSystem = () => {
                                 src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
                                 controls 
                                 autoPlay 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 20 }} 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50 }} 
                             />
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                         </>
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>Hazırlanıyor...</div>
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>
                     )}
                 </div>
             </div>
