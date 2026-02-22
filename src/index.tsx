@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { registerRoot, Composition, useCurrentFrame, interpolate, spring } from 'remotion';
+import React, { useState, useEffect } from 'react';
+import { registerRoot, Composition, useCurrentFrame, interpolate } from 'remotion';
 
-// --- VİDEO İÇERİĞİ (Gelişmiş Animasyon Motoru) ---
+// --- VİDEO İÇERİĞİ ---
 const SocialVideoContent = ({ 
     title, 
     sub, 
@@ -16,7 +16,6 @@ const SocialVideoContent = ({
     const frame = useCurrentFrame();
     const config = animConfig || { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 };
     
-    // Claude'dan gelen değere göre dinamik zoom ve sarsıntı
     const scale = interpolate(frame, [0, 150], [1, config.zoomScale]);
     const shake = Math.sin(frame * config.textSpeed) * config.shakeIntensity;
 
@@ -49,6 +48,26 @@ const MainSocialSystem = () => {
         animConfig: null 
     });
 
+    // URL'den gelen veriyi yakalamak için güncelleme
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const videoDataRaw = params.get("videoData");
+        if (videoDataRaw) {
+            try {
+                const decoded = JSON.parse(decodeURIComponent(videoDataRaw));
+                setOutputs({
+                    twitter: '',
+                    linkedin: '',
+                    videoTitle: decoded.title || "",
+                    videoSub: decoded.sub || "",
+                    videoColor: decoded.accentColor || "#3b82f6",
+                    animConfig: decoded.animation || null
+                });
+                setStatus('success');
+            } catch (e) { console.error("URL verisi okunamadı", e); }
+        }
+    }, []);
+
     const handleGenerate = async () => {
         if (!userInput) return alert("Komut girin!");
         setStatus('processing');
@@ -63,8 +82,8 @@ const MainSocialSystem = () => {
             setOutputs({
                 twitter: data.twitter,
                 linkedin: data.linkedin,
-                videoTitle: data.video_script.text,
-                videoSub: data.video_script.theme.toUpperCase(),
+                videoTitle: data.video_script.title,
+                videoSub: data.video_script.sub,
                 videoColor: data.video_script.accentColor,
                 animConfig: data.video_script.animation
             });
@@ -106,8 +125,6 @@ const MainSocialSystem = () => {
     );
 };
 
-// --- GÜNCELLEME: REMOTION KAYIT NOKTASI ---
-// Hem arayüzü hem de workflow'un aradığı Composition'ı aynı anda kaydediyoruz.
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -125,7 +142,6 @@ export const RemotionRoot: React.FC = () => {
             animConfig: null
         }}
       />
-      {/* Tarayıcıda açıldığında kontrol panelini görmek için */}
       <MainSocialSystem />
     </>
   );
