@@ -24,12 +24,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          # Önceki hataları önlemek için cache boş bırakıldı - SİLİNMEDİ
           cache: '' 
 
       - name: Install Dependencies
+        # package-lock.json olmasa bile güvenli kurulum - SİLİNMEDİ
         run: npm install
 
       - name: Install System Dependencies
+        # Ubuntu 24.04 'Noble' uyumlu kütüphaneler - SİLİNMEDİ
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,23 +46,21 @@ jobs:
 
       - name: Render Video
         run: |
-          # 1. VERİYİ GÜVENLİ DOSYAYA YAZDIRMA
-          # 'İmparatorluğu'nun' gibi kesme işaretlerinin Bash'i bozmasını engellemek için
-          # veriyi doğrudan bir dosyaya kaydediyoruz.
+          # GÜNCELLEME: 'İmparatorluğu'nun' gibi kesme işaretleri hatasını önlemek için 
+          # veriyi doğrudan güvenli bir JSON dosyasına yazdırıyoruz.
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
 
-          # 2. DOSYA KONTROLÜ
-          # Eğer dosya boşsa varsayılan JSON'ı oluştur
+          # GÜNCELLEME: Eğer veri boş gelirse sistemin çökmemesi için varsayılan JSON oluşturma
           if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then
-            echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6"}' > props.json
+            echo '{"title": "Sesini Markaya Dönüştür", "sub": "VOICE2POST AI", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json
           fi
-
+          
           mkdir -p out
           
-          # 3. RENDER (DOSYA ÜZERİNDEN)
-          # Artık --props içine uzun metin yazmak yerine props.json dosyasını veriyoruz.
+          # GÜNCELLEME: Render komutu artık doğrudan props.json dosyasını okuyor.
+          # index.tsx içindeki MyVideo ID'sini ve 450 frame'lik yeni süreyi destekler.
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
             --props=./props.json \
             --browser-executable=$(npx remotion browser path) \
