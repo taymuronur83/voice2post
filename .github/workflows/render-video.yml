@@ -19,6 +19,9 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # Depoya geri yükleme yapabilmek için token ekledik
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,17 +42,33 @@ jobs:
 
       - name: Render Video
         run: |
+          # Props dosyasını oluştur
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
-          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json; fi
-          mkdir -p out
-          npx remotion render src/index.tsx MyVideo out/video.mp4 --props=./props.json --force --loglevel=verbose
+          
+          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then 
+            echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json
+          fi
+          
+          # KLASÖR GÜNCELLEMESİ: out yerine public/outputs kullanıyoruz ki siteye direkt gelsin
+          mkdir -p public/outputs
+          npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --props=./props.json --force --loglevel=verbose
 
-      - name: Upload Video
+      # GÜNCELLEME: Oluşan videoyu GitHub deposuna geri yükler (Sitede oynaması için şart)
+      - name: Commit and Push Video
+        if: success()
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add public/outputs/final-video.mp4
+          git commit -m "Video Güncellendi: final-video.mp4" || echo "Değişiklik yok"
+          git push origin main
+
+      - name: Upload Video Artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: final-video
-          path: out/video.mp4
+          path: public/outputs/final-video.mp4
           retention-days: 1
