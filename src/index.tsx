@@ -101,12 +101,34 @@ const MainSocialSystem = () => {
                         <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>
                     )}
                 </div>
-                <div style={{ display: 'none' }}>
-                    <Composition id="MyVideo" component={SocialVideoContent} durationInFrames={150} fps={30} width={1080} height={1920} />
-                </div>
             </div>
         </div>
     );
 };
 
-registerRoot(MainSocialSystem);
+// --- GÜNCELLEME: REMOTION KAYIT NOKTASI ---
+// Hem arayüzü hem de workflow'un aradığı Composition'ı aynı anda kaydediyoruz.
+export const RemotionRoot: React.FC = () => {
+  return (
+    <>
+      <Composition
+        id="MyVideo"
+        component={SocialVideoContent}
+        durationInFrames={150}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+            title: "Örnek Başlık",
+            sub: "ALT BAŞLIK",
+            accentColor: "#3b82f6",
+            animConfig: null
+        }}
+      />
+      {/* Tarayıcıda açıldığında kontrol panelini görmek için */}
+      <MainSocialSystem />
+    </>
+  );
+};
+
+registerRoot(RemotionRoot);
