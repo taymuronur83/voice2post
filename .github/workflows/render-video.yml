@@ -2,13 +2,13 @@ name: Render Video
 
 on:
   repository_dispatch:
-    types: [render-video]
+    types: [render-video] # api/render-video.js ile tam eşleşme sağlandı
   workflow_dispatch:
     inputs:
       props:
         description: 'Remotion Props JSON'
         required: false
-        default: '{"title": "Hazır", "sub": "VİDEO OLUŞTURULUYOR", "accentColor": "#3b82f6"}'
+        default: '{"title": "Örnek", "sub": "VİDEO", "accentColor": "#3b82f6"}'
 
 permissions:
   contents: write
@@ -30,7 +30,6 @@ jobs:
         run: npm install
 
       - name: Install System Dependencies
-        # Remotion'ın Linux sunucuda ekran kartı olmadan render yapabilmesi için gereken kütüphaneler
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,18 +42,17 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        # GÜNCELLEME: Props verisini API'den (client_payload) veya manuel (inputs) alıp Remotion'a tam uyumlu basıyoruz.
         run: |
+          # Payload'dan gelen veriyi güvenli bir değişkene alıyoruz
           PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
           
-          # Eğer veri boş gelirse sistemin çökmemesi için varsayılan değer atıyoruz
+          # Boş gelirse patlamaması için default
           if [ -z "$PROPS" ] || [ "$PROPS" == "null" ]; then 
-            PROPS='{"title": "Sesini Markaya Dönüştür", "sub": "VOICE2POST AI", "accentColor": "#3b82f6"}'; 
+            PROPS='{"title": "Hata", "sub": "VERI ALINAMADI", "accentColor": "#ff0000"}'; 
           fi
           
           mkdir -p out
-          
-          # Remotion Render Komutu: index.tsx içindeki 'MyVideo' ID'li Composition'ı hedefler
+          # index.tsx içindeki MyVideo ID'sini render eder
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
             --props="$PROPS" \
             --browser-executable=$(npx remotion browser path) \
