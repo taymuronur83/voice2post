@@ -17,7 +17,6 @@ export default async function handler(req, res) {
 
   try {
     const msg = await anthropic.messages.create({
-      // Hız ve başarı oranı için Haiku yerine Sonnet de tercih edilebilir ama yapını bozmamak için modeli korudum
       model: "claude-3-haiku-20240307", 
       max_tokens: 4000,
       temperature: 0.7,
@@ -39,7 +38,7 @@ export default async function handler(req, res) {
             "storyline": [
               "1. Sahne: Giriş ve Merak Uyandırıcı Cümle",
               "2. Sahne: Olayın Gelişimi ve Detaylar",
-              "3. Sahne: Çözüm veya Önemli Bilgi",
+              "3. Sahne: Kritik Bilgi veya Detay",
               "4. Sahne: Sonuç ve Harekete Geçirici Mesaj"
             ],
             "animation": {"shakeIntensity": 2, "zoomScale": 1.2, "textSpeed": 1.5}
@@ -50,12 +49,10 @@ export default async function handler(req, res) {
 
     const content = msg.content[0].text;
     
-    // Regex mantığın korunarak yeni yapıya uyarlandı
     const linkedin = content.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
     const twitter = content.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
     const videoScriptRaw = content.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
 
-    // Veriyi frontend'e ve oradan render-video.js'e gönderir
     res.status(200).json({
       linkedin: linkedin || "LinkedIn metni hazırlanamadı.",
       twitter: twitter || "Twitter metni hazırlanamadı.",
