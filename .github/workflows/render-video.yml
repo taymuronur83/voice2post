@@ -24,12 +24,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: ''
+          # Lock file hatasını önlemek için cache boş bırakıldı
+          cache: '' 
 
       - name: Install Dependencies
+        # package-lock.json olmasa bile hata vermeden kurması için
         run: npm install
 
       - name: Install System Dependencies
+        # Ubuntu 24.04 'Noble' uyumlu kütüphaneler (libasound2t64 hatası giderildi)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -43,16 +46,17 @@ jobs:
 
       - name: Render Video
         run: |
-          # GÜNCELLEME: JSON verisini güvenli bir şekilde string'e çeviriyoruz
+          # DÜZELTME: JSON verisini obje değil string olarak yakalıyoruz (toJson kullanımı)
           PROPS_RAW='${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}'
           
-          # Boş gelirse varsayılan değer
+          # Boş gelme ihtimaline karşı kontrol
           if [ "$PROPS_RAW" == "null" ] || [ -z "$PROPS_RAW" ]; then
             PROPS_RAW='{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6"}';
           fi
           
           mkdir -p out
-          # --props içine veriyi tek tırnak içinde göndererek Bash karmaşasını önlüyoruz
+          
+          # Remotion Render: 'MyVideo' ID'sini ve veriyi tırnak içinde gönderiyoruz
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
             --props="$PROPS_RAW" \
             --browser-executable=$(npx remotion browser path) \
