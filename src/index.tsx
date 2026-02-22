@@ -82,13 +82,18 @@ const MainSocialSystem = () => {
             });
             
             setStatus('success');
-            setVideoKey(Date.now());
+            // GENEL GÜNCELLEME: Video üretilirken GitHub'ın yavaşlığını aşmak için periyodik kontrol
+            const checkInterval = setInterval(() => {
+                setVideoKey(Date.now());
+            }, 15000);
+            setTimeout(() => clearInterval(checkInterval), 180000); 
+
         } catch (err) { setStatus('error'); }
     };
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
-            {/* SOL TARAF - GİRİŞ VE FORM (Butonların her zaman tıklanabilir olması için relative ve yüksek z-index) */}
+            {/* SOL TARAF - GİRİŞ VE FORM */}
             <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 100 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
                 <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px' }} placeholder="Ne anlatmak istersin?" />
@@ -113,22 +118,28 @@ const MainSocialSystem = () => {
                 </div>
             </div>
 
-            {/* SAĞ TARAF - VİDEO ÖNİZLEME (Sol tarafı asla etkilemez) */}
+            {/* SAĞ TARAF - GENEL VİDEO ÇÖZÜMÜ */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 1 }}>
                 <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
+                            {/* GENEL DÜŞÜNCE: Raw yerine Media sunucusunu kullanıyoruz, bu tarayıcı engellerini aşar */}
                             <video 
                                 key={videoKey}
-                                src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
                                 controls 
                                 autoPlay 
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50 }} 
-                            />
+                                playsInline
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50, backgroundColor: 'black' }} 
+                            >
+                                <source src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} type="video/mp4" />
+                            </video>
+                            {/* Video yüklenene kadar veya hata verirse arkadaki önizleme çalışır */}
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                         </>
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>Hazırlanıyor...</div>
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>
+                            {status === 'processing' ? 'Video Oluşturuluyor...' : 'Hazırlanıyor...'}
+                        </div>
                     )}
                 </div>
             </div>
