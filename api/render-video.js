@@ -3,7 +3,6 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Sadece POST desteklenir.' });
     }
 
-    // Frontend'den gelen 'script' artık tüm video_script objesini içermeli
     const { script } = req.body;
     const token = process.env.GH_TOKEN; 
 
@@ -12,7 +11,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        // GitHub Actions Dispatcher
         const response = await fetch('https://api.github.com/repos/taymuronur83/voice2post/dispatches', {
             method: 'POST',
             headers: {
@@ -25,13 +23,11 @@ export default async function handler(req, res) {
             body: JSON.stringify({
                 event_type: 'render-video',
                 client_payload: {
-                    // CLAUDE SONNET VERİLERİNİ TAM PAKET OLARAK GÖNDERİYORUZ
                     props: { 
-                        text: script.text || "Metin yok",
-                        backgroundUrl: script.backgroundUrl,
-                        accentColor: script.accentColor,
-                        audioUrl: script.audioUrl,
-                        animation: script.animation // Sarsıntı ve Zoom kodları buraya gidiyor
+                        title: script.title || "İçerik",
+                        sub: script.sub || "Hazırlanıyor",
+                        accentColor: script.accentColor || "#3b82f6",
+                        animConfig: script.animation || { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 }
                     }
                 }
             })
