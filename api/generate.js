@@ -17,7 +17,6 @@ export default async function handler(req, res) {
 
   try {
     const msg = await anthropic.messages.create({
-      // Senin API anahtarının kesin izin verdiği model:
       model: "claude-3-haiku-20240307", 
       max_tokens: 4000,
       temperature: 0.7,
@@ -28,17 +27,20 @@ export default async function handler(req, res) {
           content: `Şu metni içeriklere dönüştür: ${prompt}. Yanıt formatını kesinlikle bozma:
           LinkedIn: [Metin]
           Twitter: [Metin]
-          VideoScript: {"title": "...", "subtitles": [{"text": "...", "start": 0, "end": 2}]}`
+          VideoScript: {
+            "title": "Ana Başlık",
+            "sub": "Alt Başlık veya Tema",
+            "accentColor": "#3b82f6",
+            "animation": {"shakeIntensity": 2, "zoomScale": 1.1, "textSpeed": 1}
+          }`
         }
       ],
     });
 
     const content = msg.content[0].text;
     
-    // HTML'deki id'lerle eşleşen veri ayıklama
     const linkedin = content.match(/LinkedIn:\s*([\s\S]*?)(?=Twitter:|$)/)?.[1]?.trim();
     const twitter = content.match(/Twitter:\s*([\s\S]*?)(?=VideoScript:|$)/)?.[1]?.trim();
-    // VideoScript verisinin daha sağlam yakalanması için geliştirilmiş regex
     const videoScriptRaw = content.match(/VideoScript:\s*(\{[\s\S]*\})/)?.[1]?.trim();
 
     res.status(200).json({
