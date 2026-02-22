@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // Mevcut metod kontrolün
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Sadece POST desteklenir.' });
     }
@@ -7,13 +6,11 @@ export default async function handler(req, res) {
     const { script } = req.body;
     const token = process.env.GH_TOKEN; 
 
-    // Token kontrolü
     if (!token) {
-        return res.status(500).json({ error: "Vercel üzerinde GH_TOKEN tanımlı değil!" });
+        return res.status(500).json({ error: "GH_TOKEN bulunamadı! Vercel'e eklediğinden emin ol." });
     }
 
     try {
-        // GÜNCELLEME: Repo adresin ve Payload yapın hatasız hale getirildi
         const response = await fetch('https://api.github.com/repos/taymuronur83/voice2post/dispatches', {
             method: 'POST',
             headers: {
@@ -24,13 +21,12 @@ export default async function handler(req, res) {
                 'User-Agent': 'Voice2Post-App'
             },
             body: JSON.stringify({
-                // Bu isim .yml dosyasındaki types: [render-video] ile eşleşmelidir
+                // DİKKAT: Bu isim .yml dosyasındaki types: [render-video] ile BİREBİR aynı olmalı
                 event_type: 'render-video', 
                 client_payload: {
-                    // Remotion bileşeninin (index.tsx) beklediği isimlere (title, sub) entegre edildi
                     props: { 
-                        title: script.title || "İçerik Başlığı",
-                        sub: script.sub || "Video İçeriği",
+                        title: script.title || "Hazır",
+                        sub: script.sub || "İÇERİK OLUŞTURULUYOR",
                         accentColor: script.accentColor || "#3b82f6",
                         animConfig: script.animation || { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 }
                     }
@@ -38,21 +34,14 @@ export default async function handler(req, res) {
             })
         });
 
-        // Yanıt kontrolü (GitHub 204 No Content döndürürse başarılı sayılır)
-        if (response.ok || response.status === 204) {
-            return res.status(200).json({ 
-                success: true, 
-                message: "GitHub Actions tetiklendi. Video render işlemi başarıyla sıraya alındı!" 
-            });
+        // GitHub 204 dönerse tetikleme başarılıdır
+        if (response.status === 204 || response.ok) {
+            return res.status(200).json({ success: true, message: "Workflow başarıyla tetiklendi! GitHub Actions sekmesini kontrol et." });
         } else {
-            const errorData = await response.json().catch(() => ({}));
-            return res.status(response.status).json({ 
-                error: "GitHub API Hatası", 
-                detail: errorData 
-            });
+            const errorText = await response.text();
+            return res.status(response.status).json({ error: "GitHub Hatası", detail: errorText });
         }
     } catch (err) {
-        // Hata durumunda hiçbir veriyi kaybetmeden döndürür
-        return res.status(500).json({ error: "Sunucu hatası: " + err.message });
+        return res.status(500).json({ error: "Sistem Hatası: " + err.message });
     }
 }
