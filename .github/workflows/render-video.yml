@@ -24,13 +24,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: '' # Önceki hatayı önlemek için boş bırakıldı
+          cache: ''
 
       - name: Install Dependencies
         run: npm install
 
       - name: Install System Dependencies
-        # GÜNCELLEME: libasound2 paketi libasound2t64 olarak güncellendi (Ubuntu 24.04 uyumu için)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -44,14 +43,18 @@ jobs:
 
       - name: Render Video
         run: |
-          PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
-          if [ -z "$PROPS" ] || [ "$PROPS" == "null" ]; then 
-            PROPS='{"title": "Sesini Markaya Dönüştür", "sub": "VOICE2POST AI", "accentColor": "#3b82f6"}'; 
+          # GÜNCELLEME: JSON verisini güvenli bir şekilde string'e çeviriyoruz
+          PROPS_RAW='${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}'
+          
+          # Boş gelirse varsayılan değer
+          if [ "$PROPS_RAW" == "null" ] || [ -z "$PROPS_RAW" ]; then
+            PROPS_RAW='{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6"}';
           fi
           
           mkdir -p out
+          # --props içine veriyi tek tırnak içinde göndererek Bash karmaşasını önlüyoruz
           npx remotion render src/index.tsx MyVideo out/video.mp4 \
-            --props="$PROPS" \
+            --props="$PROPS_RAW" \
             --browser-executable=$(npx remotion browser path) \
             --chromium-flags="--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage" \
             --force \
