@@ -30,6 +30,7 @@ jobs:
         run: npm install
 
       - name: Install System Dependencies
+        # Eksiksiz kütüphane listesi (Render için kritik)
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -42,12 +43,18 @@ jobs:
         run: npx remotion browser install
 
       - name: Render Video
-        # HATA ÇÖZÜMÜ: Tırnak çakışmasını önlemek için ifadeyi sadeleştirdik.
-        # Props varsa onu kullanır, yoksa boş obje gönderir.
+        # HATA ÇÖZÜMÜ: 'npx remotion render' komutuna --force ve --chromium-flags eklendi.
+        # Bu, Linux sunucularda GPU hatası nedeniyle render'ın başlamamasını önler.
         run: |
           PROPS='${{ github.event.client_payload.props || github.event.inputs.props }}'
-          if [ -z "$PROPS" ]; then PROPS='{}'; fi
-          npx remotion render src/index.tsx MyVideo out/video.mp4 --props="$PROPS"
+          if [ -z "$PROPS" ] || [ "$PROPS" == "null" ]; then PROPS='{}'; fi
+          
+          npx remotion render src/index.tsx MyVideo out/video.mp4 \
+            --props="$PROPS" \
+            --chromium-flags="--no-sandbox --disable-setuid-sandbox" \
+            --force
+        env:
+          REMOTION_BROWSER_EXECUTABLE: $(npx remotion browser path)
 
       - name: Upload Video
         if: success()
