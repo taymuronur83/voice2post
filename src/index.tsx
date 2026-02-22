@@ -46,7 +46,7 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
-    // EKLENTİ: Videoyu yenilemek için cache-buster
+    // Yeni video yüklendiğinde cache temizlemek için
     const [videoKey, setVideoKey] = useState(Date.now());
 
     useEffect(() => {
@@ -78,7 +78,7 @@ const MainSocialSystem = () => {
                 animConfig: data.video_script.animation 
             });
 
-            // EKLENTİ: GitHub Actions Render işlemini otomatik başlat
+            // GÜNCELLEME: GitHub Render işlemini buradan otomatik tetikliyoruz
             await fetch('/api/render-video', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -86,10 +86,8 @@ const MainSocialSystem = () => {
             });
 
             setStatus('success');
-            setVideoKey(Date.now()); // Video URL'sini tazele
-        } catch (err) { 
-            setStatus('error'); 
-        }
+            setVideoKey(Date.now());
+        } catch (err) { setStatus('error'); }
     };
 
     return (
@@ -103,36 +101,39 @@ const MainSocialSystem = () => {
                     <div style={{ background: '#111', padding: '10px', borderRadius: '10px' }}><strong>LinkedIn:</strong> <p>{outputs.linkedin}</p></div>
                 </div>
             </div>
+            {/* SAĞ TARAF: İşte senin sitenin görüntüsü yerine videonun oynayacağı dikey alan */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
-                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
-                    {/* GÜNCELLEME: status success olduğunda videoyu doğrudan GitHub'dan oynatır */}
+                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative', background: '#111' }}>
                     {status === 'success' ? (
-                        <video 
-                            key={videoKey}
-                            src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
-                            controls 
-                            autoPlay 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => {
-                                // Video henüz hazır değilse SocialVideoContent önizlemesini göster
-                                console.log("Video dosyası henüz oluşturulmadı, önizleme gösteriliyor.");
-                            }}
-                        />
+                        <>
+                            {/* Render bittiğinde GitHub'dan gelecek gerçek video */}
+                            <video 
+                                key={videoKey}
+                                src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} 
+                                controls 
+                                autoPlay 
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 2 }}
+                                onError={(e) => {
+                                    // Video henüz GitHub'da hazır değilse, alttaki Remotion önizlemesi görünür kalır
+                                    (e.target as HTMLVideoElement).style.opacity = '0';
+                                }}
+                                onLoadedData={(e) => {
+                                    (e.target as HTMLVideoElement).style.opacity = '1';
+                                }}
+                            />
+                            {/* Video hazırlanana kadar Claude'un verileriyle çalışan anlık Remotion önizlemesi */}
+                            <SocialVideoContent 
+                                title={outputs.videoTitle} 
+                                sub={outputs.videoSub} 
+                                accentColor={outputs.videoColor} 
+                                storyline={outputs.storyline} 
+                                animConfig={outputs.animConfig} 
+                            />
+                        </>
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%' }}>
-                            {status === 'processing' ? 'Video Hazırlanıyor...' : 'Hazırlanıyor...'}
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
+                            {status === 'processing' ? 'Video Üretiliyor...' : 'Hazırlanıyor...'}
                         </div>
-                    )}
-                    
-                    {/* Orijinal SocialVideoContent yapını da burada gizli bir katman veya alternatif olarak tutuyoruz */}
-                    {status === 'success' && !videoKey && (
-                        <SocialVideoContent 
-                            title={outputs.videoTitle} 
-                            sub={outputs.videoSub} 
-                            accentColor={outputs.videoColor} 
-                            storyline={outputs.storyline} 
-                            animConfig={outputs.animConfig} 
-                        />
                     )}
                 </div>
             </div>
