@@ -3,6 +3,10 @@ on:
   repository_dispatch:
     types: [render-video]
   workflow_dispatch:
+    inputs:
+      userId:
+        description: 'User ID for Firestore'
+        required: true
 
 permissions:
   contents: write
@@ -22,18 +26,46 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install -g firebase-tools
 
       - name: Render Video
         run: |
           mkdir -p public/outputs
+          # GitHub'dan gelen userId'yi payload'dan alıyoruz
+          USER_ID="${{ github.event.client_payload.userId || github.event.inputs.userId }}"
+          echo "Render basliyor for User: $USER_ID"
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --force
 
-      - name: Commit and Push
+      - name: Upload to Firebase Storage
+        id: upload_video
+        run: |
+          USER_ID="${{ github.event.client_payload.userId || github.event.inputs.userId }}"
+          # Videoyu Firebase Storage'a yükle (Dosya adını benzersiz yapıyoruz)
+          firebase storage:upload public/outputs/final-video.mp4 --destination "renders/${USER_ID}/video.mp4" --token "${{ secrets.FIREBASE_TOKEN }}"
+          
+          # Videonun herkese açık URL'ini oluştur (Firebase URL yapısı)
+          VIDEO_URL="https://firebasestorage.googleapis.com/v0/b/voice2post-9e8ca.firebasestorage.app/o/renders%2F${USER_ID}%2Fvideo.mp4?alt=media"
+          echo "VIDEO_URL=$VIDEO_URL" >> $GITHUB_ENV
+          echo "USER_ID=$USER_ID" >> $GITHUB_ENV
+
+      - name: Update Firestore
+        run: |
+          # Firestore'a 'Videonun URL'i budur' bilgisini yazıyoruz
+          # Bu komut sitendeki onSnapshot'ı tetikler ve video anında ekranda belirir
+          curl -X PATCH "https://firestore.googleapis.com/v1/projects/voice2post-9e8ca/databases/(default)/documents/renders/${{ env.USER_ID }}?updateMask.fieldPaths=videoUrl&key=${{ secrets.FIREBASE_PUBLIC_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "fields": {
+              "videoUrl": { "stringValue": "${{ env.VIDEO_URL }}" }
+            }
+          }'
+
+      - name: Commit and Push (Optional Backup)
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          # Videoyu repoya geri yüklüyoruz ki URL üzerinden erişebilelim
           git add public/outputs/final-video.mp4
-          git commit -m "Video render edildi ve yüklendi" || echo "Degisiklik yok"
+          git commit -m "Video backup updated for ${{ env.USER_ID }}" || echo "Degisiklik yok"
           git push origin main
