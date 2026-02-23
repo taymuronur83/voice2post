@@ -61,9 +61,19 @@
         .text-input-area { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; color: white; resize: none; min-height: 150px; margin-bottom: 20px; outline: none; }
         .text-input-area:focus { border-color: #3b82f6; }
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
+
+        /* VİDEO MODU İÇİN ÖZEL STİL */
+        #video-only-container { display: none; width: 100vw; height: 100vh; background: black; justify-content: center; align-items: center; flex-direction: column; text-align: center; }
+        body.video-mode #video-only-container { display: flex; }
+        body.video-mode nav, body.video-mode header, body.video-mode section, body.video-mode footer { display: none !important; }
     </style>
 </head>
-<body>
+<body id="main-body">
+
+    <div id="video-only-container">
+        <h1 id="v-title" style="font-size: 10vw; font-weight: 800; color: #3b82f6;"></h1>
+        <p id="v-sub" style="font-size: 5vw; margin-top: 20px; color: white;"></p>
+    </div>
 
     <div id="auth-modal" class="modal-overlay fixed inset-0 z-[100] items-center justify-center bg-black/80 backdrop-blur-md px-4">
         <div class="modal-content glass max-w-md w-full p-8 rounded-[2.5rem] border border-white/20 shadow-2xl relative">
@@ -318,6 +328,16 @@
     </footer>
 
     <script type="module">
+        // --- VİDEO MODU KONTROLÜ (GÜNCELLEME) ---
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('videoData')) {
+            document.body.classList.add('video-mode');
+            const data = JSON.parse(decodeURIComponent(urlParams.get('videoData')));
+            document.getElementById('v-title').innerText = data.title;
+            document.getElementById('v-sub').innerText = data.sub || data.storyline[0];
+            document.getElementById('v-title').style.color = data.accentColor;
+        }
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { 
@@ -449,15 +469,14 @@
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
 
-                // GÜNCELLEME: Video script verisi varsa workflow tetiklenir
                 if (data.video_script) {
                     const videoData = data.video_script;
                     const encodedData = encodeURIComponent(JSON.stringify(videoData));
                     
-                    // Önizleme alanını güncelle (Vite/Remotion Server URL'sine bakar)
-                    liveArea.innerHTML = `<iframe src="/index.html?videoData=${encodedData}" style="width:100%; height:100%; border:none;"></iframe>`;
+                    // --- GÜNCELLEME: BURASI SONSUZ DÖNGÜYÜ KIRAN YER ---
+                    // Iframe sadece video modunda çalışacak şekilde parametre ile yüklenir.
+                    liveArea.innerHTML = `<iframe src="/index.html?videoData=${encodedData}" style="width:100%; height:100%; border:none; overflow:hidden;"></iframe>`;
                     
-                    // MP4 İndir butonu işlevini buraya ekliyoruz
                     const downloadBtn = document.getElementById('download-btn');
                     downloadBtn.onclick = async () => {
                         downloadBtn.innerText = "Sıraya Alındı...";
