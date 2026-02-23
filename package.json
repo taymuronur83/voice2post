@@ -1,38 +1,26 @@
 {
   "name": "voice2post",
   "version": "1.0.0",
-  "main": "src/index.tsx",
   "scripts": {
-    "start": "node server.js",
-    "video": "remotion preview src/index.tsx",
-    "build": "next build || echo 'Build bypass'",
-    "render": "remotion render src/index.tsx MyVideo out/video.mp4",
-    "install-remotion": "npm install remotion @remotion/cli @remotion/player @remotion/renderer"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "render": "remotion render src/index.tsx MyVideo out/video.mp4"
   },
   "dependencies": {
-    "remotion": "^4.0.0",
-    "@remotion/cli": "^4.0.0",
-    "@remotion/player": "^4.0.0",
-    "@remotion/renderer": "^4.0.0",
-    "@remotion/google-fonts": "^4.0.0",
-    "@anthropic-ai/sdk": "^0.26.0",
-    "openai": "^4.55.0",
+    "next": "latest",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "firebase": "^10.8.0",
-    "axios": "^1.6.0",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "lucide-react": "^0.263.1"
+    "remotion": "^4.0.0",
+    "@remotion/player": "^4.0.0",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.26.0",
+    "openai": "^4.55.0"
   },
   "devDependencies": {
     "typescript": "^5.1.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@types/node": "^20.0.0"
-  },
-  "engines": {
-    "node": "20.x"
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0"
   }
 }
