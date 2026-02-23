@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Videoların Vercel üzerinde görünmesini engelleyen önbelleği kırar
-  generateEtags: false,
-  // Dışarıdan gelen (GitHub) medyalar için optimizasyonu kapatır
   images: {
     unoptimized: true,
   },
+  generateEtags: false, // Vercel'in videoyu eski haliyle (boş) hatırlamasını engeller
 }
 
 module.exports = nextConfig
