@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { registerRoot, Composition, useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion';
 
-// Gemini API Key
+// Gemini API Key [cite: 2026-02-22]
 const GEMINI_API_KEY = "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA";
 
 const SocialVideoContent = ({ 
@@ -82,23 +82,21 @@ const MainSocialSystem = () => {
             });
             
             setStatus('success');
-
-            // OTOMATİK YÜKLEME SİHİRBAZI:
-            // Render bittikten sonra 15 saniye aralıklarla videoyu kontrol eder.
-            // videoKey değiştiği an tarayıcı videoyu yeniden yüklemek ZORUNDA kalır.
+            
+            // OTOMATİK YÜKLEME DÖNGÜSÜ
+            // Render bittikten sonra her 15 saniyede bir depodaki videoyu kontrol eder
             const autoRefresh = setInterval(() => {
                 setVideoKey(Date.now());
-                console.log("Yeni video aranıyor...");
             }, 15000);
             
-            // 3 dakika sonra aramayı durdur (Render genelde 2dk sürer)
-            setTimeout(() => clearInterval(autoRefresh), 180000);
+            setTimeout(() => clearInterval(autoRefresh), 180000); // 3 dakika boyunca dene
 
         } catch (err) { setStatus('error'); }
     };
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
+            {/* SOL PANEL: Tıklama alanı */}
             <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 100 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
                 <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px', border: '1px solid #333' }} placeholder="Ne anlatmak istersin?" />
@@ -111,18 +109,17 @@ const MainSocialSystem = () => {
                 </div>
             </div>
 
+            {/* SAĞ PANEL: Otomatik Video Ekranı */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 1 }}>
                 <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
                             <video 
-                                key={videoKey} // Her değiştiğinde videoyu otomatik tetikler
-                                controls 
-                                autoPlay 
-                                playsInline
+                                key={videoKey}
+                                controls autoPlay playsInline
                                 style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50, backgroundColor: 'black' }} 
                             >
-                                {/* GENİŞ DÜŞÜNÜLMÜŞ LİNK: media.githubusercontent LFS engeline takılmaz ve t= parametresi önbelleği kırar */}
+                                {/* Media sunucusu + Timestamp ile kesin yükleme */}
                                 <source src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} type="video/mp4" />
                             </video>
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
