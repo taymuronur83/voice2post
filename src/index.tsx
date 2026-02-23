@@ -2,45 +2,41 @@ import React, { useState } from 'react';
 import { registerRoot, Composition } from 'remotion';
 import { Player } from '@remotion/player';
 
-// ---------------------------------------------------------
-// 1. SADECE VİDEONUN KENDİSİ (TELEFON EKRANINDA ÇIKACAK OLAN)
-// ---------------------------------------------------------
-export const MyVideoContent = ({ 
-    title = "Başlık Bekleniyor", 
-    sub = "Alt Başlık", 
-    accentColor = "#3b82f6", 
-    storyline = [] 
-}: any) => {
+/** * 1. TASARIM BİLEŞENİ (SADECE VİDEO)
+ * Bu bileşen dikey ekranın içinde görünecek olan tek şeydir.
+ */
+const VideoLayout = ({ title, sub, accentColor, storyline = [] }: any) => {
     return (
         <div style={{ 
             flex: 1, backgroundColor: '#000', color: '#fff', display: 'flex', 
             flexDirection: 'column', justifyContent: 'center', alignItems: 'center', 
-            padding: '60px', textAlign: 'center', width: '100%', height: '100%' 
+            padding: '60px', textAlign: 'center', width: '100%', height: '100%',
+            fontFamily: 'sans-serif'
         }}>
             <div style={{ 
                 position: 'absolute', width: '100%', height: '100%', 
-                background: `radial-gradient(circle, ${accentColor}44 0%, transparent 70%)` 
+                background: `radial-gradient(circle, ${accentColor || '#3b82f6'}44 0%, transparent 70%)` 
             }} />
-            <h1 style={{ fontSize: '80px', fontWeight: 'bold', color: accentColor, zIndex: 10 }}>{title}</h1>
-            <p style={{ fontSize: '45px', zIndex: 10, marginTop: '30px', color: '#eee' }}>
+            <h1 style={{ fontSize: '80px', fontWeight: 'bold', color: accentColor || '#3b82f6', zIndex: 10 }}>
+                {title || "Yükleniyor..."}
+            </h1>
+            <p style={{ fontSize: '40px', zIndex: 10, marginTop: '20px', color: '#eee' }}>
                 {storyline.length > 0 ? storyline[0] : sub}
             </p>
         </div>
     );
 };
 
-// ---------------------------------------------------------
-// 2. ANA SİTE ARAYÜZÜ (SOL PANEL + SAĞ PANEL)
-// ---------------------------------------------------------
+/**
+ * 2. ANA SİTE ARAYÜZÜ
+ */
 const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
-    const [outputs, setOutputs] = useState({ 
-        twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[] 
-    });
+    const [outputs, setOutputs] = useState<any>(null);
 
     const handleGenerate = async () => {
-        if (!userInput) return alert("Lütfen komut girin!");
+        if (!userInput) return alert("Komut girin!");
         setStatus('processing');
         try {
             const response = await fetch('/api/generate', { 
@@ -59,7 +55,7 @@ const MainSocialSystem = () => {
                 storyline: data.video_script.storyline || [] 
             });
 
-            // Arka planda render tetikleyici
+            // Arka planda GitHub Action tetikleme
             fetch('/api/render-video', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -73,34 +69,33 @@ const MainSocialSystem = () => {
     return (
         <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#050505', color: '#eee', overflow: 'hidden' }}>
             {/* SOL PANEL */}
-            <div style={{ width: '450px', padding: '40px', borderRight: '2px solid #222', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ width: '400px', padding: '40px', borderRight: '2px solid #222', display: 'flex', flexDirection: 'column' }}>
                 <h2 style={{ color: '#00acee', marginBottom: '20px' }}>Voice2Post AI</h2>
                 <textarea 
                     value={userInput} 
                     onChange={(e) => setUserInput(e.target.value)} 
-                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '15px', padding: '20px', border: '1px solid #333' }} 
+                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '15px', padding: '15px', border: '1px solid #333' }} 
                     placeholder="Komutunuzu buraya girin..." 
                 />
                 <button 
                     onClick={handleGenerate} 
                     style={{ padding: '20px', background: '#2563eb', color: '#fff', borderRadius: '12px', marginTop: '20px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
                 >
-                    {status === 'processing' ? 'Claude İşliyor...' : 'İçeriği Oluştur ve Oynat'}
+                    {status === 'processing' ? 'Hazırlanıyor...' : 'İçeriği Oluştur ve Oynat'}
                 </button>
-                <div style={{ marginTop: '30px', overflowY: 'auto' }}>
-                    <div style={{ background: '#111', padding: '20px', borderRadius: '15px', marginBottom: '15px' }}>
-                        <strong>X (Twitter):</strong>
-                        <p style={{ marginTop: '10px', color: '#ccc' }}>{outputs.twitter}</p>
+                <div style={{ marginTop: '20px' }}>
+                    <div style={{ background: '#111', padding: '15px', borderRadius: '10px', marginBottom: '10px' }}>
+                        <strong>X:</strong> <p>{outputs?.twitter || "..."}</p>
                     </div>
                 </div>
             </div>
 
-            {/* SAĞ PANEL: CANLI VİDEO ÖNİZLEME */}
+            {/* SAĞ PANEL: GERÇEK VİDEO ÖNİZLEME */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
-                <div style={{ width: '360px', height: '640px', border: '12px solid #1a1a1a', borderRadius: '50px', overflow: 'hidden', position: 'relative' }}>
-                    {status === 'success' ? (
+                <div style={{ width: '360px', height: '640px', border: '12px solid #1a1a1a', borderRadius: '50px', overflow: 'hidden' }}>
+                    {status === 'success' && outputs ? (
                         <Player
-                            component={MyVideoContent} // KRİTİK: Buraya SADECE video bileşenini veriyoruz
+                            component={VideoLayout} // KRİTİK: Buraya sadece video tasarımını veriyoruz, tüm sistemi değil!
                             durationInFrames={300}
                             compositionWidth={1080}
                             compositionHeight={1920}
@@ -116,9 +111,7 @@ const MainSocialSystem = () => {
                             }}
                         />
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', display: 'flex', alignItems: 'center', height: '100%', padding: '20px' }}>
-                            {status === 'processing' ? 'Dikey ekran hazırlanıyor...' : 'Komut sonrası video burada anında başlayacak.'}
-                        </div>
+                        <div style={{ color: '#444', textAlign: 'center', marginTop: '80%' }}>Video burada canlı görünecek.</div>
                     )}
                 </div>
             </div>
@@ -126,17 +119,15 @@ const MainSocialSystem = () => {
     );
 };
 
-// ---------------------------------------------------------
-// 3. REMOTION KAYIT NOKTASI
-// ---------------------------------------------------------
+/**
+ * 3. KAYIT VE GİRİŞ NOKTASI
+ */
 export const RemotionRoot: React.FC = () => {
-    // URL'de "composition" araması yapılıyorsa (Render işlemiyse) sadece videoyu göster
-    // Değilse (Sitedeyse) ana sistemi göster. Bu iç içe geçmeyi engeller.
     return (
         <>
             <Composition 
                 id="MyVideo" 
-                component={MyVideoContent} 
+                component={VideoLayout} 
                 durationInFrames={300} 
                 fps={30} 
                 width={1080} 
