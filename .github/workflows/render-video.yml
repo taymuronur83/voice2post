@@ -1,71 +1,57 @@
-name: Render Video
+name: Render Video Workflow
+
 on:
-  repository_dispatch:
-    types: [render-video]
   workflow_dispatch:
     inputs:
-      userId:
-        description: 'User ID for Firestore'
+      prompt:
+        description: 'Video içeriği için komut'
         required: true
-
-permissions:
-  contents: write
+      composition:
+        description: 'Remotion Composition ID'
+        default: 'SocialMediaVideo'
+      inputProps:
+        description: 'Claude verileri (JSON)'
+        required: true
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Install Dependencies
-        run: |
-          npm install
-          npm install -g firebase-tools
+        run: npm install
 
+      # 1. ADIM: VİDEOYU RENDER ET
       - name: Render Video
+        id: render
         run: |
-          mkdir -p public/outputs
-          # GitHub'dan gelen userId'yi payload'dan alıyoruz
-          USER_ID="${{ github.event.client_payload.userId || github.event.inputs.userId }}"
-          echo "Render basliyor for User: $USER_ID"
-          npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --force
+          npx remotion render ${{ github.event.inputs.composition }} out/video.mp4 --props='${{ github.event.inputs.inputProps }}'
 
-      - name: Upload to Firebase Storage
-        id: upload_video
+      # 2. ADIM: VİDEOYU CLOUD'A YÜKLE (AWS S3 veya Vercel Blob)
+      # Not: Burada videoyu bir yere yüklemezsen sitemiz videoyu göremez.
+      - name: Upload to S3
+        id: upload
         run: |
-          USER_ID="${{ github.event.client_payload.userId || github.event.inputs.userId }}"
-          # Videoyu Firebase Storage'a yükle (Dosya adını benzersiz yapıyoruz)
-          firebase storage:upload public/outputs/final-video.mp4 --destination "renders/${USER_ID}/video.mp4" --token "${{ secrets.FIREBASE_TOKEN }}"
-          
-          # Videonun herkese açık URL'ini oluştur (Firebase URL yapısı)
-          VIDEO_URL="https://firebasestorage.googleapis.com/v0/b/voice2post-9e8ca.firebasestorage.app/o/renders%2F${USER_ID}%2Fvideo.mp4?alt=media"
-          echo "VIDEO_URL=$VIDEO_URL" >> $GITHUB_ENV
-          echo "USER_ID=$USER_ID" >> $GITHUB_ENV
+          # Örnek S3 yükleme komutu (Kendi ayarlarınla güncelle)
+          # aws s3 cp out/video.mp4 s3://senin-bucket-ismin/videos/${{ github.run_id }}.mp4
+          echo "url=https://senin-storage-linkin.com/${{ github.run_id }}.mp4" >> $GITHUB_OUTPUT
 
-      - name: Update Firestore
+      # 3. ADIM: SİTEYE HABER VER (WORKFLOW BRIDGE)
+      # Bu kısım eksik olduğu için videon sitende gözükmüyor!
+      - name: Notify Website API
         run: |
-          # Firestore'a 'Videonun URL'i budur' bilgisini yazıyoruz
-          # Bu komut sitendeki onSnapshot'ı tetikler ve video anında ekranda belirir
-          curl -X PATCH "https://firestore.googleapis.com/v1/projects/voice2post-9e8ca/databases/(default)/documents/renders/${{ env.USER_ID }}?updateMask.fieldPaths=videoUrl&key=${{ secrets.FIREBASE_PUBLIC_API_KEY }}" \
+          curl -X POST https://senin-siten.com/api/video-ready \
           -H "Content-Type: application/json" \
           -d '{
-            "fields": {
-              "videoUrl": { "stringValue": "${{ env.VIDEO_URL }}" }
-            }
+            "videoUrl": "${{ steps.upload.outputs.url }}",
+            "status": "completed",
+            "prompt": "${{ github.event.inputs.prompt }}"
           }'
 
-      - name: Commit and Push (Optional Backup)
-        run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          git add public/outputs/final-video.mp4
-          git commit -m "Video backup updated for ${{ env.USER_ID }}" || echo "Degisiklik yok"
-          git push origin main
