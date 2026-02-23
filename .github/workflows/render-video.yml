@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Bu satır olmazsa video sisteme asla yüklenemez
+  contents: write
 
 jobs:
   render:
@@ -14,8 +14,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_TOKEN }} # Şifreli kodun burada kullanılıyor
-          fetch-depth: 0
+          # Vercel'de tanımladığın GH_TOKEN ismini buraya bağlıyoruz
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -23,23 +23,18 @@ jobs:
           node-version: 20
 
       - name: Install Dependencies
-        run: |
-          npm install
-          sudo apt-get update
-          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libasound2t64 libpangocairo-1.0-0 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxtst6 libcups2 libxss1 libxrandr2 libgbm1 libpango-1.0-0 libgtk-3-0 libatk-bridge2.0-0 libxshmfence1
+        run: npm install
 
       - name: Render Video
         run: |
           mkdir -p public/outputs
-          # Video ismini her seferinde tazelemek için force kullanıyoruz
+          # 'MyVideo' ID'sini burada açıkça belirtiyoruz
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --force
 
-      - name: Commit and Push Video
+      - name: Commit and Push
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          # Dosyanın varlığını kontrol et ve zorla ekle
-          git add -f public/outputs/final-video.mp4 
-          git commit -m "Video otomatik olarak sisteme yüklendi [$(date)]" || echo "Değişiklik yok"
-          # Siteme geri gönder
+          git add public/outputs/final-video.mp4
+          git commit -m "Video otomatik yüklendi" || echo "Değişiklik yok"
           git push origin main
