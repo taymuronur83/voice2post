@@ -30,7 +30,7 @@ export default async function handler(req, res) {
         {
           "videoTitle": "Ana Metin",
           "subTitle": "Alt Metin",
-          "accentColor": "#hex",
+          "accentColor": "#3b82f6",
           "animation": {"shakeIntensity": 2, "zoomScale": 1.2}
         }
         Komut: ${prompt}` 
@@ -38,7 +38,6 @@ export default async function handler(req, res) {
     });
     const videoData = JSON.parse(msg.content[0].text.trim());
 
-    // 3. SONUÇ BİRLEŞTİRME VE DÖNDÜRME
     return res.status(200).json({ 
       success: true, 
       linkedinText: textData.linkedin,
@@ -53,7 +52,6 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Hata:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 }
