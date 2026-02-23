@@ -1,57 +1,33 @@
-name: Render Video Workflow
-
+name: Render Video
 on:
-  workflow_dispatch:
-    inputs:
-      prompt:
-        description: 'Video içeriği için komut'
-        required: true
-      composition:
-        description: 'Remotion Composition ID'
-        default: 'SocialMediaVideo'
-      inputProps:
-        description: 'Claude verileri (JSON)'
-        required: true
+  repository_dispatch:
+    types: [render-video] # generate.js'deki event_type ile aynı
 
 jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install Dependencies
+          
+      - name: Install
         run: npm install
-
-      # 1. ADIM: VİDEOYU RENDER ET
-      - name: Render Video
-        id: render
+        
+      - name: Render Remotion Video
         run: |
-          npx remotion render ${{ github.event.inputs.composition }} out/video.mp4 --props='${{ github.event.inputs.inputProps }}'
+          npx remotion render SocialMediaVideo out/video.mp4 --props='${{ toJson(github.event.client_payload.inputProps) }}'
 
-      # 2. ADIM: VİDEOYU CLOUD'A YÜKLE (AWS S3 veya Vercel Blob)
-      # Not: Burada videoyu bir yere yüklemezsen sitemiz videoyu göremez.
-      - name: Upload to S3
+      - name: Upload Video (S3 veya Benzeri)
         id: upload
         run: |
-          # Örnek S3 yükleme komutu (Kendi ayarlarınla güncelle)
-          # aws s3 cp out/video.mp4 s3://senin-bucket-ismin/videos/${{ github.run_id }}.mp4
-          echo "url=https://senin-storage-linkin.com/${{ github.run_id }}.mp4" >> $GITHUB_OUTPUT
+          # Videoyu bir yere yükleyip URL almalısın. Örnek:
+          # Buraya kendi yükleme komutunu ekle. URL'i çıktı ver:
+          echo "url=https://senin-depolama-alanin.com/video-${{ github.run_id }}.mp4" >> $GITHUB_OUTPUT
 
-      # 3. ADIM: SİTEYE HABER VER (WORKFLOW BRIDGE)
-      # Bu kısım eksik olduğu için videon sitende gözükmüyor!
-      - name: Notify Website API
+      - name: Notify Website
         run: |
-          curl -X POST https://senin-siten.com/api/video-ready \
+          curl -X POST https://senin-siten.com/api/video-done \
           -H "Content-Type: application/json" \
-          -d '{
-            "videoUrl": "${{ steps.upload.outputs.url }}",
-            "status": "completed",
-            "prompt": "${{ github.event.inputs.prompt }}"
-          }'
-
+          -d '{"videoUrl": "${{ steps.upload.outputs.url }}"}'
