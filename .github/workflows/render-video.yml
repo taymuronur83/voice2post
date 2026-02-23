@@ -20,7 +20,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # ÖNEMLİ: GitHub Ayarlarından (Secrets) GH_TOKEN eklemiş olman gerekir
+          # TOKEN BURADA BAĞLANIYOR: Hata veren kısmı bu satır çözüyor
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
@@ -44,8 +44,7 @@ jobs:
           cat << 'EOF' > props.json
           ${{ toJson(github.event.client_payload.props) || github.event.inputs.props }}
           EOF
-          if [ ! -s props.json ] || [ "$(cat props.json)" == "null" ]; then echo '{"title": "Hazır", "sub": "VİDEO", "accentColor": "#3b82f6", "storyline": ["İçerik Hazırlanıyor..."]}' > props.json; fi
-          # GENEL ÇÖZÜM: Videoyu public klasörüne atıyoruz
+          # Videoyu public klasörüne, sitenin göreceği yere basıyoruz
           mkdir -p public/outputs
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --props=./props.json --force --loglevel=verbose
 
@@ -55,13 +54,5 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add public/outputs/final-video.mp4
-          git commit -m "Video Sync" || echo "No changes"
+          git commit -m "Video Rendered" || echo "No changes"
           git push origin main
-
-      - name: Upload Video Artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: final-video
-          path: public/outputs/final-video.mp4
-          retention-days: 1
