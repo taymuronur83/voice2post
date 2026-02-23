@@ -10,31 +10,25 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
 
   try {
-    // 1. ADIM: Claude'dan tüm içerikleri JSON formatında istiyoruz
-    // Bu sayede LinkedIn, Twitter ve Video metni tek seferde hatasız gelir.
+    // 1. CLAUDE İÇERİK ÜRETİMİ (LinkedIn, Twitter ve Video Metni)
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1500,
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için sosyal medya içerikleri üret. 
-        Cevabını SADECE aşağıdaki JSON formatında ver, başka hiçbir metin ekleme:
+        content: `Aşağıdaki komut için içerik üret. Cevabını SADECE şu JSON formatında ver, başka hiçbir açıklama ekleme:
         {
-          "linkedin": "profesyonel ve uzun bir linkedin postu",
-          "twitter": "dikkat çekici kısa bir X/twitter postu",
-          "video_text": "video içinde animasyonla görünecek kısa ana metin"
+          "linkedin": "profesyonel linkedin postu",
+          "twitter": "dikkat çekici twitter postu",
+          "video": "video içinde görünecek kısa metin"
         }
-        
         Komut: ${prompt}` 
       }],
     });
 
-    // Claude'dan gelen yanıtı JSON olarak ayrıştırıyoruz
-    const responseText = msg.content[0].text.trim();
-    const aiData = JSON.parse(responseText);
+    const aiData = JSON.parse(msg.content[0].text.trim());
 
-    // 2. ADIM: GitHub Workflow (Remotion) Tetikleme
-    // Video render motoruna Claude'un ürettiği "video_text" bilgisini gönderiyoruz.
+    // 2. GITHUB WORKFLOW (REMOTION) TETİKLEME
     const githubResponse = await fetch(
       `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
       {
@@ -49,33 +43,23 @@ export default async function handler(req, res) {
           event_type: 'render-video', 
           client_payload: {
             inputProps: {
-              text: aiData.video_text, // Remotion projen bu 'text' prop'unu okumalı
-              title: "AI Content"
+              text: aiData.video, // Remotion projesine giden metin
             }
           }
         }),
       }
     );
 
-    // GitHub tetikleme kontrolü
-    if (!githubResponse.ok) {
-      const errorText = await githubResponse.text();
-      console.error("GitHub API Hatası:", errorText);
-    }
-
-    // 3. ADIM: Frontend'e (index.tsx) tüm verileri gönder
+    // 3. FRONTEND'E TAM VERİ GÖNDERİMİ
     return res.status(200).json({ 
       success: true, 
       linkedinText: aiData.linkedin,
       twitterText: aiData.twitter,
-      videoTitle: aiData.video_text 
+      videoTitle: aiData.video
     });
 
   } catch (error) {
-    console.error("Sistem Hatası:", error);
-    return res.status(500).json({ 
-      success: false, 
-      error: "İçerik üretiminde veya GitHub bağlantısında hata oluştu." 
-    });
+    console.error("Hata:", error);
+    return res.status(500).json({ success: false, error: error.message });
   }
 }
