@@ -1,61 +1,55 @@
 import { Anthropic } from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
+const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
   const { prompt } = req.body;
 
   try {
-    // 1. CLAUDE İÇERİK ÜRETİMİ (LinkedIn, Twitter ve Video Metni)
-    const msg = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
-      max_tokens: 1500,
+    // 1. OPENAI: SOSYAL MEDYA METİN ÜRETİMİ
+    const aiResponse = await openai.chat.completions.create({
+      model: "gpt-4",
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için içerik üret. Cevabını SADECE şu JSON formatında ver, başka hiçbir açıklama ekleme:
+        content: `Aşağıdaki komut için LinkedIn ve Twitter içeriği üret. JSON formatında ver: {"linkedin": "...", "twitter": "..."} Komut: ${prompt}` 
+      }],
+      response_format: { type: "json_object" }
+    });
+    const textData = JSON.parse(aiResponse.choices[0].message.content);
+
+    // 2. CLAUDE: REMOTION VİDEO İÇERİK ÜRETİMİ
+    const msg = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 1000,
+      messages: [{ 
+        role: "user", 
+        content: `Aşağıdaki komut için Remotion video parametreleri üret. Cevabı SADECE şu JSON ile ver:
         {
-          "linkedin": "profesyonel linkedin postu",
-          "twitter": "dikkat çekici twitter postu",
-          "video": "video içinde görünecek kısa metin"
+          "videoTitle": "Ana Metin",
+          "subTitle": "Alt Metin",
+          "accentColor": "#hex",
+          "animation": {"shakeIntensity": 2, "zoomScale": 1.2}
         }
         Komut: ${prompt}` 
       }],
     });
+    const videoData = JSON.parse(msg.content[0].text.trim());
 
-    const aiData = JSON.parse(msg.content[0].text.trim());
-
-    // 2. GITHUB WORKFLOW (REMOTION) TETİKLEME
-    const githubResponse = await fetch(
-      `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json',
-          'User-Agent': 'Remotion-App'
-        },
-        body: JSON.stringify({
-          event_type: 'render-video', 
-          client_payload: {
-            inputProps: {
-              text: aiData.video, // Remotion projesine giden metin
-            }
-          }
-        }),
-      }
-    );
-
-    // 3. FRONTEND'E TAM VERİ GÖNDERİMİ
+    // 3. SONUÇ BİRLEŞTİRME VE DÖNDÜRME
     return res.status(200).json({ 
       success: true, 
-      linkedinText: aiData.linkedin,
-      twitterText: aiData.twitter,
-      videoTitle: aiData.video
+      linkedinText: textData.linkedin,
+      twitterText: textData.twitter,
+      videoTitle: videoData.videoTitle,
+      video_script: {
+        title: videoData.videoTitle,
+        sub: videoData.subTitle,
+        accentColor: videoData.accentColor,
+        animation: videoData.animation
+      }
     });
 
   } catch (error) {
