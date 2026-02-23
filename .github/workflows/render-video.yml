@@ -1,7 +1,7 @@
 name: Render Video
 on:
   repository_dispatch:
-    types: [render-video] # generate.js'deki event_type ile aynı
+    types: [render-video]
 
 jobs:
   render:
@@ -12,22 +12,15 @@ jobs:
         with:
           node-version: 20
           
-      - name: Install
+      - name: Install Dependencies
         run: npm install
         
       - name: Render Remotion Video
         run: |
-          npx remotion render SocialMediaVideo out/video.mp4 --props='${{ toJson(github.event.client_payload.inputProps) }}'
+          npx remotion render src/index.tsx MyVideo out/video.mp4 --props='${{ toJson(github.event.client_payload.inputProps) }}'
 
-      - name: Upload Video (S3 veya Benzeri)
-        id: upload
-        run: |
-          # Videoyu bir yere yükleyip URL almalısın. Örnek:
-          # Buraya kendi yükleme komutunu ekle. URL'i çıktı ver:
-          echo "url=https://senin-depolama-alanin.com/video-${{ github.run_id }}.mp4" >> $GITHUB_OUTPUT
-
-      - name: Notify Website
-        run: |
-          curl -X POST https://senin-siten.com/api/video-done \
-          -H "Content-Type: application/json" \
-          -d '{"videoUrl": "${{ steps.upload.outputs.url }}"}'
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: social-video
+          path: out/video.mp4
