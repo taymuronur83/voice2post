@@ -1,52 +1,30 @@
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Sadece POST desteklenir.' });
-    }
+    if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST' });
 
     const { script } = req.body;
-    const token = process.env.GH_TOKEN; 
-
-    if (!token) {
-        return res.status(500).json({ error: "Vercel üzerinde GH_TOKEN tanımlı değil!" });
-    }
+    const token = process.env.GITHUB_TOKEN; 
 
     try {
-        const response = await fetch('https://api.github.com/repos/taymuronur83/voice2post/dispatches', {
+        const response = await fetch(`https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token.trim()}`,
+                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json',
-                'X-GitHub-Api-Version': '2022-11-28',
                 'User-Agent': 'Voice2Post-App'
             },
             body: JSON.stringify({
                 event_type: 'render-video', 
-                client_payload: {
-                    props: { 
-                        title: script.title || "İçerik Başlığı",
-                        sub: script.sub || "Video İçeriği",
-                        accentColor: script.accentColor || "#3b82f6",
-                        storyline: script.storyline || [], 
-                        animConfig: script.animation || { shakeIntensity: 2, zoomScale: 1.1, textSpeed: 1 }
-                    }
-                }
+                client_payload: { inputProps: script }
             })
         });
 
         if (response.ok || response.status === 204) {
-            return res.status(200).json({ 
-                success: true, 
-                message: "GitHub Actions tetiklendi. Video render işlemi başarıyla sıraya alındı!" 
-            });
+            return res.status(200).json({ success: true, message: "Video render işlemi GitHub Actions üzerinde başlatıldı!" });
         } else {
-            const errorData = await response.json().catch(() => ({}));
-            return res.status(response.status).json({ 
-                error: "GitHub API Hatası", 
-                detail: errorData 
-            });
+            return res.status(400).json({ error: "GitHub API hatası" });
         }
     } catch (err) {
-        return res.status(500).json({ error: "Sunucu hatası: " + err.message });
+        return res.status(500).json({ error: err.message });
     }
 }
