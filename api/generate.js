@@ -10,16 +10,34 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
 
   try {
-    // 1. ADIM: Claude İçerik Üretimi
+    // 1. ADIM: Claude'un Üçlü İçerik Üretmesi (LinkedIn, Twitter, Video)
+    // Claude'dan veriyi belirli bir formatta istiyoruz ki aşağıda parçalayabilelim.
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: `Aşağıdaki komut için kısa bir video metni oluştur: ${prompt}` }],
+      max_tokens: 1500,
+      messages: [{ 
+        role: "user", 
+        content: `Aşağıdaki komut için 3 farklı içerik üret:
+        1. Profesyonel bir LinkedIn postu.
+        2. Dikkat çekici bir X (Twitter) postu.
+        3. Video içinde görünecek çok kısa bir metin.
+        
+        Yanıtını tam olarak şu formatta ver, aralara sadece "###" koy:
+        LINKEDIN_BURAYA ### TWITTER_BURAYA ### VIDEO_BURAYA
+        
+        Komut: ${prompt}` 
+      }],
     });
-    const aiContent = msg.content[0].text;
 
-    // 2. ADIM: GitHub Workflow Bridge (Workflow'un çalışması için burası şart)
-    // ÖNEMLİ: GitHub Token'ın "repo" ve "workflow" izinlerine sahip olmalı.
+    const rawContent = msg.content[0].text;
+    const parts = rawContent.split('###');
+    
+    // İçerikleri parçalara ayırıyoruz
+    const linkedinText = parts[0]?.trim() || "LinkedIn içeriği üretilemedi.";
+    const twitterText = parts[1]?.trim() || "Twitter içeriği üretilemedi.";
+    const videoText = parts[2]?.trim() || "Video metni üretilemedi.";
+
+    // 2. ADIM: GitHub Workflow Bridge (Video Render Tetikleme)
     const githubResponse = await fetch(
       `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
       {
@@ -28,13 +46,15 @@ export default async function handler(req, res) {
           'Authorization': `Bearer ${process.env.GITHUB_TOKEN}`,
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
-          'User-Agent': 'Remotion-App' // GitHub bazen bunu zorunlu tutar
+          'User-Agent': 'Remotion-App'
         },
         body: JSON.stringify({
-          event_type: 'render-video', // .yml dosyasındaki types: [render-video] ile AYNI olmalı
+          event_type: 'render-video', 
           client_payload: {
             inputProps: {
-              text: aiContent, // Remotion projen bu "text" prop'unu beklemeli
+              text: videoText, // Remotion projesine giden asıl metin
+              title: "Yeni İçerik",
+              accentColor: "#2563eb"
             }
           }
         }),
@@ -46,10 +66,13 @@ export default async function handler(req, res) {
       throw new Error(`GitHub Hatası: ${errorData}`);
     }
 
+    // 3. ADIM: Tüm içerikleri Frontend'e (index.tsx) gönderiyoruz
     return res.status(200).json({ 
       success: true, 
-      aiText: aiContent,
-      message: "Yapay zeka içeriği hazırladı ve video kuyruğa alındı." 
+      linkedinText: linkedinText,
+      twitterText: twitterText,
+      aiText: videoText, // Player önizlemesi için
+      message: "İçerikler üretildi ve video kuyruğa alındı." 
     });
 
   } catch (error) {
