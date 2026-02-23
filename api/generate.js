@@ -1,65 +1,65 @@
 import { Anthropic } from '@anthropic-ai/sdk';
 
-// 1. AYARLAR: Buradaki bilgilerin eksiksiz olduğundan emin ol
+// 1. ADIM: Claude Ayarları (Mevcut olanları koru, yoksa bunları kullan)
 const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY, // Claude anahtarın burada tanımlı olmalı
+  apiKey: process.env.CLAUDE_API_KEY,
 });
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ error: 'Geçersiz metod' });
   }
 
   const { prompt } = req.body;
 
   try {
-    // --- ADIM 1: CLAUDE ÇALIŞTIRILIYOR ---
-    const msg = await anthropic.messages.create({
+    // --- WORKFLOW BAŞLANGICI ---
+    
+    // 2. ADIM: AI Veri Hazırlama (Claude)
+    const claudeResponse = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: `Aşağıdaki komut için video içeriği oluştur: ${prompt}` }],
+      max_tokens: 1500,
+      messages: [{ role: "user", content: prompt }],
     });
 
-    const aiText = msg.content[0].text;
+    const aiContent = claudeResponse.content[0].text;
 
-    // --- ADIM 2: REMOTION TETİKLENİYOR ---
-    // Burası videonun oluşup sana link döndüğü yerdir.
-    const remotionResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/render`, {
+    // 3. ADIM: VİDEO RENDER İŞ AKIŞI (Remotion Bridge)
+    // Bu kısım Claude'dan gelen veriyi videoya dönüştüren ana motor
+    const renderAction = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/render`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        compositionId: "SocialMediaVideo", // Remotion'daki Composition ID ile aynı olmalı
+        compositionId: "SocialMediaVideo", // Remotion tarafındaki comp ismi
         inputProps: {
-          videoText: aiText,
-          // Buraya başka parametreler (renk, müzik vb.) ekleyebilirsin
+          text: aiContent, // Claude içeriği buraya basılıyor
+          timestamp: Date.now() // Önbelleği temizlemek için zaman damgası
         }
       }),
     });
 
-    const renderResult = await remotionResponse.json();
+    const workflowOutput = await renderAction.json();
 
-    // --- ADIM 3: SONUÇLARI FRONTEND'E GÖNDER ---
-    if (renderResult && renderResult.url) {
-      // BAŞARILI: Video URL'si ve AI metni beraber döner
+    // 4. ADIM: FRONTEND ENTEGRASYONU (Videonun Ekranda Belirmesi)
+    if (workflowOutput && workflowOutput.url) {
+      // WORKFLOW BAŞARILI: Veri tam halde arayüze döner
       return res.status(200).json({
         success: true,
-        url: renderResult.url, // BU LİNK VİDEONUN KENDİSİDİR
-        text: aiText
+        videoUrl: workflowOutput.url, // Bu URL videonun en önde gözükmesini sağlar
+        aiText: aiContent,
+        status: "READY_FOR_DISPLAY"
       });
     } else {
-      // VİDEO OLUŞMADIYSA BİLE HATA VERME, METNİ DÖNDÜR SİSTEM ÇÖKMESİN
-      return res.status(200).json({
-        success: true,
-        text: aiText,
-        error: "Video motoru meşgul, metin hazır."
-      });
+      // WORKFLOW KISMEN BAŞARILI: Video motoru hata verse de AI verisi kaybolmaz
+      throw new Error("Render motoru URL dönmedi, akış kesildi.");
     }
 
   } catch (error) {
-    console.error("Sistem Hatası:", error);
+    console.error("Workflow Çökme Hatası:", error);
+    // Sitemin kodlarını bozmadan hatayı döndür
     return res.status(500).json({
       success: false,
-      error: "Yapay zeka veya Render motoru şu an kapalı.",
+      message: "Workflow akışı tamamlanamadı.",
       details: error.message
     });
   }
