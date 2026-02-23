@@ -6,38 +6,29 @@ const anthropic = new Anthropic({
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
   const { prompt } = req.body;
 
   try {
-    // 1. ADIM: Claude'un Üçlü İçerik Üretmesi (LinkedIn, Twitter, Video)
-    // Claude'dan veriyi belirli bir formatta istiyoruz ki aşağıda parçalayabilelim.
+    // 1. CLAUDE'DAN NET JSON FORMATI İSTİYORUZ
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1500,
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için 3 farklı içerik üret:
-        1. Profesyonel bir LinkedIn postu.
-        2. Dikkat çekici bir X (Twitter) postu.
-        3. Video içinde görünecek çok kısa bir metin.
-        
-        Yanıtını tam olarak şu formatta ver, aralara sadece "###" koy:
-        LINKEDIN_BURAYA ### TWITTER_BURAYA ### VIDEO_BURAYA
-        
+        content: `Aşağıdaki komut için içerik üret. Cevabını SADECE şu JSON formatında ver, başka hiçbir şey yazma:
+        {
+          "linkedin": "linkedin postu buraya",
+          "twitter": "twitter postu buraya",
+          "video": "kısa video metni buraya"
+        }
         Komut: ${prompt}` 
       }],
     });
 
-    const rawContent = msg.content[0].text;
-    const parts = rawContent.split('###');
-    
-    // İçerikleri parçalara ayırıyoruz
-    const linkedinText = parts[0]?.trim() || "LinkedIn içeriği üretilemedi.";
-    const twitterText = parts[1]?.trim() || "Twitter içeriği üretilemedi.";
-    const videoText = parts[2]?.trim() || "Video metni üretilemedi.";
+    // Claude cevabını parse ediyoruz
+    const aiResponse = JSON.parse(msg.content[0].text);
 
-    // 2. ADIM: GitHub Workflow Bridge (Video Render Tetikleme)
+    // 2. GITHUB WORKFLOW TETİKLEME
     const githubResponse = await fetch(
       `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
       {
@@ -52,31 +43,22 @@ export default async function handler(req, res) {
           event_type: 'render-video', 
           client_payload: {
             inputProps: {
-              text: videoText, // Remotion projesine giden asıl metin
-              title: "Yeni İçerik",
-              accentColor: "#2563eb"
+              text: aiResponse.video,
             }
           }
         }),
       }
     );
 
-    if (!githubResponse.ok) {
-      const errorData = await githubResponse.text();
-      throw new Error(`GitHub Hatası: ${errorData}`);
-    }
-
-    // 3. ADIM: Tüm içerikleri Frontend'e (index.tsx) gönderiyoruz
     return res.status(200).json({ 
       success: true, 
-      linkedinText: linkedinText,
-      twitterText: twitterText,
-      aiText: videoText, // Player önizlemesi için
-      message: "İçerikler üretildi ve video kuyruğa alındı." 
+      linkedinText: aiResponse.linkedin,
+      twitterText: aiResponse.twitter,
+      aiText: aiResponse.video
     });
 
   } catch (error) {
-    console.error("Workflow Hatası:", error);
-    return res.status(500).json({ success: false, error: error.message });
+    console.error("API Hatası:", error);
+    return res.status(500).json({ success: false, error: "Veri işlenemedi: " + error.message });
   }
 }
