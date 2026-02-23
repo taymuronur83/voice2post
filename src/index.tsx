@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { registerRoot, Composition } from 'remotion';
 import { Player } from '@remotion/player';
 
-// 1. SADECE VİDEO TASARIMI (Bu kısım dikey ekranda görünecek olan yer)
-const SocialVideoContent = ({ 
-    title = "Başlık", 
+// ---------------------------------------------------------
+// 1. SADECE VİDEONUN KENDİSİ (TELEFON EKRANINDA ÇIKACAK OLAN)
+// ---------------------------------------------------------
+export const MyVideoContent = ({ 
+    title = "Başlık Bekleniyor", 
     sub = "Alt Başlık", 
     accentColor = "#3b82f6", 
     storyline = [] 
@@ -19,20 +21,26 @@ const SocialVideoContent = ({
                 position: 'absolute', width: '100%', height: '100%', 
                 background: `radial-gradient(circle, ${accentColor}44 0%, transparent 70%)` 
             }} />
-            <h1 style={{ fontSize: '70px', fontWeight: 'bold', color: accentColor, zIndex: 10 }}>{title}</h1>
-            <p style={{ fontSize: '40px', zIndex: 10, marginTop: '20px' }}>{storyline[0] || sub}</p>
+            <h1 style={{ fontSize: '80px', fontWeight: 'bold', color: accentColor, zIndex: 10 }}>{title}</h1>
+            <p style={{ fontSize: '45px', zIndex: 10, marginTop: '30px', color: '#eee' }}>
+                {storyline.length > 0 ? storyline[0] : sub}
+            </p>
         </div>
     );
 };
 
-// 2. ANA SİTE ARAYÜZÜ
+// ---------------------------------------------------------
+// 2. ANA SİTE ARAYÜZÜ (SOL PANEL + SAĞ PANEL)
+// ---------------------------------------------------------
 const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
-    const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[] });
+    const [outputs, setOutputs] = useState({ 
+        twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[] 
+    });
 
     const handleGenerate = async () => {
-        if (!userInput) return alert("Komut girin!");
+        if (!userInput) return alert("Lütfen komut girin!");
         setStatus('processing');
         try {
             const response = await fetch('/api/generate', { 
@@ -51,7 +59,7 @@ const MainSocialSystem = () => {
                 storyline: data.video_script.storyline || [] 
             });
 
-            // GitHub Render Tetikleme
+            // Arka planda render tetikleyici
             fetch('/api/render-video', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -63,31 +71,36 @@ const MainSocialSystem = () => {
     };
 
     return (
-        <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100vh', width: '100vw', background: '#050505', color: '#eee', overflow: 'hidden' }}>
             {/* SOL PANEL */}
-            <div style={{ flex: 1, padding: '40px', borderRight: '1px solid #222' }}>
-                <h2 style={{ color: '#00acee' }}>Voice2Post AI</h2>
+            <div style={{ width: '450px', padding: '40px', borderRight: '2px solid #222', display: 'flex', flexDirection: 'column' }}>
+                <h2 style={{ color: '#00acee', marginBottom: '20px' }}>Voice2Post AI</h2>
                 <textarea 
                     value={userInput} 
                     onChange={(e) => setUserInput(e.target.value)} 
-                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '15px', padding: '20px' }} 
-                    placeholder="Komut yazın..." 
+                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '15px', padding: '20px', border: '1px solid #333' }} 
+                    placeholder="Komutunuzu buraya girin..." 
                 />
-                <button onClick={handleGenerate} style={{ padding: '20px', background: '#2563eb', color: '#fff', borderRadius: '12px', marginTop: '20px', width: '100%', fontWeight: 'bold', cursor: 'pointer' }}>
-                    {status === 'processing' ? 'Hazırlanıyor...' : 'Oluştur ve İzle'}
+                <button 
+                    onClick={handleGenerate} 
+                    style={{ padding: '20px', background: '#2563eb', color: '#fff', borderRadius: '12px', marginTop: '20px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
+                >
+                    {status === 'processing' ? 'Claude İşliyor...' : 'İçeriği Oluştur ve Oynat'}
                 </button>
-                <div style={{ marginTop: '20px' }}>
-                    <div style={{ background: '#111', padding: '15px', borderRadius: '10px', marginBottom: '10px' }}><strong>X:</strong> <p>{outputs.twitter}</p></div>
-                    <div style={{ background: '#111', padding: '15px', borderRadius: '10px' }}><strong>LinkedIn:</strong> <p>{outputs.linkedin}</p></div>
+                <div style={{ marginTop: '30px', overflowY: 'auto' }}>
+                    <div style={{ background: '#111', padding: '20px', borderRadius: '15px', marginBottom: '15px' }}>
+                        <strong>X (Twitter):</strong>
+                        <p style={{ marginTop: '10px', color: '#ccc' }}>{outputs.twitter}</p>
+                    </div>
                 </div>
             </div>
 
-            {/* SAĞ PANEL - VİDEO BURADA OYNAYACAK */}
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <div style={{ width: '360px', height: '640px', border: '12px solid #1a1a1a', borderRadius: '50px', overflow: 'hidden' }}>
+            {/* SAĞ PANEL: CANLI VİDEO ÖNİZLEME */}
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000' }}>
+                <div style={{ width: '360px', height: '640px', border: '12px solid #1a1a1a', borderRadius: '50px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <Player
-                            component={SocialVideoContent} // DİKKAT: Buraya MainSocialSystem vermiyoruz!
+                            component={MyVideoContent} // KRİTİK: Buraya SADECE video bileşenini veriyoruz
                             durationInFrames={300}
                             compositionWidth={1080}
                             compositionHeight={1920}
@@ -103,7 +116,9 @@ const MainSocialSystem = () => {
                             }}
                         />
                     ) : (
-                        <div style={{ color: '#444', textAlign: 'center', marginTop: '80%' }}>Video burada canlı görünecek.</div>
+                        <div style={{ color: '#444', textAlign: 'center', display: 'flex', alignItems: 'center', height: '100%', padding: '20px' }}>
+                            {status === 'processing' ? 'Dikey ekran hazırlanıyor...' : 'Komut sonrası video burada anında başlayacak.'}
+                        </div>
                     )}
                 </div>
             </div>
@@ -111,21 +126,22 @@ const MainSocialSystem = () => {
     );
 };
 
-// 3. KAYIT VE GİRİŞ NOKTASI
-// Sitenin kendisi ile render motorunu birbirinden ayırıyoruz.
+// ---------------------------------------------------------
+// 3. REMOTION KAYIT NOKTASI
+// ---------------------------------------------------------
 export const RemotionRoot: React.FC = () => {
+    // URL'de "composition" araması yapılıyorsa (Render işlemiyse) sadece videoyu göster
+    // Değilse (Sitedeyse) ana sistemi göster. Bu iç içe geçmeyi engeller.
     return (
         <>
-            {/* GitHub Action'ın render edeceği saf video bileşeni */}
             <Composition 
                 id="MyVideo" 
-                component={SocialVideoContent} 
+                component={MyVideoContent} 
                 durationInFrames={300} 
                 fps={30} 
                 width={1080} 
                 height={1920} 
             />
-            {/* Sitenin ana arayüzü */}
             <MainSocialSystem />
         </>
     );
