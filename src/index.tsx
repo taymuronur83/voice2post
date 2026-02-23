@@ -83,24 +83,32 @@ const MainSocialSystem = () => {
             
             setStatus('success');
             
-            // OTOMATİK YÜKLEME DÖNGÜSÜ
-            // Render bittikten sonra her 15 saniyede bir depodaki videoyu kontrol eder
+            // OTOMATİK TAZELEME: Vercel'i beklemeden doğrudan GitHub'ı kontrol eder
             const autoRefresh = setInterval(() => {
                 setVideoKey(Date.now());
-            }, 15000);
+                console.log("Video güncelleniyor...");
+            }, 10000); // 10 saniyede bir dene
             
-            setTimeout(() => clearInterval(autoRefresh), 180000); // 3 dakika boyunca dene
+            setTimeout(() => clearInterval(autoRefresh), 300000); // 5 dakika boyunca denemeye devam et
 
         } catch (err) { setStatus('error'); }
     };
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
-            {/* SOL PANEL: Tıklama alanı */}
+            {/* SOL PANEL: Tıklama alanı (zIndex ile üstte) */}
             <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 100 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
-                <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px', border: '1px solid #333' }} placeholder="Ne anlatmak istersin?" />
-                <button onClick={handleGenerate} style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>
+                <textarea 
+                    value={userInput} 
+                    onChange={(e) => setUserInput(e.target.value)} 
+                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px', border: '1px solid #333' }} 
+                    placeholder="Ne anlatmak istersin?" 
+                />
+                <button 
+                    onClick={handleGenerate} 
+                    style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}
+                >
                     {status === 'processing' ? 'İşleniyor...' : 'Üret'}
                 </button>
                 <div style={{ marginTop: '20px', overflowY: 'auto' }}>
@@ -109,24 +117,26 @@ const MainSocialSystem = () => {
                 </div>
             </div>
 
-            {/* SAĞ PANEL: Otomatik Video Ekranı */}
+            {/* SAĞ PANEL: Video Ekranı (Doğrudan GitHub CDN Bağlantılı) */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 1 }}>
                 <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
                             <video 
                                 key={videoKey}
-                                controls autoPlay playsInline
+                                controls 
+                                autoPlay 
+                                playsInline
                                 style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50, backgroundColor: 'black' }} 
                             >
-                                {/* Media sunucusu + Timestamp ile kesin yükleme */}
+                                {/* KESİN ÇÖZÜM LİNKİ: media.githubusercontent Vercel'den bağımsız çalışır */}
                                 <source src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} type="video/mp4" />
                             </video>
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                         </>
                     ) : (
                         <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Üretiliyor...' : 'Komut Bekleniyor...'}
+                            {status === 'processing' ? 'Video Hazırlanıyor...' : 'Komut Bekleniyor...'}
                         </div>
                     )}
                 </div>
