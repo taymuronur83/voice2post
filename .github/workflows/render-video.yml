@@ -19,8 +19,8 @@ jobs:
         run: |
           npx remotion render src/index.tsx MyVideo out/video.mp4 --props='${{ toJson(github.event.client_payload.inputProps) }}'
 
-      - name: Upload Artifact
+      - name: Upload Video
         uses: actions/upload-artifact@v4
         with:
-          name: processed-video
+          name: final-video
           path: out/video.mp4
