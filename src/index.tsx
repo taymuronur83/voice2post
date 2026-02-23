@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { registerRoot, Composition, useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion';
 
-// Verdiğin API Key - Sistem genelinde kullanılmak üzere tanımlandı
+// Gemini API Key
 const GEMINI_API_KEY = "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA";
 
 const SocialVideoContent = ({ 
@@ -49,7 +49,6 @@ const MainSocialSystem = () => {
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('idle');
     const [outputs, setOutputs] = useState({ twitter: '', linkedin: '', videoTitle: '', videoSub: '', videoColor: '#3b82f6', storyline: [] as string[], animConfig: null });
-    // Video tazeleme anahtarı
     const [videoKey, setVideoKey] = useState(Date.now());
 
     useEffect(() => {
@@ -68,7 +67,6 @@ const MainSocialSystem = () => {
         if (!userInput) return alert("Komut girin!");
         setStatus('processing');
         try {
-            // API İsteği (Anahtar eklendi)
             const response = await fetch('/api/generate', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -77,7 +75,6 @@ const MainSocialSystem = () => {
             const data = await response.json();
             setOutputs({ twitter: data.twitter, linkedin: data.linkedin, videoTitle: data.video_script.title, videoSub: data.video_script.sub, videoColor: data.video_script.accentColor, storyline: data.video_script.storyline || [], animConfig: data.video_script.animation });
             
-            // Video render tetikleyici
             await fetch('/api/render-video', { 
                 method: 'POST', 
                 headers: { 'Content-Type': 'application/json' }, 
@@ -85,39 +82,18 @@ const MainSocialSystem = () => {
             });
             
             setStatus('success');
-            
-            // Video hazır olana kadar her 10 saniyede bir ana ekrandaki kaynağı tazeleyen döngü
             const checkSync = setInterval(() => setVideoKey(Date.now()), 10000);
-            setTimeout(() => clearInterval(checkSync), 120000); // 2 dakika sonra kontrolü bırak
-
+            setTimeout(() => clearInterval(checkSync), 120000);
         } catch (err) { setStatus('error'); }
     };
 
     return (
         <div style={{ display: 'flex', height: '100vh', background: '#050505', color: '#eee', overflow: 'hidden' }}>
-            {/* SOL PANEL: Giriş, TextArea ve Butonlar (zIndex ile tıklama garantilendi) */}
+            {/* SOL TARAF: Tıklama garantili alan */}
             <div style={{ flex: 1, padding: '30px', borderRight: '1px solid #222', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 100 }}>
                 <h2 style={{ color: '#00acee', marginBottom: '15px' }}>Voice2Post AI</h2>
-                <textarea 
-                    value={userInput} 
-                    onChange={(e) => setUserInput(e.target.value)} 
-                    style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px', border: '1px solid #333' }} 
-                    placeholder="Ne anlatmak istersin?" 
-                />
-                <button 
-                    onClick={handleGenerate} 
-                    style={{ 
-                        padding: '15px', 
-                        background: '#2563eb', 
-                        color: '#fff', 
-                        borderRadius: '8px', 
-                        marginTop: '15px', 
-                        fontWeight: 'bold', 
-                        cursor: 'pointer',
-                        border: 'none',
-                        outline: 'none'
-                    }}
-                >
+                <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} style={{ width: '100%', height: '150px', background: '#111', color: '#fff', borderRadius: '10px', padding: '15px', border: '1px solid #333' }} placeholder="Ne anlatmak istersin?" />
+                <button onClick={handleGenerate} style={{ padding: '15px', background: '#2563eb', color: '#fff', borderRadius: '8px', marginTop: '15px', fontWeight: 'bold', cursor: 'pointer', border: 'none' }}>
                     {status === 'processing' ? 'İşleniyor...' : 'Üret'}
                 </button>
                 <div style={{ marginTop: '20px', overflowY: 'auto' }}>
@@ -126,28 +102,23 @@ const MainSocialSystem = () => {
                 </div>
             </div>
 
-            {/* SAĞ PANEL: Video Ana Ekran ve Önizleme (Sol panelin tıklanmasını engellemez) */}
+            {/* SAĞ TARAF: Video Ana Ekran alanı */}
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#000', position: 'relative', zIndex: 1 }}>
-                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative', boxShadow: '0 0 50px rgba(0,0,0,0.5)' }}>
+                <div style={{ width: '320px', height: '568px', border: '8px solid #1a1a1a', borderRadius: '40px', overflow: 'hidden', position: 'relative' }}>
                     {status === 'success' ? (
                         <>
-                            {/* GENEL ÇÖZÜM: Media CDN üzerinden video akışı */}
                             <video 
                                 key={videoKey}
-                                controls 
-                                autoPlay 
-                                playsInline
-                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50, backgroundColor: '#000' }} 
+                                controls autoPlay playsInline
+                                style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 50, backgroundColor: 'black' }} 
                             >
                                 <source src={`https://media.githubusercontent.com/media/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} type="video/mp4" />
-                                <source src={`https://raw.githubusercontent.com/taymuronur83/voice2post/main/public/outputs/final-video.mp4?t=${videoKey}`} type="video/mp4" />
                             </video>
-                            {/* Yedek animasyon katmanı */}
                             <SocialVideoContent title={outputs.videoTitle} sub={outputs.videoSub} accentColor={outputs.videoColor} storyline={outputs.storyline} animConfig={outputs.animConfig} />
                         </>
                     ) : (
                         <div style={{ color: '#444', textAlign: 'center', marginTop: '70%', padding: '20px' }}>
-                            {status === 'processing' ? 'Video Oluşturuluyor...' : 'Giriş Başarılı. Komut Bekleniyor...'}
+                            {status === 'processing' ? 'Video Oluşturuluyor...' : 'Hazırlanıyor...'}
                         </div>
                     )}
                 </div>
@@ -158,21 +129,7 @@ const MainSocialSystem = () => {
 
 export const RemotionRoot: React.FC = () => (
     <>
-      <Composition 
-        id="MyVideo" 
-        component={SocialVideoContent} 
-        durationInFrames={450} 
-        fps={30} 
-        width={1080} 
-        height={1920} 
-        defaultProps={{ 
-            title: "BAŞLIK", 
-            sub: "ALT BAŞLIK", 
-            accentColor: "#3b82f6", 
-            storyline: ["Hazırlanıyor..."], 
-            animConfig: null 
-        }} 
-      />
+      <Composition id="MyVideo" component={SocialVideoContent} durationInFrames={450} fps={30} width={1080} height={1920} defaultProps={{ title: "BAŞLIK", sub: "ALT BAŞLIK", accentColor: "#3b82f6", storyline: ["Bekleniyor..."], animConfig: null }} />
       <MainSocialSystem />
     </>
 );
