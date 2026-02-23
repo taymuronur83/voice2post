@@ -6,29 +6,35 @@ const anthropic = new Anthropic({
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
   const { prompt } = req.body;
 
   try {
-    // 1. CLAUDE'DAN NET JSON FORMATI İSTİYORUZ
+    // 1. ADIM: Claude'dan tüm içerikleri JSON formatında istiyoruz
+    // Bu sayede LinkedIn, Twitter ve Video metni tek seferde hatasız gelir.
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1500,
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için içerik üret. Cevabını SADECE şu JSON formatında ver, başka hiçbir şey yazma:
+        content: `Aşağıdaki komut için sosyal medya içerikleri üret. 
+        Cevabını SADECE aşağıdaki JSON formatında ver, başka hiçbir metin ekleme:
         {
-          "linkedin": "linkedin postu buraya",
-          "twitter": "twitter postu buraya",
-          "video": "kısa video metni buraya"
+          "linkedin": "profesyonel ve uzun bir linkedin postu",
+          "twitter": "dikkat çekici kısa bir X/twitter postu",
+          "video_text": "video içinde animasyonla görünecek kısa ana metin"
         }
+        
         Komut: ${prompt}` 
       }],
     });
 
-    // Claude cevabını parse ediyoruz
-    const aiResponse = JSON.parse(msg.content[0].text);
+    // Claude'dan gelen yanıtı JSON olarak ayrıştırıyoruz
+    const responseText = msg.content[0].text.trim();
+    const aiData = JSON.parse(responseText);
 
-    // 2. GITHUB WORKFLOW TETİKLEME
+    // 2. ADIM: GitHub Workflow (Remotion) Tetikleme
+    // Video render motoruna Claude'un ürettiği "video_text" bilgisini gönderiyoruz.
     const githubResponse = await fetch(
       `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
       {
@@ -43,22 +49,33 @@ export default async function handler(req, res) {
           event_type: 'render-video', 
           client_payload: {
             inputProps: {
-              text: aiResponse.video,
+              text: aiData.video_text, // Remotion projen bu 'text' prop'unu okumalı
+              title: "AI Content"
             }
           }
         }),
       }
     );
 
+    // GitHub tetikleme kontrolü
+    if (!githubResponse.ok) {
+      const errorText = await githubResponse.text();
+      console.error("GitHub API Hatası:", errorText);
+    }
+
+    // 3. ADIM: Frontend'e (index.tsx) tüm verileri gönder
     return res.status(200).json({ 
       success: true, 
-      linkedinText: aiResponse.linkedin,
-      twitterText: aiResponse.twitter,
-      aiText: aiResponse.video
+      linkedinText: aiData.linkedin,
+      twitterText: aiData.twitter,
+      videoTitle: aiData.video_text 
     });
 
   } catch (error) {
-    console.error("API Hatası:", error);
-    return res.status(500).json({ success: false, error: "Veri işlenemedi: " + error.message });
+    console.error("Sistem Hatası:", error);
+    return res.status(500).json({ 
+      success: false, 
+      error: "İçerik üretiminde veya GitHub bağlantısında hata oluştu." 
+    });
   }
 }
