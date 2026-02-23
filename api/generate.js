@@ -9,46 +9,41 @@ export default async function handler(req, res) {
   const { prompt } = req.body;
 
   try {
-    // 1. OPENAI: SOSYAL MEDYA METİN ÜRETİMİ
+    // 1. OPENAI: LinkedIn ve Twitter içeriği
     const aiResponse = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4-turbo",
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için LinkedIn ve Twitter içeriği üret. JSON formatında ver: {"linkedin": "...", "twitter": "..."} Komut: ${prompt}` 
+        content: `Aşağıdaki komut için LinkedIn postu ve Twitter akışı üret. JSON formatında ver: {"linkedin": "...", "twitter": "..."} Komut: ${prompt}` 
       }],
       response_format: { type: "json_object" }
     });
     const textData = JSON.parse(aiResponse.choices[0].message.content);
 
-    // 2. CLAUDE: REMOTION VİDEO İÇERİK ÜRETİMİ
+    // 2. CLAUDE: Remotion Video parametreleri (Senin index.html yapına uygun)
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1000,
       messages: [{ 
         role: "user", 
-        content: `Aşağıdaki komut için Remotion video parametreleri üret. Cevabı SADECE şu JSON ile ver:
+        content: `Aşağıdaki komut için video parametreleri üret. JSON ver:
         {
-          "videoTitle": "Ana Metin",
-          "subTitle": "Alt Metin",
+          "title": "Ana Başlık",
+          "sub": "Alt yazı",
           "accentColor": "#3b82f6",
-          "animation": {"shakeIntensity": 2, "zoomScale": 1.2}
+          "animation": {"shakeIntensity": 2, "zoomScale": 1.2, "textSpeed": 1}
         }
         Komut: ${prompt}` 
       }],
     });
     const videoData = JSON.parse(msg.content[0].text.trim());
 
+    // 3. index.html'in beklediği formatta dönüş yap
     return res.status(200).json({ 
       success: true, 
-      linkedinText: textData.linkedin,
-      twitterText: textData.twitter,
-      videoTitle: videoData.videoTitle,
-      video_script: {
-        title: videoData.videoTitle,
-        sub: videoData.subTitle,
-        accentColor: videoData.accentColor,
-        animation: videoData.animation
-      }
+      linkedin: textData.linkedin, // index.html bunu bekliyor
+      twitter: textData.twitter,   // index.html bunu bekliyor
+      video_script: videoData      // index.html bunu bekliyor
     });
 
   } catch (error) {
