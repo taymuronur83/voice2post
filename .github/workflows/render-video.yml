@@ -14,7 +14,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          # Vercel'de tanımladığın GH_TOKEN ismini buraya bağlıyoruz
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Node.js
@@ -28,13 +27,13 @@ jobs:
       - name: Render Video
         run: |
           mkdir -p public/outputs
-          # 'MyVideo' ID'sini burada açıkça belirtiyoruz
           npx remotion render src/index.tsx MyVideo public/outputs/final-video.mp4 --force
 
       - name: Commit and Push
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
+          # Videoyu repoya geri yüklüyoruz ki URL üzerinden erişebilelim
           git add public/outputs/final-video.mp4
-          git commit -m "Video otomatik yüklendi" || echo "Değişiklik yok"
+          git commit -m "Video render edildi ve yüklendi" || echo "Degisiklik yok"
           git push origin main
