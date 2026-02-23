@@ -66,7 +66,8 @@
         #video-render-canvas { display: none; width: 100vw; height: 100vh; background: #000; position: relative; overflow: hidden; }
         body.video-canvas-mode #video-render-canvas { display: flex; justify-content: center; align-items: center; }
         body.video-canvas-mode nav, body.video-canvas-mode header, body.video-canvas-mode section, body.video-canvas-mode footer { display: none !important; }
-        .v-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+        .v-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.6; animation: zoomIn 20s infinite alternate; }
+        @keyframes zoomIn { from { transform: scale(1); } to { transform: scale(1.1); } }
         .v-text { position: relative; z-index: 2; text-align: center; padding: 20px; }
     </style>
 </head>
@@ -333,7 +334,7 @@
     </footer>
 
     <script type="module">
-        // --- VIDEO ENGINE LOGIC (EKLENDİ) ---
+        // --- GÜNCEL VIDEO ENGINE LOGIC (DİNAMİK ARKA PLAN EKLENDİ) ---
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('videoData')) {
             document.body.classList.add('video-canvas-mode');
@@ -341,7 +342,11 @@
                 const data = JSON.parse(decodeURIComponent(urlParams.get('videoData')));
                 document.getElementById('v-engine-title').innerText = data.title || "Başlık";
                 document.getElementById('v-engine-sub').innerText = data.sub || data.storyline?.[0] || "";
-                document.getElementById('v-engine-bg').src = `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1080&q=80`;
+                
+                // Konuya uygun arka plan çekimi
+                const query = encodeURIComponent(data.title || 'abstract dark');
+                document.getElementById('v-engine-bg').src = `https://source.unsplash.com/1080x1920/?${query}`;
+                
                 if(data.accentColor) document.getElementById('v-engine-sub').style.color = data.accentColor;
             } catch(e) { console.error("Render hatası:", e); }
         }
@@ -481,7 +486,7 @@
                     const videoData = data.video_script;
                     const encodedData = encodeURIComponent(JSON.stringify(videoData));
                     
-                    // --- GÜNCELLEME: BURASI SONSUZ DÖNGÜYÜ KIRAR VE VİDEOYU OYNATIR ---
+                    // --- GÜNCELLEME: OTOMATİK OYNATMA VE DÖNGÜ KIRICI ---
                     liveArea.innerHTML = `<iframe src="${window.location.pathname}?videoData=${encodedData}" style="width:100%; height:100%; border:none; overflow:hidden;"></iframe>`;
                     
                     const downloadBtn = document.getElementById('download-btn');
@@ -499,12 +504,13 @@
                         downloadBtn.innerText = "MP4 İndir";
                     };
                     
+                    // Otomatik olarak loader'ı kaldır ve videoyu göster
                     setTimeout(() => {
                         videoLoader.classList.add('hidden');
                         liveArea.classList.remove('opacity-0');
                         downloadBtn.classList.remove('hidden');
                         statusText.innerText = "İçerik Hazır!";
-                    }, 2000);
+                    }, 2500);
                 } else {
                     videoLoader.classList.add('hidden');
                 }
