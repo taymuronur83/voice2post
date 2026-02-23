@@ -58,11 +58,11 @@ export default function Voice2Post() {
         <div style={{ backgroundColor: '#0f172a', minHeight: '100vh', color: '#fff', padding: '40px', fontFamily: 'Arial' }}>
             <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px' }}>
-                    <h1 style={{ fontSize: '24px', fontBold: 'bold' }}>VOICE2POST AI</h1>
+                    <h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>VOICE2POST AI</h1>
                     <div style={{ display: 'flex', gap: '10px' }}>
                         {content.video_script && (
                             <button onClick={handleRenderVideo} disabled={isRendering} style={{ backgroundColor: '#ef4444', color: 'white', padding: '12px 30px', borderRadius: '30px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
-                                {isRendering ? 'İŞLENİYOR...' : 'VİDEOYU RENDER ET'}
+                                {isRendering ? 'RENDER BAŞLADI...' : 'VİDEOYU İNDİR (MP4)'}
                             </button>
                         )}
                         <button onClick={handleGenerate} disabled={loading} style={{ backgroundColor: '#10b981', color: 'white', padding: '12px 30px', borderRadius: '30px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
@@ -77,17 +77,17 @@ export default function Voice2Post() {
                             <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', minHeight: '100px', border: '1px solid #334155', marginTop: '5px' }}>{content.linkedin}</div>
                         </div>
                         <div style={{ marginBottom: '20px' }}>
-                            <label style={{ color: '#94a3b8', fontSize: '12px' }}>X / TWITTER (OpenAI)</label>
+                            <label style={{ color: '#94a3b8', fontSize: '12px' }}>X (Twitter) (OpenAI)</label>
                             <div style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', minHeight: '100px', border: '1px solid #334155', marginTop: '5px' }}>{content.twitter}</div>
                         </div>
-                        <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="Komutunuzu yazın..." style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#000', color: '#fff', border: '1px solid #334155', minHeight: '100px' }} />
+                        <textarea value={userInput} onChange={(e) => setUserInput(e.target.value)} placeholder="Buraya yazın..." style={{ width: '100%', padding: '15px', borderRadius: '15px', background: '#000', color: '#fff', border: '1px solid #334155', minHeight: '100px' }} />
                     </div>
                     <div style={{ width: '360px' }}>
                         <div style={{ width: '360px', height: '640px', border: '10px solid #1e293b', borderRadius: '45px', overflow: 'hidden', backgroundColor: '#000' }}>
                             {content.video_script ? (
                                 <Player component={VideoElement} durationInFrames={150} compositionWidth={1080} compositionHeight={1920} fps={30} style={{ width: '100%', height: '100%' }} autoPlay loop inputProps={content.video_script} />
                             ) : (
-                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>CANLI ÖNİZLEME</div>
+                                <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}>VİDEO ÖNİZLEME</div>
                             )}
                         </div>
                     </div>
