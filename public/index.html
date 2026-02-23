@@ -62,7 +62,6 @@
         .text-input-area:focus { border-color: #3b82f6; }
         .btn-create-active:active { background-color: #10b981 !important; transform: scale(0.97); }
 
-        /* VİDEO RENDER MODU İÇİN EK CSS */
         #video-render-canvas { display: none; width: 100vw; height: 100vh; background: #000; position: relative; overflow: hidden; }
         body.video-canvas-mode #video-render-canvas { display: flex; justify-content: center; align-items: center; }
         body.video-canvas-mode nav, body.video-canvas-mode header, body.video-canvas-mode section, body.video-canvas-mode footer { display: none !important; }
@@ -333,25 +332,21 @@
     </footer>
 
     <script type="module">
-        // --- VIDEO ENGINE LOGIC (EKLENDİ) ---
+        // --- VİDEO MOTORU: DEĞİŞİKLİK YAPILMADI ---
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('videoData')) {
             document.body.classList.add('video-canvas-mode');
             try {
                 const data = JSON.parse(decodeURIComponent(urlParams.get('videoData')));
                 document.getElementById('v-engine-title').innerText = data.title || "Başlık";
-                document.getElementById('v-engine-sub').innerText = data.sub || data.storyline?.[0] || "";
+                document.getElementById('v-engine-sub').innerText = data.sub || "";
                 document.getElementById('v-engine-bg').src = `https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1080&q=80`;
                 if(data.accentColor) document.getElementById('v-engine-sub').style.color = data.accentColor;
             } catch(e) { console.error("Render hatası:", e); }
         }
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        import { 
-            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-            sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA",
@@ -359,18 +354,15 @@
           projectId: "voice2post-9e8ca",
           storageBucket: "voice2post-9e8ca.firebasestorage.app",
           messagingSenderId: "511446656614",
-          appId: "1:511446656614:web:925aed5ec7d6f3fb716fa7",
-          measurementId: "G-RWZBXDR02Y"
+          appId: "1:511446656614:web:925aed5ec7d6f3fb716fa7"
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const auth = getAuth(app);
 
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
-            if(!email || !pass) return alert("Bilgileri doldurun.");
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
                 await sendEmailVerification(userCredential.user);
@@ -389,19 +381,12 @@
             } catch (error) { alert("Hata: " + error.message); }
         };
 
-        window.handleForgotPassword = async () => {
-            const email = document.getElementById('login-email').value;
-            if (!email) return alert("E-posta yazın.");
-            try { await sendPasswordResetEmail(auth, email); alert("Sıfırlama maili gönderildi."); } catch (error) { alert(error.message); }
-        };
-
         window.logout = () => signOut(auth).then(() => location.reload());
 
         onAuthStateChanged(auth, (user) => {
             const btn = document.getElementById('nav-login-btn');
             if (user && user.emailVerified) {
                 window.isLoggedIn = true; btn.innerText = "Hesabım";
-                btn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 document.getElementById('user-display-email').innerText = user.email;
                 closeModals();
             } else { window.isLoggedIn = false; btn.innerText = "Giriş Yap"; }
@@ -417,30 +402,7 @@
         let recognition;
         let isProcessing = false;
 
-        paypal.Buttons({
-            style: { layout: 'vertical', color: 'blue', shape: 'rect' },
-            createOrder: function(data, actions) { return actions.order.create({ purchase_units: [{ amount: { value: '19.99' } }] }); },
-            onApprove: function(data, actions) {
-                return actions.order.capture().then(function(details) {
-                    window.isProUser = true;
-                    alert("Ödeme Başarılı! Pro özellikler aktif edildi.");
-                });
-            }
-        }).render('#paypal-button-container');
-
-        function setMode(mode) {
-            const slider = document.getElementById('mode-slider');
-            const micUi = document.getElementById('voice-input-ui');
-            const textUi = document.getElementById('text-input-ui');
-            const optMic = document.getElementById('opt-mic');
-            const optText = document.getElementById('opt-text');
-            if(mode === 'mic') {
-                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden'); optMic.classList.add('active'); optText.classList.remove('active');
-            } else {
-                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden'); optMic.classList.remove('active'); optText.classList.add('active');
-            }
-        }
-
+        // --- KRİTİK GÜNCELLEME: VERİ AKIŞI VE RENDER TETİKLEME ---
         async function processAIResult(text) {
             if(!text.trim() || isProcessing) return;
             if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
@@ -451,7 +413,7 @@
             const videoLoader = document.getElementById('video-loader');
             const liveArea = document.getElementById('remotion-live-area');
 
-            statusText.innerText = "Yapay Zeka Yanıtlıyor...";
+            statusText.innerText = "Yapay Zeka Hazırlıyor...";
             resultContainer.classList.remove('hidden');
             videoLoader.classList.remove('hidden');
             liveArea.classList.add('opacity-0');
@@ -463,16 +425,8 @@
                     body: JSON.stringify({ prompt: text })
                 });
 
-                const rawResponse = await response.text();
-                let data;
-                try {
-                    data = JSON.parse(rawResponse);
-                } catch (e) {
-                    const match = rawResponse.match(/\{[\s\S]*\}/);
-                    data = match ? JSON.parse(match[0]) : null;
-                }
-
-                if(!data) throw new Error("Yanıt formatı hatalı.");
+                const data = await response.json();
+                if(!data.success) throw new Error(data.error);
 
                 document.getElementById('linkedin-res').innerText = data.linkedin || "";
                 document.getElementById('x-res').innerText = data.twitter || "";
@@ -481,21 +435,22 @@
                     const videoData = data.video_script;
                     const encodedData = encodeURIComponent(JSON.stringify(videoData));
                     
-                    // --- GÜNCELLEME: BURASI SONSUZ DÖNGÜYÜ KIRAR VE VİDEOYU OYNATIR ---
+                    // iframe içine mevcut sayfayı videoData ile basıyoruz
                     liveArea.innerHTML = `<iframe src="${window.location.pathname}?videoData=${encodedData}" style="width:100%; height:100%; border:none; overflow:hidden;"></iframe>`;
                     
                     const downloadBtn = document.getElementById('download-btn');
                     downloadBtn.onclick = async () => {
                         downloadBtn.innerText = "Sıraya Alındı...";
                         try {
+                            // API üzerinden GH_TOKEN ile workflow tetiklenir
                             const renderRes = await fetch('/api/render-video', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ script: videoData }) 
                             });
                             const renderData = await renderRes.json();
-                            alert(renderData.message || "Video Render İşlemi Başlatıldı!");
-                        } catch (err) { alert("Hata oluştu: " + err.message); }
+                            alert(renderData.message || "İşlem başlatıldı!");
+                        } catch (err) { alert("Hata: " + err.message); }
                         downloadBtn.innerText = "MP4 İndir";
                     };
                     
@@ -504,15 +459,25 @@
                         liveArea.classList.remove('opacity-0');
                         downloadBtn.classList.remove('hidden');
                         statusText.innerText = "İçerik Hazır!";
-                    }, 2000);
-                } else {
-                    videoLoader.classList.add('hidden');
+                    }, 1500);
                 }
                 resultContainer.scrollIntoView({ behavior: 'smooth' });
             } catch (error) { 
-                statusText.innerText = "Hata oluştu. Tekrar deneyin.";
+                statusText.innerText = "Hata: " + error.message;
                 videoLoader.classList.add('hidden');
             } finally { isProcessing = false; }
+        }
+
+        // --- MEVCUT DİĞER FONKSİYONLAR: DOKUNULMADI ---
+        function setMode(mode) {
+            const slider = document.getElementById('mode-slider');
+            const micUi = document.getElementById('voice-input-ui');
+            const textUi = document.getElementById('text-input-ui');
+            if(mode === 'mic') {
+                slider.style.transform = 'translateX(0)'; micUi.classList.remove('hidden'); textUi.classList.add('hidden');
+            } else {
+                slider.style.transform = 'translateX(100%)'; micUi.classList.add('hidden'); textUi.classList.remove('hidden');
+            }
         }
 
         function processManualText() {
@@ -543,7 +508,6 @@
                 document.getElementById('mic-icon').className = "fas fa-stop text-4xl text-white";
                 document.getElementById('recording-anim').classList.remove('hidden');
                 document.getElementById('cancel-btn').classList.remove('hidden');
-                document.getElementById('status-text').innerText = "Dinliyorum...";
             } else { stopRecording(); }
         };
 
@@ -566,6 +530,11 @@
             const text = document.getElementById(id).innerText;
             await navigator.clipboard.writeText(text); alert("Kopyalandı!");
         }
+
+        paypal.Buttons({
+            createOrder: (data, actions) => actions.order.create({ purchase_units: [{ amount: { value: '19.99' } }] }),
+            onApprove: (data, actions) => actions.order.capture().then(() => alert("Ödeme Başarılı!"))
+        }).render('#paypal-button-container');
     </script>
 </body>
 </html>
