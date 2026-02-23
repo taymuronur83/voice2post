@@ -7,20 +7,19 @@ const anthropic = new Anthropic({
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Sadece POST' });
 
-  const { command } = req.body;
-
   try {
-    // 1. CLAUDE İLE İÇERİK ÜRETİMİ
+    const { prompt } = req.body;
+
+    // 1. CLAUDE VERİYİ ÜRETİR
     const msg = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20240620",
       max_tokens: 1024,
-      messages: [{ role: "user", content: `Social media video script for: ${command}` }],
+      messages: [{ role: "user", content: `Social media video script: ${prompt}` }],
     });
+    const aiContent = msg.content[0].text;
 
-    const aiText = msg.content[0].text;
-
-    // 2. GITHUB WORKFLOW TETİKLEME (REMOTION RENDER)
-    const githubDispatch = await fetch(
+    // 2. GITHUB WORKFLOW TETİKLER (VIDEO MOTORU)
+    const githubResponse = await fetch(
       `https://api.github.com/repos/${process.env.GITHUB_USER}/${process.env.GITHUB_REPO}/dispatches`,
       {
         method: 'POST',
@@ -31,23 +30,15 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           event_type: 'render-video',
-          client_payload: {
-            inputProps: { text: aiText }
-          }
+          client_payload: { inputProps: { text: aiContent } }
         }),
       }
     );
 
-    if (!githubDispatch.ok) throw new Error("GitHub Workflow tetiklenemedi.");
+    if (!githubResponse.ok) throw new Error("GitHub bağlantısı başarısız.");
 
-    return res.status(200).json({
-      success: true,
-      aiContent: aiText,
-      message: "Video hazırlanıyor, birkaç dakika içinde ekranda belirecek."
-    });
-
+    return res.status(200).json({ success: true, aiText: aiContent });
   } catch (error) {
-    console.error("Workflow Hatası:", error);
     return res.status(500).json({ success: false, error: error.message });
   }
 }
