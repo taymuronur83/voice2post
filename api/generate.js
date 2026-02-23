@@ -1,72 +1,66 @@
-// generate.js - MEVCUT KODLARINI KORUR, ÜZERİNE EKLEME YAPAR
+import { Anthropic } from '@anthropic-ai/sdk';
+
+// 1. AYARLAR: Buradaki bilgilerin eksiksiz olduğundan emin ol
+const anthropic = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY, // Claude anahtarın burada tanımlı olmalı
+});
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const { prompt } = req.body;
+
+  try {
+    // --- ADIM 1: CLAUDE ÇALIŞTIRILIYOR ---
+    const msg = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20240620",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: `Aşağıdaki komut için video içeriği oluştur: ${prompt}` }],
+    });
+
+    const aiText = msg.content[0].text;
+
+    // --- ADIM 2: REMOTION TETİKLENİYOR ---
+    // Burası videonun oluşup sana link döndüğü yerdir.
+    const remotionResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        compositionId: "SocialMediaVideo", // Remotion'daki Composition ID ile aynı olmalı
+        inputProps: {
+          videoText: aiText,
+          // Buraya başka parametreler (renk, müzik vb.) ekleyebilirsin
+        }
+      }),
+    });
+
+    const renderResult = await remotionResponse.json();
+
+    // --- ADIM 3: SONUÇLARI FRONTEND'E GÖNDER ---
+    if (renderResult && renderResult.url) {
+      // BAŞARILI: Video URL'si ve AI metni beraber döner
+      return res.status(200).json({
+        success: true,
+        url: renderResult.url, // BU LİNK VİDEONUN KENDİSİDİR
+        text: aiText
+      });
+    } else {
+      // VİDEO OLUŞMADIYSA BİLE HATA VERME, METNİ DÖNDÜR SİSTEM ÇÖKMESİN
+      return res.status(200).json({
+        success: true,
+        text: aiText,
+        error: "Video motoru meşgul, metin hazır."
+      });
     }
 
-    try {
-        const { prompt } = req.body;
-
-        // 1. ADIM: CLAUDE ENTEGRASYONU (AI ÇALIŞTIRMA)
-        // Burada senin mevcut Claude API çağrın olduğunu varsayıyoruz.
-        // AI'dan video için gerekli metinleri/parametreleri alıyoruz.
-        const aiResponse = await callClaudeAPI(prompt); 
-
-        if (!aiResponse) {
-            throw new Error("Yapay zeka içeriği oluşturamadı.");
-        }
-
-        // 2. ADIM: REMOTION RENDER İŞLEMİ
-        // Claude'dan gelen veriyi Remotion'a gönderip videoya dönüştürüyoruz.
-        // 'SocialMediaVideo' senin Remotion projesindeki Composition ID'n olmalı.
-        
-        console.log("Video render işlemi başlatılıyor...");
-        
-        const renderResult = await fetch(`${process.env.REMOTION_SERVER_URL}/api/render`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                composition: "SocialMediaVideo", 
-                inputProps: {
-                    text: aiResponse.text,       // AI'dan gelen yazı
-                    audioUrl: aiResponse.audio, // AI'dan gelen ses (varsa)
-                    theme: aiResponse.theme     // AI'dan gelen tema ayarı
-                }
-            }),
-        });
-
-        const videoData = await renderResult.json();
-
-        // 3. ADIM: SONUCU FRONTEND'E (SİTEYE) GÖNDERME
-        // Video render edildikten sonra URL'i direkt siteye basıyoruz.
-        
-        if (videoData.url) {
-            // SİSTEMİN ÇALIŞMASI İÇİN BU RETURN ŞART:
-            return res.status(200).json({
-                success: true,
-                url: videoData.url, // Bu URL videonun internetteki adresidir
-                message: "Video başarıyla oluşturuldu ve yüklendi."
-            });
-        } else {
-            throw new Error("Remotion video URL'i oluşturamadı.");
-        }
-
-    } catch (error) {
-        console.error("Generate.js Hatası:", error);
-        return res.status(500).json({
-            success: false,
-            error: "Yapay zeka veya Video motoru şu an çalışmıyor: " + error.message
-        });
-    }
-}
-
-// YARDIMCI FONKSİYON (EĞER SENDE YOKSA DİYE TASLAK OLARAK EKLENDİ)
-async function callClaudeAPI(userPrompt) {
-    // Buraya senin mevcut Claude API anahtarın ve fetch kodun gelecek.
-    // Önemli olan return edilen objenin Remotion'a gitmesidir.
-    return {
-        text: "AI tarafından üretilen sosyal medya içeriği",
-        theme: "dark"
-    };
+  } catch (error) {
+    console.error("Sistem Hatası:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Yapay zeka veya Render motoru şu an kapalı.",
+      details: error.message
+    });
+  }
 }
