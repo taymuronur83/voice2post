@@ -341,9 +341,6 @@
             getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
             sendEmailVerification, sendPasswordResetEmail, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        
-        // YENİ ENTEGRASYON: Firestore Modülleri
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDaZ3eZsoAKW3ZazFPebAd-b147KaW5wOA",
@@ -358,7 +355,6 @@
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const auth = getAuth(app);
-        const db = getFirestore(app); // Firestore bağlantısı başlatıldı
 
         window.handleSignUp = async () => {
             const email = document.getElementById('login-email').value;
@@ -399,76 +395,6 @@
                 closeModals();
             } else { window.isLoggedIn = false; btn.innerText = "Giriş Yap"; }
         });
-
-        // YENİ ENTEGRASYON: Real-time Video Yakalayıcı (processAIResult içine entegre edildi)
-        window.processAIResult = async (text) => {
-            if(!text.trim() || isProcessing) return;
-            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
-            
-            isProcessing = true;
-            const statusText = document.getElementById('status-text');
-            const resultContainer = document.getElementById('ai-result-container');
-            const videoLoader = document.getElementById('video-loader');
-            const liveArea = document.getElementById('remotion-live-area');
-            const videoPlayer = document.getElementById('ai-video-player');
-            const userId = auth.currentUser?.uid;
-
-            statusText.innerText = "İçerik Analiz Ediliyor...";
-            resultContainer.classList.remove('hidden');
-            videoLoader.classList.remove('hidden');
-            liveArea.classList.add('opacity-0');
-            videoPlayer.classList.add('hidden');
-
-            try {
-                // 1. ADIM: Claude üzerinden metinleri ve video script'ini al
-                const response = await fetch('/api/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text, userId: userId })
-                });
-
-                const data = await response.json();
-                document.getElementById('linkedin-res').innerText = data.linkedin || "";
-                document.getElementById('x-res').innerText = data.twitter || "";
-
-                if (data.video_script) {
-                    statusText.innerText = "Video GitHub'da Render Ediliyor (2-3 dk sürebilir)...";
-                    
-                    // 2. ADIM: GitHub Render işlemini tetikle (Mevcut akışın devamı)
-                    await fetch('/api/render-video', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ script: data.video_script, userId: userId }) 
-                    });
-                    
-                    // 3. ADIM: REAL-TIME DİNLEME (Videonun direkt arayüze yüklenmesi)
-                    // GitHub renderı bitirip Firebase'e yazdığı an burası tetiklenir
-                    const unsub = onSnapshot(doc(db, "renders", userId), (docSnap) => {
-                        if (docSnap.exists() && docSnap.data().videoUrl) {
-                            const videoUrl = docSnap.data().videoUrl;
-                            
-                            // Videoyu player'a yükle
-                            videoPlayer.src = videoUrl;
-                            videoPlayer.classList.remove('hidden');
-                            videoLoader.classList.add('hidden');
-                            liveArea.classList.remove('opacity-0');
-                            document.getElementById('download-btn').classList.remove('hidden');
-                            
-                            // İndirme butonuna linki ata
-                            document.getElementById('download-btn').onclick = () => window.open(videoUrl, '_blank');
-                            
-                            statusText.innerText = "İçerik ve Video Hazır!";
-                            unsub(); // Video geldikten sonra dinlemeyi bırak
-                        }
-                    });
-                }
-                resultContainer.scrollIntoView({ behavior: 'smooth' });
-            } catch (error) { 
-                console.error("Hata:", error);
-                statusText.innerText = "Bir hata oluştu. Tekrar deneyin.";
-                videoLoader.classList.add('hidden');
-            } finally { isProcessing = false; }
-        }
     </script>
 
     <script src="https://www.paypal.com/sdk/js?client-id=AdOeigm877SXMe7mMtuEMPUeGkY9WcgyIJPbzGJU2HP1CS_eaGcn4O0FnUEoB3JFmDXEHSnxx5Do-pIN&currency=EUR"></script>
@@ -504,7 +430,63 @@
             }
         }
 
-        // processAIResult ana script içine (module olan yere) taşındı.
+        async function processAIResult(text) {
+            if(!text.trim() || isProcessing) return;
+            if (!window.isLoggedIn) return document.getElementById('auth-modal').classList.add('active');
+            
+            isProcessing = true;
+            const statusText = document.getElementById('status-text');
+            const resultContainer = document.getElementById('ai-result-container');
+            const videoLoader = document.getElementById('video-loader');
+            const liveArea = document.getElementById('remotion-live-area');
+            const videoPlayer = document.getElementById('ai-video-player');
+
+            statusText.innerText = "İçerik Analiz Ediliyor...";
+            resultContainer.classList.remove('hidden');
+            videoLoader.classList.remove('hidden');
+            liveArea.classList.add('opacity-0');
+            videoPlayer.classList.add('hidden');
+
+            try {
+                // 1. ADIM: Claude üzerinden metinleri ve video script'ini al
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text })
+                });
+
+                const data = await response.json();
+                document.getElementById('linkedin-res').innerText = data.linkedin || "";
+                document.getElementById('x-res').innerText = data.twitter || "";
+
+                if (data.video_script) {
+                    statusText.innerText = "Video Oluşturuluyor (Bu işlem 30-60 sn sürebilir)...";
+                    
+                    // 2. ADIM: Remotion üzerinden gerçek render işlemini başlat
+                    const renderRes = await fetch('/api/render-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ script: data.video_script }) 
+                    });
+                    
+                    const renderData = await renderRes.json();
+
+                    if (renderData.videoUrl) {
+                        // 3. ADIM: Render bitince gelen MP4 URL'ini oynatıcıya bağla
+                        videoPlayer.src = renderData.videoUrl;
+                        videoPlayer.classList.remove('hidden');
+                        videoLoader.classList.add('hidden');
+                        liveArea.classList.remove('opacity-0');
+                        document.getElementById('download-btn').classList.remove('hidden');
+                        statusText.innerText = "İçerik ve Video Hazır!";
+                    }
+                }
+                resultContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) { 
+                statusText.innerText = "Bir hata oluştu. Tekrar deneyin.";
+                videoLoader.classList.add('hidden');
+            } finally { isProcessing = false; }
+        }
 
         function processManualText() {
             const text = document.getElementById('manual-text').value;
